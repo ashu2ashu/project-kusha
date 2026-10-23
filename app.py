@@ -11,9 +11,12 @@ import os
 from dotenv import load_dotenv
 
 # Load local environment variables if available
-load_dotenv()
+load_dotenv(override=True)
 
 from prompt_template import IDEX_ANALYSIS_PROMPT
+import importlib
+import analyzer
+importlib.reload(analyzer)
 from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key
 
 # --- PAGE CONFIGURATION ---
@@ -105,31 +108,35 @@ st.sidebar.markdown("### **IDEX-7.5SC Hybrid Pro**")
 st.sidebar.caption("Ashu Elite Edition — Locked with Promoter Integrity Guardrails")
 
 # API Key handling
-default_env_key = os.getenv("GEMINI_API_KEY", "")
-api_key = st.sidebar.text_input(
+env_key = os.getenv("GEMINI_API_KEY", "").strip()
+api_key_input = st.sidebar.text_input(
     "Google Gemini API Key (Free)",
-    value=default_env_key,
+    value=env_key,
     type="password",
-    help="Get a free Gemini API key from https://aistudio.google.com with 15 RPM and 1M token context."
+    help="Loaded automatically from .env or enter manually."
 )
+
+active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
+
+if env_key:
+    st.sidebar.caption("🔒 Key auto-detected from .env")
 
 if st.sidebar.button("🔍 Test Key Connection", use_container_width=True):
     with st.sidebar:
         with st.spinner("Testing API key with Gemini..."):
-            is_valid, msg = verify_gemini_api_key(api_key)
+            is_valid, msg = verify_gemini_api_key(active_api_key)
             if is_valid:
                 st.success(msg)
             else:
                 st.error(msg)
 
-
 demo_mode = st.sidebar.checkbox(
     "Run in Demo / Preview Mode",
-    value=False if api_key else True,
+    value=False if active_api_key else True,
     help="Preview complete institutional analysis on sample company without needing an API key."
 )
 
-if not api_key and not demo_mode:
+if not active_api_key and not demo_mode:
     st.sidebar.warning("⚠️ Enter your Gemini API Key or check 'Demo Mode' to evaluate.")
 
 st.sidebar.markdown("---")
@@ -238,13 +245,15 @@ if run_button:
                         pdf_bytes=pdf_bytes,
                         company_name=company_name,
                         sector=sector,
-                        api_key=api_key,
+                        api_key=active_api_key,
                         custom_prompt=custom_prompt
                     )
                 st.session_state["idex_result"] = result
                 st.success("✅ Evaluation complete! Institutional scorecard generated.")
             except Exception as e:
                 st.error(f"Execution Error: {str(e)}")
+                with st.expander("🔍 View Technical Details of Error"):
+                    st.exception(e)
 
 # --- DISPLAY REPORT ---
 if "idex_result" in st.session_state:

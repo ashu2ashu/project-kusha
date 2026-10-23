@@ -1219,99 +1219,307 @@ if "idex_result" in st.session_state:
 
     st.write("")
 
-    # 2. RADAR & RECEIVABLE HEALTH SPLIT
-    split_col1, split_col2 = st.columns([1.3, 1.7])
-
-    with split_col1:
-        with st.container(border=True):
-            st.markdown("##### 8-Pillar Quality Profile")
-            radar_fig = build_radar_chart(res.get("pillars", []))
-            st.plotly_chart(radar_fig, width="stretch", alt="8-Pillar Radar Chart")
-            
-            # Active Tags Row with Vibrant Semantic Pills
-            st.caption("Active Forensic Tags:")
-            tag_pills = []
-            tag_color_map = {
-                "GOV-CLEAN": ("#ECFDF5", "#047857", "#A7F3D0"),
-                "GOV-RED": ("#FEF2F2", "#DC2626", "#FECACA"),
-                "PROM-ALERT": ("#FFFBEB", "#D97706", "#FDE68A"),
-                "ZERO-DEBT": ("#EFF6FF", "#1D4ED8", "#BFDBFE"),
-                "HIGH-ROCE": ("#ECFDF5", "#047857", "#A7F3D0"),
-                "COOL-PRO": ("#F5F3FF", "#6D28D9", "#DDD6FE"),
-                "DSO-PRISTINE": ("#ECFEFF", "#0E7490", "#A5F3FC"),
-            }
-            for t in res.get("tags_applied", []):
-                found_colors = None
-                for prefix, colors in tag_color_map.items():
-                    if prefix in t:
-                        found_colors = colors
-                        break
-                if not found_colors:
-                    found_colors = ("#F1F5F9", "#334155", "#CBD5E1")
-                bg, fg, bdr = found_colors
-                tag_pills.append(f'<span style="background: {bg}; color: {fg}; border: 1px solid {bdr}; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; display: inline-block; margin-right: 6px; margin-bottom: 6px;">{t}</span>')
-            st.html(f'<div style="display: flex; flex-wrap: wrap; margin-top: 6px;">{"".join(tag_pills)}</div>')
-
-    with split_col2:
-        with st.container(border=True):
-            st.markdown("##### Sector Receivable Health Layer")
-            st.caption("Forensic Cash Conversion & Liquidity Benchmarking")
-            
-            rec = res.get("receivable_health_metrics", {})
-            dso_val = rec.get('dso_days', 'N/A')
-            ideal_dso = rec.get('sector_ideal_dso', 'N/A')
-            rec_sales = rec.get('receivables_to_sales_pct', 'N/A')
-            over_90 = rec.get('pct_over_90_days', 'N/A')
-            prov_cov = rec.get('provision_coverage_pct', 'N/A')
-            verdict_text = rec.get('receivable_verdict', 'Normal')
-
-            rec_cards_html = (
-                f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">'
-                f'<div style="background: #F0FDFA; border: 1px solid #99F6E4; border-radius: 8px; padding: 12px 16px;">'
-                f'<div style="font-size: 11.5px; font-weight: 700; color: #0F766E; text-transform: uppercase;">DSO (Days Sales)</div>'
-                f'<div style="font-size: 22px; font-weight: 800; color: #115E59; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{dso_val} d</div>'
-                f'<div style="font-size: 11.5px; color: #0D9488; font-weight: 600;">Sector Benchmark: {ideal_dso}</div>'
-                f'</div>'
-                f'<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 16px;">'
-                f'<div style="font-size: 11.5px; font-weight: 700; color: #1D4ED8; text-transform: uppercase;">Receivables / Sales</div>'
-                f'<div style="font-size: 22px; font-weight: 800; color: #1E40AF; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{rec_sales}</div>'
-                f'<div style="font-size: 11.5px; color: #2563EB; font-weight: 600;">Balance Sheet Weight</div>'
-                f'</div>'
-                f'<div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 16px;">'
-                f'<div style="font-size: 11.5px; font-weight: 700; color: #B45309; text-transform: uppercase;">>90 Days Overdue</div>'
-                f'<div style="font-size: 22px; font-weight: 800; color: #92400E; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{over_90}</div>'
-                f'<div style="font-size: 11.5px; color: #D97706; font-weight: 600;">Delinquency Risk</div>'
-                f'</div>'
-                f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px 16px;">'
-                f'<div style="font-size: 11.5px; font-weight: 700; color: #15803D; text-transform: uppercase;">Provision Coverage</div>'
-                f'<div style="font-size: 22px; font-weight: 800; color: #166534; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{prov_cov}</div>'
-                f'<div style="font-size: 11.5px; color: #16A34A; font-weight: 600;">ECL Buffer</div>'
-                f'</div>'
-                f'</div>'
-                f'<div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #059669; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">'
-                f'<span style="font-size: 20px;">🛡️</span>'
-                f'<div>'
-                f'<div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">Forensic Assessment</div>'
-                f'<div style="font-size: 13.5px; font-weight: 700; color: #064E3B;">{verdict_text}</div>'
-                f'</div>'
-                f'</div>'
-            )
-            st.html(rec_cards_html)
-
-    # 3. TABBED IN-DEPTH FORENSIC ANALYSIS
-    st.write("")
-    tab_pillars, tab_math, tab_peers, tab_thesis, tab_appendices = st.tabs([
-        "8-Pillar Scorecard",
-        "Risk Deductions & Bonuses",
-        "Peer Relative Matrix",
-        "Investment Thesis & Final Call",
-        "Auditor Evidence & Valuation Math"
+    # 2. EXECUTIVE INVESTMENT THESIS & RECOMMENDATION (PROMINENT TOP PLACEMENT)
+    final_call_str = res.get("final_call", "N/A")
+    drift_str = res.get('drift_optionality_update', 'Monitor upcoming capital deployment and quarterly earnings.')
+    esg_str = res.get('fragility_esg_fx_notes', 'No material governance or FX vulnerabilities observed.')
+    
+    str_list = res.get("strengths", [])
+    str_html_items = "".join([
+        f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;">'
+        f'<span style="color: #059669; font-weight: 800; font-size: 15px; line-height: 1.2;">✔</span>'
+        f'<span style="color: #064E3B;">{s}</span>'
+        f'</div>'
+        for s in str_list
+    ])
+    
+    wk_list = res.get("weaknesses", [])
+    wk_html_items = "".join([
+        f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;">'
+        f'<span style="color: #DC2626; font-weight: 800; font-size: 15px; line-height: 1.2;">✖</span>'
+        f'<span style="color: #7F1D1D;">{w}</span>'
+        f'</div>'
+        for w in wk_list
     ])
 
-    with tab_pillars:
-        st.markdown("#### Comprehensive 8-Pillar Quality Table")
-        st.caption("Standardized Institutional Evaluation Matrix across Governance, Forensics, Capital Allocation & Durability")
-        
+    thesis_banner_html = (
+        f'<div style="background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%); border: 2px solid #059669; border-radius: 12px; padding: 22px 26px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(5,150,105,0.06);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">'
+        f'<div style="display: flex; align-items: center; gap: 10px;">'
+        f'<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.5px; text-transform: uppercase;">🎯 INSTITUTIONAL POSITION CALL</span>'
+        f'<span style="font-size: 12.5px; color: #64748B; font-weight: 600;">12–24 Month Investment Horizon</span>'
+        f'</div>'
+        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">IDEX-7.5SC Certified</span>'
+        f'</div>'
+        f'<div style="font-size: 21px; font-weight: 900; color: #0F172A; line-height: 1.35; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1.5px solid #E2E8F0;">'
+        f'{final_call_str}'
+        f'</div>'
+        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">'
+        f'<div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 10px; padding: 16px 18px;">'
+        f'<div style="font-size: 13px; font-weight: 800; color: #047857; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.4px;">'
+        f'<span>🟢</span> Key Moats & Structural Strengths'
+        f'</div>'
+        f'{str_html_items}'
+        f'</div>'
+        f'<div style="background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 10px; padding: 16px 18px;">'
+        f'<div style="font-size: 13px; font-weight: 800; color: #DC2626; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.4px;">'
+        f'<span>🔴</span> Structural Fragilities & Cautions'
+        f'</div>'
+        f'{wk_html_items}'
+        f'</div>'
+        f'</div>'
+        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px;">'
+        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 18px;">'
+        f'<div style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
+        f'<span>⏱️</span> 12–24M Catalyst & Forensic Drift Watch'
+        f'</div>'
+        f'<div style="font-size: 13.5px; line-height: 1.55; color: #1E293B;">{drift_str}</div>'
+        f'</div>'
+        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 18px;">'
+        f'<div style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
+        f'<span>🌍</span> ESG, Governance & FX Sensitivity'
+        f'</div>'
+        f'<div style="font-size: 13.5px; line-height: 1.55; color: #1E293B;">{esg_str}</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    )
+    st.html(thesis_banner_html)
+
+    # 3. EXECUTIVE DOSSIER SECTION NAVIGATOR
+    st.markdown("<div style='margin-top: 14px; margin-bottom: 6px;'></div>", unsafe_allow_html=True)
+    dossier_tab = st.segmented_control(
+        "Dossier Section Navigator",
+        options=[
+            "📑 Complete Dossier (All Sections)",
+            "🛡️ Risk Deductions & Bonuses",
+            "👥 Peer Relative Matrix",
+            "🏛️ 8-Pillar Scorecard & Radar",
+            "🔍 Auditor Evidence & Math"
+        ],
+        default="📑 Complete Dossier (All Sections)",
+        key="dossier_nav_filter",
+        label_visibility="collapsed"
+    )
+
+    show_all = (dossier_tab == "📑 Complete Dossier (All Sections)")
+
+    # --- SECTION A: RISK DEDUCTIONS & GROWTH BONUSES ---
+    if show_all or dossier_tab == "🛡️ Risk Deductions & Bonuses":
+        st.markdown(
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
+            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<span>🛡️</span> Forensic Score Bridge: Risk Deductions & Applied Bonuses'
+            f'</div>'
+            f'<span style="font-size: 12px; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 6px; font-weight: 600;">'
+            f'Core Quality ({core_score:.1f}) → Penalties (-{total_penalties:.1f}) → Bonuses (+{total_bonus:.1f}%) → Final IDEX ({final_score:.1f})'
+            f'</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        bridge_col1, bridge_col2 = st.columns(2)
+        with bridge_col1:
+            with st.container(border=True):
+                st.markdown(
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
+                    '<span style="font-size: 13.5px; font-weight: 800; color: #991B1B; text-transform: uppercase;">Deducted Risk Penalties</span>'
+                    '<span style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-7.5 pts Max Cap</span>'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+                penalties = res.get("penalties_breakdown", [])
+                if penalties:
+                    pen_html = []
+                    for pen in penalties:
+                        pen_html.append(
+                            f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #DC2626; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px;">'
+                            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">'
+                            f'<span style="font-size: 14.5px; font-weight: 800; color: #991B1B;">{pen.get("penalty_name")}</span>'
+                            f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-{pen.get("points")} pts</span>'
+                            f'</div>'
+                            f'<div style="font-size: 13.5px; color: #7F1D1D; line-height: 1.5;">{pen.get("reason")}</div>'
+                            f'</div>'
+                        )
+                    st.html("".join(pen_html))
+                else:
+                    st.html(
+                        '<div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-left: 4px solid #10B981; border-radius: 8px; padding: 16px 18px; color: #064E3B; font-weight: 700; font-size: 14px;">'
+                        '✔ Zero statutory forensic risk deductions applied. Clean regulatory audit profile.'
+                        '</div>'
+                    )
+
+        with bridge_col2:
+            with st.container(border=True):
+                bb = res.get("bonuses_breakdown", {})
+                st.markdown(
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
+                    '<span style="font-size: 13.5px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Applied Growth Bonuses</span>'
+                    '<span style="background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">+10.0% Max Cap</span>'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+                st.html(
+                    f'<div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">'
+                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">COOL++ PRO Bonus</span><div style="font-size: 12px; color: #6D28D9;">Capital-Light Operating Leverage Outperformance</div></div>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{bb.get("cool_pro_bonus", 0):.1f}%</span>'
+                    f'</div>'
+                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">Trajectory Bonus</span><div style="font-size: 12px; color: #6D28D9;">Sustained Margin Expansion & FCF Compounding</div></div>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{bb.get("trajectory_bonus", 0):.1f}%</span>'
+                    f'</div>'
+                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">Resilience Bonus</span><div style="font-size: 12px; color: #6D28D9;">Balance Sheet Solvency & Counter-Cyclical Endurance</div></div>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{bb.get("resilience_bonus", 0):.1f}%</span>'
+                    f'</div>'
+                    f'</div>'
+                    f'<div style="background: #EDE9FE; border: 1.5px solid #A78BFA; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<span style="font-size: 13px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Total Growth Bonus Applied</span>'
+                    f'<span style="font-size: 20px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace;">+{bb.get("total_bonus_applied", 0):.1f}%</span>'
+                    f'</div>'
+                )
+
+    # --- SECTION B: PEER RELATIVE BENCHMARK MATRIX ---
+    if show_all or dossier_tab == "👥 Peer Relative Matrix":
+        st.markdown(
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
+            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<span>👥</span> Peer Relative Benchmark Matrix ({target_sector})'
+            f'</div>'
+            f'<span style="font-size: 12px; color: #64748B;">Standardized 100-Point Quality & Valuation Comparison</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        peers = res.get("peer_matrix", [])
+        if peers:
+            p_rows = []
+            # Target company highlighted row
+            p_rows.append(
+                f'<tr style="background: #F0FDF4; border-bottom: 2px solid #BBF7D0;">'
+                f'<td style="padding: 12px 16px; font-weight: 900; color: #064E3B;">'
+                f'{target_company_name} <span style="background: #059669; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 4px; margin-left: 6px;">EVALUATED</span>'
+                f'</td>'
+                f'<td style="padding: 12px 16px; text-align: center;"><span style="background: #059669; color: #FFFFFF; padding: 4px 10px; border-radius: 6px; font-weight: 900; font-family: monospace; font-size: 14px;">{final_score:.1f} / 100</span></td>'
+                f'<td style="padding: 12px 16px;"><span style="background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 12px;">Active Target ({verdict})</span></td>'
+                f'</tr>'
+            )
+            for p in peers:
+                p_name = p.get("peer_name", "")
+                p_sc = p.get("score", "N/A")
+                p_pos = p.get("position", "Peer Competitor")
+                p_rows.append(
+                    f'<tr style="border-bottom: 1px solid #F1F5F9;">'
+                    f'<td style="padding: 11px 16px; font-weight: 700; color: #1E293B;">{p_name}</td>'
+                    f'<td style="padding: 11px 16px; text-align: center;"><span style="background: #F8FAFC; color: #0F172A; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-family: monospace; font-size: 13.5px;">{p_sc} / 100</span></td>'
+                    f'<td style="padding: 11px 16px;"><span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 12px;">{p_pos}</span></td>'
+                    f'</tr>'
+                )
+            
+            peer_table_html = (
+                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
+                f'<table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">'
+                f'<thead>'
+                f'<tr style="background: #F8FAFC; border-bottom: 1.5px solid #E2E8F0;">'
+                f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #475569; font-size: 12px; text-transform: uppercase;">Constituent Company</th>'
+                f'<th style="padding: 12px 16px; text-align: center; font-weight: 800; color: #475569; font-size: 12px; text-transform: uppercase;">IDEX Quality Score</th>'
+                f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #475569; font-size: 12px; text-transform: uppercase;">Sector Position & Standing</th>'
+                f'</tr>'
+                f'</thead>'
+                f'<tbody>{"".join(p_rows)}</tbody>'
+                f'</table>'
+                f'</div>'
+            )
+            st.html(peer_table_html)
+
+    # --- SECTION C: 8-PILLAR SCORECARD & RADAR PROFILE ---
+    if show_all or dossier_tab == "🏛️ 8-Pillar Scorecard & Radar":
+        st.markdown(
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
+            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<span>🏛️</span> 8-Pillar Quality Profile & Comprehensive Table'
+            f'</div>'
+            f'<span style="font-size: 12px; color: #64748B;">Standardized 100-Point Forensic Matrix</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        split_col1, split_col2 = st.columns([1.3, 1.7])
+
+        with split_col1:
+            with st.container(border=True):
+                st.markdown("##### 8-Pillar Quality Profile")
+                radar_fig = build_radar_chart(res.get("pillars", []))
+                st.plotly_chart(radar_fig, width="stretch", alt="8-Pillar Radar Chart")
+                
+                st.caption("Active Forensic Tags:")
+                tag_pills = []
+                tag_color_map = {
+                    "GOV-CLEAN": ("#ECFDF5", "#047857", "#A7F3D0"),
+                    "GOV-RED": ("#FEF2F2", "#DC2626", "#FECACA"),
+                    "PROM-ALERT": ("#FFFBEB", "#D97706", "#FDE68A"),
+                    "ZERO-DEBT": ("#EFF6FF", "#1D4ED8", "#BFDBFE"),
+                    "HIGH-ROCE": ("#ECFDF5", "#047857", "#A7F3D0"),
+                    "COOL-PRO": ("#F5F3FF", "#6D28D9", "#DDD6FE"),
+                    "DSO-PRISTINE": ("#ECFEFF", "#0E7490", "#A5F3FC"),
+                }
+                for t in res.get("tags_applied", []):
+                    found_colors = None
+                    for prefix, colors in tag_color_map.items():
+                        if prefix in t:
+                            found_colors = colors
+                            break
+                    if not found_colors:
+                        found_colors = ("#F1F5F9", "#334155", "#CBD5E1")
+                    bg, fg, bdr = found_colors
+                    tag_pills.append(f'<span style="background: {bg}; color: {fg}; border: 1px solid {bdr}; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; display: inline-block; margin-right: 6px; margin-bottom: 6px;">{t}</span>')
+                st.html(f'<div style="display: flex; flex-wrap: wrap; margin-top: 6px;">{"".join(tag_pills)}</div>')
+
+        with split_col2:
+            with st.container(border=True):
+                st.markdown("##### Sector Receivable Health Layer")
+                st.caption("Forensic Cash Conversion & Liquidity Benchmarking")
+                
+                rec = res.get("receivable_health_metrics", {})
+                dso_val = rec.get('dso_days', 'N/A')
+                ideal_dso = rec.get('sector_ideal_dso', 'N/A')
+                rec_sales = rec.get('receivables_to_sales_pct', 'N/A')
+                over_90 = rec.get('pct_over_90_days', 'N/A')
+                prov_cov = rec.get('provision_coverage_pct', 'N/A')
+                verdict_text = rec.get('receivable_verdict', 'Normal')
+
+                rec_cards_html = (
+                    f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">'
+                    f'<div style="background: #F0FDFA; border: 1px solid #99F6E4; border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 11.5px; font-weight: 700; color: #0F766E; text-transform: uppercase;">DSO (Days Sales)</div>'
+                    f'<div style="font-size: 22px; font-weight: 800; color: #115E59; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{dso_val} d</div>'
+                    f'<div style="font-size: 11.5px; color: #0D9488; font-weight: 600;">Sector Benchmark: {ideal_dso}</div>'
+                    f'</div>'
+                    f'<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 11.5px; font-weight: 700; color: #1D4ED8; text-transform: uppercase;">Receivables / Sales</div>'
+                    f'<div style="font-size: 22px; font-weight: 800; color: #1E40AF; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{rec_sales}</div>'
+                    f'<div style="font-size: 11.5px; color: #2563EB; font-weight: 600;">Balance Sheet Weight</div>'
+                    f'</div>'
+                    f'<div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 11.5px; font-weight: 700; color: #B45309; text-transform: uppercase;">>90 Days Overdue</div>'
+                    f'<div style="font-size: 22px; font-weight: 800; color: #92400E; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{over_90}</div>'
+                    f'<div style="font-size: 11.5px; color: #D97706; font-weight: 600;">Delinquency Risk</div>'
+                    f'</div>'
+                    f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 11.5px; font-weight: 700; color: #15803D; text-transform: uppercase;">Provision Coverage</div>'
+                    f'<div style="font-size: 22px; font-weight: 800; color: #166534; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{prov_cov}</div>'
+                    f'<div style="font-size: 11.5px; color: #16A34A; font-weight: 600;">ECL Buffer</div>'
+                    f'</div>'
+                    f'</div>'
+                    f'<div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #059669; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">'
+                    f'<span style="font-size: 20px;">🛡️</span>'
+                    f'<div>'
+                    f'<div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">Forensic Assessment</div>'
+                    f'<div style="font-size: 13.5px; font-weight: 700; color: #064E3B;">{verdict_text}</div>'
+                    f'</div>'
+                    f'</div>'
+                )
+                st.html(rec_cards_html)
+
+        # 8-Pillar Table
         table_rows = []
         for p in res.get("pillars", []):
             p_id = p.get("id", 1)
@@ -1372,98 +1580,26 @@ if "idex_result" in st.session_state:
         )
         st.html(full_table_html)
 
-    with tab_math:
-        m_col1, m_col2 = st.columns(2)
-        with m_col1:
-            with st.container(border=True):
-                st.markdown("##### Deducted Risk Penalties")
-                penalties = res.get("penalties_breakdown", [])
-                if penalties:
-                    pen_html = []
-                    for pen in penalties:
-                        pen_html.append(
-                            f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #DC2626; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px;">'
-                            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">'
-                            f'<span style="font-size: 14.5px; font-weight: 800; color: #991B1B;">{pen.get("penalty_name")}</span>'
-                            f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-{pen.get("points")} pts</span>'
-                            f'</div>'
-                            f'<div style="font-size: 13.5px; color: #7F1D1D; line-height: 1.5;">{pen.get("reason")}</div>'
-                            f'</div>'
-                        )
-                    st.html("".join(pen_html))
-                else:
-                    st.html(
-                        '<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-left: 4px solid #10B981; border-radius: 6px; padding: 14px 18px; color: #064E3B; font-weight: 600; font-size: 14px;">'
-                        '✔ Zero statutory forensic risk deductions applied. Clean regulatory profile.'
-                        '</div>'
-                    )
-        
-        with m_col2:
-            with st.container(border=True):
-                st.markdown("##### Applied Growth Bonuses (Max +10%)")
-                bb = res.get("bonuses_breakdown", {})
-                st.html(
-                    f'<div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">'
-                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<div><span style="font-weight: 700; color: #4C1D95; font-size: 14px;">COOL++ PRO Bonus</span><div style="font-size: 12px; color: #6D28D9;">Capital-Light Operating Leverage Outperformance</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">+{bb.get("cool_pro_bonus", 0):.1f}%</span>'
-                    f'</div>'
-                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<div><span style="font-weight: 700; color: #4C1D95; font-size: 14px;">Trajectory Bonus</span><div style="font-size: 12px; color: #6D28D9;">Sustained Margin Expansion & FCF Compounding</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">+{bb.get("trajectory_bonus", 0):.1f}%</span>'
-                    f'</div>'
-                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<div><span style="font-weight: 700; color: #4C1D95; font-size: 14px;">Resilience Bonus</span><div style="font-size: 12px; color: #6D28D9;">Balance Sheet Solvency & Counter-Cyclical Endurance</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">+{bb.get("resilience_bonus", 0):.1f}%</span>'
-                    f'</div>'
-                    f'</div>'
-                    f'<div style="background: #EDE9FE; border: 1.5px solid #A78BFA; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<span style="font-size: 13.5px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Total Growth Bonus Applied</span>'
-                    f'<span style="font-size: 22px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace;">+{bb.get("total_bonus_applied", 0):.1f}%</span>'
-                    f'</div>'
-                )
-
-    with tab_peers:
+    # --- SECTION D: AUDITOR EVIDENCE PACK & VALUATION MATH ---
+    if show_all or dossier_tab == "🔍 Auditor Evidence & Math":
+        st.markdown(
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
+            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<span>🔍</span> Statutory Auditor Evidence Pack & Forensic Calculations'
+            f'</div>'
+            f'<span style="font-size: 12px; color: #64748B;">Appendix A (Auditor Excerpts) & Appendix B (Valuation Math)</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
         with st.container(border=True):
-            st.markdown("##### Peer Relative Matrix")
-            peers = res.get("peer_matrix", [])
-            if peers:
-                st.dataframe(peers, width="stretch", alt="Peer Matrix Table")
-            
-            p_str_col1, p_str_col2 = st.columns(2)
-            with p_str_col1:
-                st.markdown("##### Key Structural Strengths")
-                str_items = "".join([f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;"><span style="color: #059669; font-weight: 800; font-size: 15px;">✔</span> <span style="color: #064E3B;">{s}</span></div>' for s in res.get("strengths", [])])
-                st.html(f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px;">{str_items}</div>')
-            with p_str_col2:
-                st.markdown("##### Structural Fragilities & Cautions")
-                wk_items = "".join([f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;"><span style="color: #DC2626; font-weight: 800; font-size: 15px;">✖</span> <span style="color: #7F1D1D;">{w}</span></div>' for w in res.get("weaknesses", [])])
-                st.html(f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 14px 16px;">{wk_items}</div>')
-
-    with tab_thesis:
-        with st.container(border=True):
-            st.markdown("##### Final Analyst Recommendation")
-            st.html(
-                f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; padding: 18px 22px; background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1.5px solid #CBD5E1; border-left: 5px solid #059669; border-radius: 0 8px 8px 0; margin: 12px 0 18px 0; line-height: 1.4;">'
-                f'<div style="font-size: 11.5px; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">INSTITUTIONAL POSITION CALL</div>'
-                f'{res.get("final_call", "N/A")}'
+            st.markdown("##### Appendix A — Load-Bearing Forensic Citations")
+            st.caption("Exact quotes, regulatory disclosures, and load-bearing statutory audit excerpts:")
+            ev_items = "".join([
+                f'<div style="font-size: 13.5px; line-height: 1.6; color: #1E293B; margin-bottom: 10px; padding: 12px 16px; background: #F8FAFC; border-left: 3.5px solid #059669; border-radius: 0 8px 8px 0; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">'
+                f'<span style="color: #059669; font-weight: 800; margin-right: 6px;">●</span> {e}'
                 f'</div>'
-            )
-            
-            st.divider()
-            t_col1, t_col2 = st.columns(2)
-            with t_col1:
-                st.markdown("**ESG, Governance & FX Sensitivity:**")
-                st.html(f"<div style='background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; font-size: 13.5px; line-height: 1.6; color: #334155;'>{res.get('fragility_esg_fx_notes', 'No material vulnerabilities observed.')}</div>")
-            with t_col2:
-                st.markdown("**12–24 Month Catalyst & Forensic Drift Watch:**")
-                st.html(f"<div style='background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; font-size: 13.5px; line-height: 1.6; color: #334155;'>{res.get('drift_optionality_update', 'Monitor upcoming capital deployment.')}</div>")
-
-    with tab_appendices:
-        with st.container(border=True):
-            st.markdown("##### Appendix A — Forensic Evidence Pack")
-            st.caption("Exact quotes, regulatory disclosures, and load-bearing audit excerpts:")
-            ev_items = "".join([f'<div style="font-size: 13.5px; line-height: 1.6; color: #1E293B; margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border-left: 3px solid #059669; border-radius: 0 6px 6px 0;">{e}</div>' for e in res.get("appendix_a_forensic_evidence", [])])
+                for e in res.get("appendix_a_forensic_evidence", [])
+            ])
             st.html(ev_items)
             
             st.divider()
@@ -1472,12 +1608,12 @@ if "idex_result" in st.session_state:
             calc_cards = []
             for k, v in calcs.items():
                 calc_cards.append(
-                    f'<div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">'
-                    f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">{k.replace("_", " ").title()}</div>'
-                    f'<div style="font-size: 14.5px; font-weight: 700; color: #0F172A; margin-top: 4px;">{v}</div>'
+                    f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
+                    f'<div style="font-size: 11.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">{k.replace("_", " ").title()}</div>'
+                    f'<div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px; line-height: 1.45;">{v}</div>'
                     f'</div>'
                 )
-            st.html(f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">{"".join(calc_cards)}</div>')
+            st.html(f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">{"".join(calc_cards)}</div>')
 
     # 4. MANDATORY GUARDRAIL & PROMOTER INTEGRITY AUDIT (BELOW PILLARS)
     st.write("")

@@ -24,7 +24,12 @@ importlib.reload(analyzer)
 importlib.reload(nifty_universe)
 
 from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key
-from nifty_universe import get_company_list, find_company_info, fetch_live_market_data, get_sector_list
+from nifty_universe import (
+    get_company_list, find_company_info, fetch_live_market_data, get_sector_list,
+    fetch_live_indices_data, fetch_marquee_stocks_data, fetch_ticker_historical_data
+)
+import pandas as pd
+from plotly.subplots import make_subplots
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -333,7 +338,7 @@ st.markdown("""
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
     st.markdown("### StockSage")
-    st.caption("Dalal Street Equity Intelligence • Ashu Elite Edition")
+    st.caption("Institutional Financial Terminal • Ashu Elite Edition")
     
     st.html("""
     <div style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border: 1.5px solid #86EFAC; border-radius: 8px; padding: 10px 14px; margin-top: 8px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(5,150,105,0.08);">
@@ -428,7 +433,7 @@ with st.container(border=True):
     st.markdown("#### Company Search")
     
     # Fast Preset Benchmark Chips
-    st.caption("⚡ **Dalal Street Benchmarks (1-Click Instant Load):**")
+    st.caption("⚡ **Marquee Benchmark Equities (1-Click Instant Load):**")
     preset_cols = st.columns(6)
     presets = [
         ("Reliance", "RELIANCE", "🔵"),
@@ -518,61 +523,216 @@ elif st.session_state["selected_company_memory"] != selected_company_str:
 def get_cached_live_data(ticker_sym: str):
     return fetch_live_market_data(ticker_sym)
 
+@st.cache_data(ttl=60, show_spinner=False)
+def get_cached_market_indices():
+    return fetch_live_indices_data()
+
+@st.cache_data(ttl=60, show_spinner=False)
+def get_cached_marquee_stocks():
+    return fetch_marquee_stocks_data()
+
+@st.cache_data(ttl=300, show_spinner=False)
+def get_cached_ticker_history(ticker_sym: str, period: str = "1y"):
+    return fetch_ticker_historical_data(ticker_sym, period=period)
+
+def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "Area", show_dma: bool = True):
+    if df.empty or len(df) < 2:
+        return None
+        
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        row_heights=[0.80, 0.20]
+    )
+    
+    if chart_style in ("Candlestick", "Candles"):
+        fig.add_trace(
+            go.Candlestick(
+                x=df.index,
+                open=df["Open"],
+                high=df["High"],
+                low=df["Low"],
+                close=df["Close"],
+                name="OHLC",
+                increasing_line_color="#059669",
+                decreasing_line_color="#DC2626",
+                showlegend=False
+            ),
+            row=1, col=1
+        )
+    else:
+        start_price = float(df["Close"].iloc[0])
+        end_price = float(df["Close"].iloc[-1])
+        line_color = "#059669" if end_price >= start_price else "#DC2626"
+        fill_color = "rgba(5, 150, 105, 0.08)" if end_price >= start_price else "rgba(220, 38, 38, 0.08)"
+        
+        fig.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=df["Close"],
+                mode="lines",
+                name="CMP",
+                line=dict(color=line_color, width=2.2),
+                fill="tozeroy",
+                fillcolor=fill_color
+            ),
+            row=1, col=1
+        )
+        
+    if show_dma:
+        if len(df) >= 50:
+            sma50 = df["Close"].rolling(window=50).mean()
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=sma50,
+                    mode="lines",
+                    name="50 DMA",
+                    line=dict(color="#2563EB", width=1.4, dash="dot")
+                ),
+                row=1, col=1
+            )
+        if len(df) >= 200:
+            sma200 = df["Close"].rolling(window=200).mean()
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=sma200,
+                    mode="lines",
+                    name="200 DMA",
+                    line=dict(color="#D97706", width=1.4, dash="dash")
+                ),
+                row=1, col=1
+            )
+
+    vol_colors = ["#059669" if c >= o else "#DC2626" for c, o in zip(df["Close"], df["Open"])]
+    fig.add_trace(
+        go.Bar(
+            x=df.index,
+            y=df["Volume"],
+            name="Volume",
+            marker=dict(color=vol_colors, opacity=0.55),
+            showlegend=False
+        ),
+        row=2, col=1
+    )
+    
+    fig.update_layout(
+        template="plotly_white",
+        height=380,
+        margin=dict(l=10, r=10, t=10, b=10),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=11, family="Inter, sans-serif")),
+        xaxis_rangeslider_visible=False,
+        hovermode="x unified",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF"
+    )
+    fig.update_yaxes(title_text="Price (₹)", row=1, col=1, gridcolor="#F1F5F9", tickfont=dict(size=11, family="JetBrains Mono, monospace"))
+    fig.update_yaxes(title_text="Vol", row=2, col=1, gridcolor="#F1F5F9", tickfont=dict(size=10))
+    fig.update_xaxes(gridcolor="#F1F5F9", tickfont=dict(size=11))
+    return fig
+
 live_data = None
 if target_ticker and target_ticker != "CUSTOM":
     live_data = get_cached_live_data(target_ticker)
 
-# Screener-grade Welcome / Empty State (When no company is selected)
+# Live Market Pulse & Benchmark Quotes (When no company is selected)
 if not selected_company_str:
     st.html("""
-    <div style="background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 36px 32px; text-align: center; margin-top: 18px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);">
-        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #A7F3D0; margin-bottom: 16px; font-size: 30px;">
-            📈
+    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <div style="font-size: 21px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 10px; letter-spacing: -0.4px;">
+          <span>📈</span> Real-Time Indian Market Pulse & Benchmark Quotes
         </div>
-        <div style="font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; margin-bottom: 8px;">
-            Dalal Street Institutional Intelligence Terminal
+        <div style="font-size: 13.5px; color: #475569; margin-top: 4px;">
+          Live NSE & BSE index levels and marquee Nifty 500 equities. Select any stock above or click <strong>Analyze Stock ↗</strong> below.
         </div>
-        <div style="font-size: 14.5px; color: #64748B; max-width: 680px; margin: 0 auto 24px auto; line-height: 1.6;">
-            Select any constituent from the <strong>501 Nifty 500 universe</strong> above or click a benchmark chip to inspect real-time NSE market valuations, 27 Screener ratios, and initiate the comprehensive 8-pillar forensic audit.
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; text-align: left; max-width: 920px; margin: 0 auto 16px auto;">
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #059669; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                <div style="font-size: 13px; font-weight: 800; color: #065F46; margin-bottom: 4px;">⚡ 27 SCREENER RATIOS</div>
-                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Real-time Market Cap, P/E, ROCE, ROE, FCF & Graham Number calculated directly from NSE/BSE feeds.</div>
-            </div>
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #2563EB; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                <div style="font-size: 13px; font-weight: 800; color: #1E40AF; margin-bottom: 4px;">🏛️ 8-PILLAR AUDIT</div>
-                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Standardized 100-point forensic matrix across Governance, Accounting Forensics, FCF, and Moat durability.</div>
-            </div>
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #DC2626; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                <div style="font-size: 13px; font-weight: 800; color: #991B1B; margin-bottom: 4px;">🛡️ PROMOTER INTEGRITY</div>
-                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Hardwired PIO overrides, share pledge thresholds, and regulatory qualification tracking.</div>
-            </div>
-            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #D97706; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                <div style="font-size: 13px; font-weight: 800; color: #92400E; margin-bottom: 4px;">📊 24 SECTOR BENCHMARKS</div>
-                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Granular sector classification ensuring Insurance, Banks, AMCs, and NBFCs are properly evaluated.</div>
-            </div>
-        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;">
+          <span style="color: #059669; font-size: 14px;">●</span> LIVE MARKET FEEDS
+        </span>
+      </div>
     </div>
     """)
     
-    col_exp1, col_exp2, col_exp3, col_exp4 = st.columns(4)
-    with col_exp1:
-        if st.button("🏢 Explore Reliance Industries", width="stretch", key="welc_rel"):
-            st.session_state["selected_company_choice"] = find_company_info("RELIANCE")["display"]
-            st.rerun()
-    with col_exp2:
-        if st.button("🏦 Explore HDFC Bank", width="stretch", key="welc_hdfc"):
-            st.session_state["selected_company_choice"] = find_company_info("HDFCBANK")["display"]
-            st.rerun()
-    with col_exp3:
-        if st.button("🛒 Explore Tata Consumer", width="stretch", key="welc_tataconsum"):
-            st.session_state["selected_company_choice"] = find_company_info("TATACONSUM")["display"]
-            st.rerun()
-    with col_exp4:
-        if st.button("💻 Explore TCS", width="stretch", key="welc_tcs"):
-            st.session_state["selected_company_choice"] = find_company_info("TCS")["display"]
-            st.rerun()
+    indices_list = get_cached_market_indices()
+    idx_cols = st.columns(4)
+    for i, idx in enumerate(indices_list):
+        with idx_cols[i]:
+            is_pos = idx["pct"] >= 0
+            delta_col = "#047857" if is_pos else "#DC2626"
+            delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
+            delta_sign = "+" if is_pos else ""
+            delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
+            
+            card_html = (
+                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+                f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
+                f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 7px; border-radius: 4px;">{delta_str}</span>'
+                f'</div>'
+                f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
+                f'<div style="font-size: 11px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between;">'
+                f'<span>L: {idx["lo"]:,.0f}</span>'
+                f'<span>H: {idx["hi"]:,.0f}</span>'
+                f'</div>'
+                f'</div>'
+            )
+            st.html(card_html)
+            
+    st.markdown("<div style='margin-top: 22px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
+    b_c1, b_c2, b_c3 = st.columns([2.5, 1.3, 1])
+    with b_c1:
+        st.markdown(
+            '<div style="font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            '<span>🇮🇳</span> NIFTY 50 Benchmark Performance'
+            '</div>',
+            unsafe_allow_html=True
+        )
+    with b_c2:
+        nifty_tf = st.segmented_control("Nifty Range", options=["1M", "3M", "6M", "1Y"], default="6M", key="nifty_tf_ctrl", label_visibility="collapsed")
+    with b_c3:
+        nifty_style = st.segmented_control("Nifty Style", options=["Area", "Candles"], default="Area", key="nifty_style_ctrl", label_visibility="collapsed")
+
+    tf_map = {"1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y"}
+    nifty_period = tf_map.get(nifty_tf or "6M", "6mo")
+    nifty_df = get_cached_ticker_history("^NSEI", period=nifty_period)
+    if not nifty_df.empty:
+        nifty_fig = build_ticker_chart(nifty_df, "NIFTY 50", nifty_style or "Area", show_dma=True)
+        if nifty_fig:
+            st.plotly_chart(nifty_fig, width="stretch")
+
+    st.markdown("""
+    <div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 10px;">
+      <div style="font-size: 17px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+        <span>⚡</span> Marquee Nifty 500 Market Movers & Live Stock Prices
+      </div>
+      <span style="font-size: 12px; color: #64748B;">Click <strong>Analyze Stock ↗</strong> on any equity to launch terminal</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    stocks_list = get_cached_marquee_stocks()
+    for stk in stocks_list:
+        row_c1, row_c2, row_c3, row_c4, row_c5 = st.columns([3.2, 2.2, 1.8, 1.8, 1.4])
+        is_p = stk["pct"] >= 0
+        p_col = "#047857" if is_p else "#DC2626"
+        p_bg = "#ECFDF5" if is_p else "#FEF2F2"
+        p_sign = "+" if is_p else ""
+        
+        with row_c1:
+            st.markdown(f"**{stk['name']}**  \n<span style='font-size: 12px; color: #047857; font-weight: 700; background: #F0FDF4; padding: 1px 6px; border-radius: 4px; border: 1px solid #BBF7D0;'>● NSE: {stk['ticker']}</span>", unsafe_allow_html=True)
+        with row_c2:
+            st.markdown(f"<span style='font-size: 12px; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 3px 8px; border-radius: 6px; font-weight: 600;'>🏛️ {stk['sector']}</span>", unsafe_allow_html=True)
+        with row_c3:
+            st.markdown(f"<div style='font-family: monospace; font-size: 15px; font-weight: 800; color: #0F172A;'>₹ {stk['cur']:,.2f}</div><div style='font-size: 11px; color: #64748B;'>Day: ₹{stk['lo']:,.0f} - ₹{stk['hi']:,.0f}</div>", unsafe_allow_html=True)
+        with row_c4:
+            st.markdown(f"<span style='color: {p_col}; background: {p_bg}; border: 1px solid {p_col}40; font-weight: 800; font-size: 13px; padding: 4px 8px; border-radius: 6px;'>{p_sign}{stk['pct']:.2f}% ({p_sign}₹{stk['chg']:,.1f})</span>", unsafe_allow_html=True)
+        with row_c5:
+            if st.button("Analyze ↗", key=f"btn_stk_{stk['ticker']}", width="stretch"):
+                st.session_state["selected_company_choice"] = stk["display"]
+                st.rerun()
 
 # --- STOCKSAGE BESPOKE COMPANY INTELLIGENCE & 27 KEY METRICS MATRIX ---
 if live_data:
@@ -840,11 +1000,36 @@ if live_data:
         f'</div>'
         f'</div>'
         f'</div>'
-        f'<div class="metrics-3col-grid">'
-        f'{card_val}{card_ret}{card_sol}'
-        f'</div>'
     )
     st.html(facts_full_html)
+
+    # --- INTERACTIVE TICKER PRICE & TECHNICAL CHART ---
+    st.markdown("<div style='margin-top: 22px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
+    tc_1, tc_2, tc_3 = st.columns([2.5, 1.3, 1])
+    with tc_1:
+        st.markdown(
+            f'<div style="font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<span>📈</span> {target_company_name} ({target_ticker}) Price Action & Technical Trend'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    with tc_2:
+        stock_tf = st.segmented_control("Range", options=["1M", "3M", "6M", "1Y", "5Y"], default="1Y", key=f"stk_tf_{target_ticker}", label_visibility="collapsed")
+    with tc_3:
+        stock_style = st.segmented_control("Style", options=["Area", "Candles"], default="Area", key=f"stk_style_{target_ticker}", label_visibility="collapsed")
+
+    tf_map = {"1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y", "5Y": "5y"}
+    chosen_period = tf_map.get(stock_tf or "1Y", "1y")
+    hist_df = get_cached_ticker_history(target_ticker, period=chosen_period)
+    if not hist_df.empty:
+        stock_fig = build_ticker_chart(hist_df, target_ticker, stock_style or "Area", show_dma=True)
+        if stock_fig:
+            st.plotly_chart(stock_fig, width="stretch")
+    else:
+        st.info(f"Historical chart currently syncing for {target_ticker} on NSE.")
+
+    # --- 27 KEY FUNDAMENTAL SCREENER RATIOS (3-COLUMN SPACIOUS MATRIX) ---
+    st.html(f'<div class="metrics-3col-grid" style="margin-top: 22px;">{card_val}{card_ret}{card_sol}</div>')
 
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])
@@ -1125,7 +1310,7 @@ if "idex_result" in st.session_state:
 
     with tab_pillars:
         st.markdown("#### Comprehensive 8-Pillar Quality Table")
-        st.caption("Standardized Dalal Street Evaluation Matrix across Governance, Forensics, Capital Allocation & Durability")
+        st.caption("Standardized Institutional Evaluation Matrix across Governance, Forensics, Capital Allocation & Durability")
         
         table_rows = []
         for p in res.get("pillars", []):
@@ -1260,7 +1445,7 @@ if "idex_result" in st.session_state:
             st.markdown("##### Final Analyst Recommendation")
             st.html(
                 f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; padding: 18px 22px; background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1.5px solid #CBD5E1; border-left: 5px solid #059669; border-radius: 0 8px 8px 0; margin: 12px 0 18px 0; line-height: 1.4;">'
-                f'<div style="font-size: 11.5px; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">DALAL STREET POSITION CALL</div>'
+                f'<div style="font-size: 11.5px; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">INSTITUTIONAL POSITION CALL</div>'
                 f'{res.get("final_call", "N/A")}'
                 f'</div>'
             )

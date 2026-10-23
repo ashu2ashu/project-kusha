@@ -28,10 +28,10 @@ buttonRadius = "8px"
 font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
 headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
 codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
-baseFontSize = 14
+baseFontSize = 15
 baseFontWeight = 400
-codeFontSize = "13px"
-headingFontSizes = ["30px", "24px", "20px", "16px", "14px", "12px"]
+codeFontSize = "14px"
+headingFontSizes = ["34px", "26px", "22px", "18px", "15px", "13px"]
 headingFontWeights = [800, 700, 600, 600, 500, 500]
 linkUnderline = false
 

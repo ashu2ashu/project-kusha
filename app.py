@@ -32,44 +32,158 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Ultra-Clean Institutional Black & White CSS
+# Screener.in Inspired Institutional Black & White CSS
 st.markdown("""
 <style>
-    /* Clean institutional font & metrics in White & Black */
-    [data-testid="stMetricValue"] {
-        font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        color: #0F172A;
+    /* Global Screener-grade Typography */
+    html, body, [class*="css"] {
+        font-size: 15px;
     }
     
+    /* Screener-Style Main Headings */
+    h1, .stHeadingContainer h1 {
+        font-size: 32px !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.6px !important;
+        color: #0F172A !important;
+    }
+    h2, .stHeadingContainer h2 {
+        font-size: 24px !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.4px !important;
+        color: #0F172A !important;
+    }
+    h3, .stHeadingContainer h3 {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #0F172A !important;
+    }
+    h4, .stHeadingContainer h4 {
+        font-size: 17px !important;
+        font-weight: 600 !important;
+        color: #0F172A !important;
+    }
+
+    /* Screener.in Iconic Tabs: Big, Bold, Clean Underline */
+    div[data-baseweb="tab-list"] {
+        gap: 8px !important;
+        border-bottom: 2px solid #E2E8F0 !important;
+        padding-bottom: 0px !important;
+        margin-top: 14px !important;
+        margin-bottom: 24px !important;
+    }
+    button[data-baseweb="tab"] {
+        font-size: 16.5px !important;
+        font-weight: 600 !important;
+        padding: 12px 24px !important;
+        border-radius: 6px 6px 0 0 !important;
+        color: #64748B !important;
+        background: transparent !important;
+        border: none !important;
+        letter-spacing: -0.2px !important;
+        transition: all 0.15s ease-in-out !important;
+    }
+    button[data-baseweb="tab"]:hover {
+        color: #0F172A !important;
+        background-color: #F8FAFC !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #000000 !important;
+        font-weight: 700 !important;
+        border-bottom: 3.5px solid #000000 !important;
+        background-color: transparent !important;
+    }
+    div[data-baseweb="tab-border"] {
+        display: none !important;
+    }
+    div[data-baseweb="tab-highlight"] {
+        background-color: #000000 !important;
+        height: 3.5px !important;
+    }
+
+    /* Screener-Style Key Ratio Metric Cards: Big, Crisp & Legible */
+    [data-testid="stMetric"] {
+        background-color: #FFFFFF;
+        padding: 16px 20px !important;
+        border-radius: 8px !important;
+        border: 1px solid #E2E8F0 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace !important;
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.6px !important;
+        color: #0F172A !important;
+        line-height: 1.25 !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: #64748B !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+    }
+
+    /* Screener-Style Institutional Primary Button */
+    button[kind="primary"] {
+        background-color: #000000 !important;
+        color: #FFFFFF !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        padding: 14px 28px !important;
+        border-radius: 8px !important;
+        border: 1px solid #000000 !important;
+        letter-spacing: -0.2px !important;
+        transition: all 0.2s ease !important;
+    }
+    button[kind="primary"]:hover {
+        opacity: 0.88 !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Progress Bar (Screener-Style) */
+    .stProgress > div > div > div > div {
+        background-color: #0F172A !important;
+        border-radius: 6px !important;
+    }
+    .stProgress > div > div > div {
+        background-color: #E2E8F0 !important;
+        height: 10px !important;
+        border-radius: 6px !important;
+    }
+
     /* Guardrail Banners - Refined Crisp White & Black with subtle semantic borders */
     .guardrail-clean-box {
         background: #F0FDF4;
         border: 1.5px solid #10B981;
         border-radius: 8px;
-        padding: 16px 20px;
+        padding: 18px 24px;
         color: #0F172A;
-        margin-top: 14px;
-        margin-bottom: 18px;
+        margin-top: 16px;
+        margin-bottom: 20px;
     }
     .guardrail-alert-box {
         background: #FFFBEB;
         border: 1.5px solid #F59E0B;
         border-radius: 8px;
-        padding: 16px 20px;
+        padding: 18px 24px;
         color: #0F172A;
-        margin-top: 14px;
-        margin-bottom: 18px;
+        margin-top: 16px;
+        margin-bottom: 20px;
     }
     .guardrail-red-box {
         background: #FEF2F2;
         border: 2px solid #EF4444;
         border-radius: 8px;
-        padding: 16px 20px;
+        padding: 18px 24px;
         color: #0F172A;
-        margin-top: 14px;
-        margin-bottom: 18px;
+        margin-top: 16px;
+        margin-bottom: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -210,95 +324,79 @@ live_data = None
 if target_ticker and target_ticker != "CUSTOM":
     live_data = get_cached_live_data(target_ticker)
 
-# --- LIVE MARKET INTELLIGENCE & KEY METRICS SECTION ---
+# --- SCREENER-STYLE LIVE COMPANY INTELLIGENCE & KEY RATIOS ---
 if live_data:
     with st.container(border=True):
-        head_col1, head_col2 = st.columns([3, 1])
-        with head_col1:
-            st.markdown(f"#### Live Market Intelligence • {target_company_name} (`{target_ticker}.NS`)")
-        with head_col2:
-            st.caption("Real-Time NSE / BSE Grounding")
-        
-        # Primary KPI Row: Market Cap, Current Price, P/E Ratio, P/B Ratio, 52W Range
-        m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
-        
-        # 1. Current Price
         cur_p = live_data.get("current_price")
         cur_str = f"₹{cur_p:,.2f}" if isinstance(cur_p, (int, float)) else "N/A"
-        chg_pct = live_data.get("change_pct")
-        chg_val = live_data.get("change_val")
-        delta_str = f"{chg_pct:+.2f}% (₹{chg_val:+.2f})" if chg_pct is not None and chg_val is not None else None
-        with m_col1:
-            st.metric(
-                label="CURRENT PRICE",
-                value=cur_str,
-                delta=delta_str,
-                border=True
-            )
-            
-        # 2. Market Cap
+        chg_pct = live_data.get("change_pct", 0)
+        chg_val = live_data.get("change_val", 0)
+        delta_color = "#059669" if chg_pct >= 0 else "#DC2626"
+        delta_sign = "+" if chg_pct >= 0 else ""
+        delta_str = f"{delta_sign}{chg_pct:.2f}% ({delta_sign}₹{chg_val:.2f})" if chg_pct is not None else ""
+
         mcap_val = live_data.get("market_cap_cr")
         mcap_str = f"₹{mcap_val:,.1f} Cr" if isinstance(mcap_val, (int, float)) else "N/A"
         cap_category = "Large Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 20000 else ("Mid Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 5000 else "Small Cap")
-        with m_col2:
-            st.metric(
-                label="MARKET CAP",
-                value=mcap_str,
-                delta=cap_category,
-                delta_color="off",
-                border=True
-            )
-            
-        # 3. P/E Ratio (TTM & Forward)
-        pe_v = live_data.get("pe_ratio")
-        pe_str = f"{pe_v}x" if pe_v and pe_v != "N/A" else "N/A"
-        fwd_v = live_data.get("forward_pe")
-        fwd_str = f"Forward: {fwd_v}x" if fwd_v and fwd_v != "N/A" else "Forward: N/A"
-        with m_col3:
-            st.metric(
-                label="P/E RATIO (TTM)",
-                value=pe_str,
-                delta=fwd_str,
-                delta_color="off",
-                border=True
-            )
-            
-        # 4. Price to Book (P/B) & Debt/Equity
-        pb_v = live_data.get("price_to_book")
-        pb_str = f"{pb_v}x" if pb_v and pb_v != "N/A" else "N/A"
-        de_v = live_data.get("debt_to_equity")
-        de_str = f"Debt/Eq: {de_v}" if de_v and de_v != "N/A" else "Debt/Eq: Clean"
-        with m_col4:
-            st.metric(
-                label="PRICE TO BOOK (P/B)",
-                value=pb_str,
-                delta=de_str,
-                delta_color="off",
-                border=True
-            )
-            
-        # 5. 52-Week Range
-        h52 = live_data.get("high_52w", "N/A")
-        l52 = live_data.get("low_52w", "N/A")
-        with m_col5:
-            st.metric(
-                label="52-WEEK HIGH",
-                value=f"₹{h52}" if h52 != "N/A" else "N/A",
-                delta=f"52W Low: ₹{l52}" if l52 != "N/A" else None,
-                delta_color="off",
-                border=True
-            )
 
-        # Secondary Technicals & Fundamentals Bar
-        sub_col1, sub_col2, sub_col3, sub_col4 = st.columns(4)
-        with sub_col1:
-            st.caption(f"**50-Day Moving Avg:** ₹{live_data.get('dma_50', 'N/A')}")
-        with sub_col2:
-            st.caption(f"**200-Day Moving Avg:** ₹{live_data.get('dma_200', 'N/A')}")
-        with sub_col3:
-            st.caption(f"**Dividend Yield:** {live_data.get('dividend_yield', 'N/A')}")
-        with sub_col4:
-            st.caption(f"**Previous Close:** ₹{live_data.get('prev_close', 'N/A')}")
+        # Screener.in Signature Company Headline Banner
+        st.markdown(f"""
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid #0F172A; padding-bottom: 14px; margin-bottom: 18px;">
+            <div>
+                <div style="font-size: 32px; font-weight: 800; color: #0F172A; letter-spacing: -0.6px; line-height: 1.2;">
+                    {target_company_name}
+                </div>
+                <div style="color: #64748B; font-size: 14.5px; font-weight: 500; margin-top: 6px;">
+                    NSE: <strong style="color:#0F172A;">{target_ticker}</strong> • Sector: <strong style="color:#0F172A;">{target_sector}</strong> • <span style="background:#F1F5F9; color:#0F172A; padding:3px 10px; border-radius:4px; font-weight:700; font-size:12.5px; border:1px solid #E2E8F0;">{cap_category}</span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 34px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace; line-height: 1.1;">
+                    {cur_str}
+                </div>
+                <div style="font-size: 15px; font-weight: 700; color: {delta_color}; margin-top: 4px;">
+                    {delta_str}
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Screener Row 1: Core Valuation & Corridor Metrics (5 Columns)
+        r_col1, r_col2, r_col3, r_col4, r_col5 = st.columns(5)
+        
+        with r_col1:
+            st.metric(label="MARKET CAP", value=mcap_str, delta=cap_category, delta_color="off", border=True)
+        with r_col2:
+            st.metric(label="CURRENT PRICE", value=cur_str, delta=delta_str, border=True)
+        with r_col3:
+            h52 = live_data.get("high_52w", "N/A")
+            l52 = live_data.get("low_52w", "N/A")
+            st.metric(label="HIGH / LOW (52W)", value=f"₹{h52}" if h52 != "N/A" else "N/A", delta=f"Low: ₹{l52}" if l52 != "N/A" else None, delta_color="off", border=True)
+        with r_col4:
+            pe_v = live_data.get("pe_ratio")
+            pe_str = f"{pe_v}x" if pe_v and pe_v != "N/A" else "N/A"
+            fwd_v = live_data.get("forward_pe")
+            fwd_str = f"Fwd PE: {fwd_v}x" if fwd_v and fwd_v != "N/A" else "Fwd PE: N/A"
+            st.metric(label="STOCK P/E", value=pe_str, delta=fwd_str, delta_color="off", border=True)
+        with r_col5:
+            pb_v = live_data.get("price_to_book")
+            pb_str = f"{pb_v}x" if pb_v and pb_v != "N/A" else "N/A"
+            de_v = live_data.get("debt_to_equity")
+            de_str = f"Debt/Eq: {de_v}" if de_v and de_v != "N/A" else "D/E: Clean"
+            st.metric(label="BOOK MULTIPLE (P/B)", value=pb_str, delta=de_str, delta_color="off", border=True)
+
+        # Screener Row 2: Secondary Technicals & Balance Sheet Ratios (5 Columns)
+        s_col1, s_col2, s_col3, s_col4, s_col5 = st.columns(5)
+        with s_col1:
+            st.metric(label="DIVIDEND YIELD", value=str(live_data.get("dividend_yield", "N/A")), border=True)
+        with s_col2:
+            st.metric(label="50-DAY DMA", value=f"₹{live_data.get('dma_50', 'N/A')}", border=True)
+        with s_col3:
+            st.metric(label="200-DAY DMA", value=f"₹{live_data.get('dma_200', 'N/A')}", border=True)
+        with s_col4:
+            st.metric(label="DEBT TO EQUITY", value=str(live_data.get("debt_to_equity", "N/A")), border=True)
+        with s_col5:
+            st.metric(label="PREVIOUS CLOSE", value=f"₹{live_data.get('prev_close', 'N/A')}", border=True)
 
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])
@@ -327,8 +425,8 @@ def build_radar_chart(pillars):
         theta=names_closed,
         fill='toself',
         fillcolor='rgba(15, 23, 42, 0.08)',
-        line=dict(color='#0F172A', width=2.5),
-        marker=dict(size=6, color='#0F172A'),
+        line=dict(color='#0F172A', width=3),
+        marker=dict(size=7, color='#0F172A'),
         name='% of Max Score'
     ))
 
@@ -341,19 +439,19 @@ def build_radar_chart(pillars):
                 ticksuffix="%",
                 gridcolor='#E2E8F0',
                 linecolor='#CBD5E1',
-                tickfont=dict(color='#64748B', size=10)
+                tickfont=dict(color='#64748B', size=11)
             ),
             angularaxis=dict(
                 gridcolor='#E2E8F0',
                 linecolor='#CBD5E1',
-                tickfont=dict(color='#0F172A', size=11, family='Inter', weight=600)
+                tickfont=dict(color='#0F172A', size=12.5, family='Inter', weight=700)
             )
         ),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
-        margin=dict(l=45, r=45, t=25, b=25),
-        height=370
+        margin=dict(l=50, r=50, t=30, b=30),
+        height=430
     )
     return fig
 
@@ -490,11 +588,26 @@ if "idex_result" in st.session_state:
                     p_max = p.get("max_score", 1)
                     pct = (p_score / p_max) * 100
                     
-                    st.markdown(f"**Pillar {p.get('id')}: {p.get('name')}**")
-                    st.progress(pct / 100, text=f"**{p_score:.1f} / {p_max:.1f} pts** ({pct:.0f}%)")
-                    st.caption(p.get("justification", ""))
+                    st.markdown(f"""
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 8px;">
+                        <span style="font-size: 17.5px; font-weight: 700; color: #0F172A;">Pillar {p.get('id')}: {p.get('name')}</span>
+                        <span style="font-family:'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #0F172A;">
+                            {p_score:.1f} <span style="font-size: 13.5px; color: #64748B;">/ {p_max:.1f} pts ({pct:.0f}%)</span>
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.progress(pct / 100)
+                    st.markdown(f"""
+                    <p style="font-size: 14.5px; line-height: 1.6; color: #334155; margin: 10px 0 6px 0;">
+                        {p.get('justification', '')}
+                    </p>
+                    """, unsafe_allow_html=True)
                     if "receivable_subscore" in p:
-                        st.markdown(f":blue-badge[Receivable Subscore: {p['receivable_subscore']}]")
+                        st.markdown(f"""
+                        <div style="background: #F8FAFC; border-left: 3px solid #0F172A; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #0F172A; border-radius: 0 4px 4px 0; margin-top: 8px;">
+                            Receivable Subscore: {p['receivable_subscore']}
+                        </div>
+                        """, unsafe_allow_html=True)
 
     with tab_math:
         m_col1, m_col2 = st.columns(2)
@@ -504,7 +617,11 @@ if "idex_result" in st.session_state:
                 penalties = res.get("penalties_breakdown", [])
                 if penalties:
                     for pen in penalties:
-                        st.markdown(f"- :red[**{pen.get('penalty_name')}**] (`{pen.get('points')} pts`): {pen.get('reason')}")
+                        st.markdown(f"""
+                        <div style="font-size: 15px; line-height: 1.6; margin-bottom: 10px;">
+                            <strong style="color: #DC2626;">{pen.get('penalty_name')}</strong> (<code style="font-weight:700;">{pen.get('points')} pts</code>): {pen.get('reason')}
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
                     st.success("No statutory forensic penalties applied.")
         
@@ -512,9 +629,13 @@ if "idex_result" in st.session_state:
             with st.container(border=True):
                 st.markdown("##### Applied Bonuses (Max +10%)")
                 bb = res.get("bonuses_breakdown", {})
-                st.markdown(f"- **COOL++ PRO Bonus:** `+{bb.get('cool_pro_bonus', 0):.1f}%`")
-                st.markdown(f"- **Trajectory Bonus:** `+{bb.get('trajectory_bonus', 0):.1f}%`")
-                st.markdown(f"- **Resilience Bonus:** `+{bb.get('resilience_bonus', 0):.1f}%`")
+                st.markdown(f"""
+                <div style="font-size: 15px; line-height: 1.8;">
+                    <div>• <strong>COOL++ PRO Bonus:</strong> <code>+{bb.get('cool_pro_bonus', 0):.1f}%</code></div>
+                    <div>• <strong>Trajectory Bonus:</strong> <code>+{bb.get('trajectory_bonus', 0):.1f}%</code></div>
+                    <div>• <strong>Resilience Bonus:</strong> <code>+{bb.get('resilience_bonus', 0):.1f}%</code></div>
+                </div>
+                """, unsafe_allow_html=True)
                 st.divider()
                 st.metric("Total Bonus Impact", f"+{bb.get('total_bonus_applied', 0):.1f}%")
 
@@ -529,38 +650,50 @@ if "idex_result" in st.session_state:
             with p_str_col1:
                 st.markdown("**Key Structural Strengths:**")
                 for s in res.get("strengths", []):
-                    st.markdown(f":green[✔] {s}")
+                    st.markdown(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #059669; font-weight: 700;'>✔</span> {s}</div>", unsafe_allow_html=True)
             with p_str_col2:
                 st.markdown("**Structural Weaknesses & Fragilities:**")
                 for w in res.get("weaknesses", []):
-                    st.markdown(f":red[✖] {w}")
+                    st.markdown(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #DC2626; font-weight: 700;'>✖</span> {w}</div>", unsafe_allow_html=True)
 
     with tab_thesis:
         with st.container(border=True):
             st.markdown("##### Final Analyst Recommendation")
-            st.markdown(f"### {res.get('final_call', 'N/A')}")
+            st.markdown(f"""
+            <div style="font-size: 22px; font-weight: 800; color: #0F172A; padding: 18px 22px; background: #F8FAFC; border-left: 4px solid #0F172A; border-radius: 0 8px 8px 0; margin: 12px 0 18px 0; line-height: 1.3;">
+                {res.get('final_call', 'N/A')}
+            </div>
+            """, unsafe_allow_html=True)
             
             st.divider()
             t_col1, t_col2 = st.columns(2)
             with t_col1:
                 st.markdown("**ESG, Fragility & Foreign Exchange Notes:**")
-                st.caption(res.get("fragility_esg_fx_notes", "No material vulnerabilities observed."))
+                st.markdown(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('fragility_esg_fx_notes', 'No material vulnerabilities observed.')}</p>", unsafe_allow_html=True)
             with t_col2:
                 st.markdown("**12–24 Month Catalyst & Drift Watch:**")
-                st.caption(res.get("drift_optionality_update", "Monitor upcoming capital deployment."))
+                st.markdown(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('drift_optionality_update', 'Monitor upcoming capital deployment.')}</p>", unsafe_allow_html=True)
 
     with tab_appendices:
         with st.container(border=True):
             st.markdown("##### Appendix A — Forensic Evidence Pack")
             st.caption("Exact quotes, regulatory disclosures, and load-bearing audit excerpts:")
             for e in res.get("appendix_a_forensic_evidence", []):
-                st.markdown(f"- `{e}`")
+                st.markdown(f"""
+                <div style="font-size: 14.5px; line-height: 1.6; color: #1E293B; margin-bottom: 8px; padding-left: 12px; border-left: 2px solid #CBD5E1;">
+                    {e}
+                </div>
+                """, unsafe_allow_html=True)
             
             st.divider()
             st.markdown("##### Appendix B — Calculations & Stress Tests")
             calcs = res.get("appendix_b_calculations", {})
             for k, v in calcs.items():
-                st.markdown(f"**{k.replace('_', ' ').title()}:** {v}")
+                st.markdown(f"""
+                <div style="font-size: 14.5px; line-height: 1.6; margin-bottom: 8px;">
+                    <strong>{k.replace('_', ' ').title()}:</strong> <span style="color: #334155;">{v}</span>
+                </div>
+                """, unsafe_allow_html=True)
 
     # 4. MANDATORY GUARDRAIL & PROMOTER INTEGRITY AUDIT (BELOW PILLARS)
     st.write("")

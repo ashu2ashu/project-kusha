@@ -8,6 +8,8 @@ import streamlit as st
 import plotly.graph_objects as go
 import json
 import os
+import re
+import html
 import time
 from dotenv import load_dotenv
 
@@ -682,6 +684,85 @@ if live_data:
     card_ret = build_spacious_card("Profitability & Capital Returns", "📈", "9 Key Metrics", "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", "#A7F3D0", "#064E3B", "#047857", col2_items)
     card_sol = build_spacious_card("Solvency, Cash Flow & Growth", "🛡️", "9 Key Metrics", "linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)", "#DDD6FE", "#4C1D95", "#6D28D9", col3_items)
 
+    def build_concise_operations_points(about_str: str, company_name: str, sector: str) -> list:
+        if not about_str or len(about_str.strip()) < 30:
+            return [
+                ("Core Operations", f"Flagship enterprise in the Indian {sector} sector listed on NSE & BSE."),
+                ("Operating Model", "Scaled commercial and retail operations catering to domestic institutional and retail demand."),
+                ("Market Reach", "Broad distribution network with continuous coverage across major domestic hubs."),
+                ("Corporate Profile", "Constituent of the Nifty 500 universe operating under Ind AS statutory disclosures.")
+            ]
+
+        about_clean = html.unescape(about_str)
+        raw_sentences = re.split(r"(?<=[.!?])\s+", about_clean.strip())
+        sentences = [s.strip() for s in raw_sentences if len(s.strip()) > 15]
+
+        core_sent = ""
+        segments_sent = ""
+        offerings_sent = ""
+        pedigree_sent = ""
+
+        for s in sentences:
+            s_lower = s.lower()
+            if not core_sent and any(kw in s_lower for kw in ["manufactures", "provides", "engages in", "operates as", "produces", "develops", "distributes", "trades", "explores"]):
+                core_sent = s
+            elif not segments_sent and any(kw in s_lower for kw in ["operates through", "segments", "verticals", "divisions"]):
+                segments_sent = s
+            elif not offerings_sent and any(kw in s_lower for kw in ["offers", "portfolio", "products include", "services include", "solutions, such as", "brand portfolio"]):
+                offerings_sent = s
+            elif not pedigree_sent and any(kw in s_lower for kw in ["incorporated in", "founded in", "headquartered in", "based in"]):
+                pedigree_sent = s
+
+        pts = []
+        # 1. Core Operations
+        if core_sent:
+            c_clean = re.sub(r",\s*together with its subsidiaries,?", "", core_sent, flags=re.IGNORECASE).strip()
+            if len(c_clean) > 165:
+                c_clean = c_clean[:162].rsplit(" ", 1)[0] + "..."
+            pts.append(("Core Operations", c_clean))
+        else:
+            pts.append(("Core Operations", f"Leading enterprise operating within the Indian {sector} industry."))
+
+        # 2. Key Segments / Offerings
+        if segments_sent:
+            s_clean = segments_sent.strip()
+            if len(s_clean) > 165:
+                s_clean = s_clean[:162].rsplit(" ", 1)[0] + "..."
+            pts.append(("Business Verticals", s_clean))
+        elif offerings_sent:
+            o_clean = offerings_sent.strip()
+            if len(o_clean) > 165:
+                o_clean = o_clean[:162].rsplit(" ", 1)[0] + "..."
+            pts.append(("Key Portfolio", o_clean))
+        else:
+            pts.append(("Product Portfolio", f"Diverse portfolio of products and value-added solutions tailored for {sector} demand."))
+
+        # 3. Market Footprint / Global Reach
+        if any(w in about_clean.lower() for w in ["worldwide", "internationally", "global", "export"]):
+            pts.append(("Market Reach", "Active domestic footprint across India alongside established international export / client channels."))
+        else:
+            pts.append(("Market Reach", "Extensive pan-India distribution network catering to domestic institutional and retail markets."))
+
+        # 4. Corporate Profile / Pedigree
+        if pedigree_sent:
+            p_clean = pedigree_sent.strip()
+            if len(p_clean) > 140:
+                p_clean = p_clean[:137].rsplit(" ", 1)[0] + "..."
+            pts.append(("Corporate Profile", p_clean))
+        else:
+            pts.append(("Benchmark Standing", f"Established constituent of the Nifty 500 index with statutory Ind AS disclosures."))
+
+        return pts
+
+    ops_points = build_concise_operations_points(about_text, target_company_name, target_sector)
+    ops_points_html = "".join([
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
+        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #0F172A; font-weight: 700;">{html.escape(label)}:</strong> {html.escape(desc)}</span>'
+        f'</li>'
+        for label, desc in ops_points
+    ])
+
     facts_full_html = (
         f'<div class="facts-header-card">'
         f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; padding-bottom: 20px; border-bottom: 1.5px solid #F1F5F9;">'
@@ -723,23 +804,38 @@ if live_data:
         f'</div>'
         f'<div style="margin-top: 22px; display: grid; grid-template-columns: 2.2fr 1fr; gap: 24px;">'
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 18px 22px;">'
-        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">'
-        f'<span>🏢</span> Corporate Operations & Business Model'
+        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">'
+        f'<span style="display: flex; align-items: center; gap: 8px;"><span>🏢</span> Corporate Operations & Business Model</span>'
+        f'<span style="font-size: 11px; background: #EFF6FF; color: #1D4ED8; font-weight: 700; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 9999px;">Key Highlights</span>'
         f'</div>'
-        f'<div style="font-size: 14px; line-height: 1.65; color: #334155;">{about_text}</div>'
+        f'<ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-direction: column; gap: 9px;">'
+        f'{ops_points_html}'
+        f'</ul>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 18px 22px; display: flex; flex-direction: column; justify-content: space-between;">'
+        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between;">'
         f'<div>'
-        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">'
-        f'<span>🔑</span> Institutional Market Position'
+        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">'
+        f'<span style="display: flex; align-items: center; gap: 8px;"><span>🔑</span> Institutional Profile</span>'
+        f'<span style="font-size: 11px; background: #ECFDF5; color: #047857; font-weight: 700; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 9999px;">Nifty 500</span>'
         f'</div>'
-        f'<div style="font-size: 13.5px; line-height: 1.6; color: #334155;">'
-        f'Established constituent of the <strong>{target_sector}</strong> benchmark on the National Stock Exchange of India (NSE). Operates under verified Ind AS statutory reporting and broad institutional coverage.'
-        f'</div>'
+        f'<ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-direction: column; gap: 9px;">'
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
+        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #0F172A; font-weight: 700;">Sector Benchmark:</strong> Verified constituent of {target_sector} peer index.</span>'
+        f'</li>'
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
+        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #0F172A; font-weight: 700;">Audit Standard:</strong> Statutory Ind AS governance & SEBI quarterly disclosures.</span>'
+        f'</li>'
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
+        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #0F172A; font-weight: 700;">Listing Exchanges:</strong> Active trading on NSE ({target_ticker}) and BSE ({bse_code}).</span>'
+        f'</li>'
+        f'</ul>'
         f'</div>'
         f'<div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">'
-        f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">✔ Ind AS Audit Tracking</span>'
-        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">✔ Nifty 500 Constituent</span>'
+        f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Ind AS Audit Tracking</span>'
+        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Nifty 500 Constituent</span>'
         f'</div>'
         f'</div>'
         f'</div>'

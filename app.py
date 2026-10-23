@@ -131,16 +131,17 @@ with st.container(border=True):
     st.markdown("#### Company Selection & Live Market Ingestion")
     
     c_list = get_company_list()
-    default_idx = 11  # Tata Consumer Products Ltd
+    default_target = "Tata Consumer Products Ltd. (TATACONSUM)"
+    default_idx = c_list.index(default_target) if default_target in c_list else 0
     
     col_sel1, col_sel2 = st.columns([2.5, 1.5])
     
     with col_sel1:
         selected_company_str = st.selectbox(
-            "Select Listed Indian Company (Nifty 50 / Next 50)",
+            "Select Listed Indian Company (Nifty 500 Universe)",
             options=c_list,
             index=default_idx,
-            help="Select any listed Indian company to automatically fetch live market data."
+            help="Select any listed Indian company from the Nifty 500 to automatically fetch live market data."
         )
     
     matched_info = find_company_info(selected_company_str)

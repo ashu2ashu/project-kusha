@@ -1,84 +1,107 @@
 """
 nifty_universe.py
-Directory of listed Indian Nifty companies with NSE tickers and sector mappings.
-Includes live market data ingestion via Yahoo Finance.
+Comprehensive directory of all 501 Nifty 500 listed Indian companies.
+Includes automatic industry-to-sector mapping and live market data ingestion.
 """
 
-from typing import Dict, Any, Optional
+import os
+import pandas as pd
+from typing import Dict, Any, Optional, List
 
-NIFTY_COMPANIES = [
-    {"name": "Reliance Industries Ltd", "ticker": "RELIANCE", "sector": "Chemicals / Oil & Gas"},
-    {"name": "Tata Consultancy Services Ltd", "ticker": "TCS", "sector": "IT Services / Consulting"},
-    {"name": "HDFC Bank Ltd", "ticker": "HDFCBANK", "sector": "Banks / NBFC"},
-    {"name": "ICICI Bank Ltd", "ticker": "ICICIBANK", "sector": "Banks / NBFC"},
-    {"name": "Infosys Ltd", "ticker": "INFY", "sector": "IT Services / Consulting"},
-    {"name": "Hindustan Unilever Ltd", "ticker": "HINDUNILVR", "sector": "FMCG / Retail"},
-    {"name": "ITC Ltd", "ticker": "ITC", "sector": "FMCG / Retail"},
-    {"name": "State Bank of India", "ticker": "SBIN", "sector": "Banks / NBFC"},
-    {"name": "Bharti Airtel Ltd", "ticker": "BHARTIARTL", "sector": "Logistics / Transport"},
-    {"name": "Larsen & Toubro Ltd", "ticker": "LT", "sector": "Construction / Infra (milestone billing)"},
-    {"name": "Tata Motors Ltd", "ticker": "TATAMOTORS", "sector": "Manufacturing / B2B"},
-    {"name": "Tata Consumer Products Ltd", "ticker": "TATACONSUM", "sector": "FMCG / Retail"},
-    {"name": "Titan Company Ltd", "ticker": "TITAN", "sector": "Consumer Durables / Retailer credit"},
-    {"name": "Sun Pharmaceutical Industries Ltd", "ticker": "SUNPHARMA", "sector": "Pharma / Formulations (trade)"},
-    {"name": "Bajaj Finance Ltd", "ticker": "BAJFINANCE", "sector": "Banks / NBFC"},
-    {"name": "Maruti Suzuki India Ltd", "ticker": "MARUTI", "sector": "Manufacturing / B2B"},
-    {"name": "Mahindra & Mahindra Ltd", "ticker": "M&M", "sector": "Manufacturing / B2B"},
-    {"name": "Asian Paints Ltd", "ticker": "ASIANPAINT", "sector": "Consumer Durables / Retailer credit"},
-    {"name": "UltraTech Cement Ltd", "ticker": "ULTRACEMCO", "sector": "Manufacturing / B2B"},
-    {"name": "NTPC Ltd", "ticker": "NTPC", "sector": "Capital Goods / Industrial"},
-    {"name": "Power Grid Corporation of India Ltd", "ticker": "POWERGRID", "sector": "Capital Goods / Industrial"},
-    {"name": "Adani Enterprises Ltd", "ticker": "ADANIENT", "sector": "Construction / Infra (milestone billing)"},
-    {"name": "Adani Ports and SEZ Ltd", "ticker": "ADANIPORTS", "sector": "Logistics / Transport"},
-    {"name": "Coal India Ltd", "ticker": "COALINDIA", "sector": "Chemicals / Oil & Gas"},
-    {"name": "Wipro Ltd", "ticker": "WIPRO", "sector": "IT Services / Consulting"},
-    {"name": "HCL Technologies Ltd", "ticker": "HCLTECH", "sector": "IT Services / Consulting"},
-    {"name": "Bajaj Finserv Ltd", "ticker": "BAJAJFINSV", "sector": "Banks / NBFC"},
-    {"name": "Oil & Natural Gas Corporation Ltd", "ticker": "ONGC", "sector": "Chemicals / Oil & Gas"},
-    {"name": "Bharat Petroleum Corporation Ltd", "ticker": "BPCL", "sector": "Chemicals / Oil & Gas"},
-    {"name": "Grasim Industries Ltd", "ticker": "GRASIM", "sector": "Manufacturing / B2B"},
-    {"name": "Hindalco Industries Ltd", "ticker": "HINDALCO", "sector": "Manufacturing / B2B"},
-    {"name": "JSW Steel Ltd", "ticker": "JSWSTEEL", "sector": "Manufacturing / B2B"},
-    {"name": "Tata Steel Ltd", "ticker": "TATASTEEL", "sector": "Manufacturing / B2B"},
-    {"name": "Cipla Ltd", "ticker": "CIPLA", "sector": "Pharma / Formulations (trade)"},
-    {"name": "Dr. Reddy's Laboratories Ltd", "ticker": "DRREDDY", "sector": "Pharma / Formulations (trade)"},
-    {"name": "Apollo Hospitals Enterprise Ltd", "ticker": "APOLLOHOSP", "sector": "Hospitals / Healthcare (insurer payments)"},
-    {"name": "Divi's Laboratories Ltd", "ticker": "DIVISLAB", "sector": "Pharma / Formulations (trade)"},
-    {"name": "Eicher Motors Ltd", "ticker": "EICHERMOT", "sector": "Manufacturing / B2B"},
-    {"name": "Hero MotoCorp Ltd", "ticker": "HEROMOTOCO", "sector": "Manufacturing / B2B"},
-    {"name": "Bajaj Auto Ltd", "ticker": "BAJAJ-AUTO", "sector": "Manufacturing / B2B"},
-    {"name": "Britannia Industries Ltd", "ticker": "BRITANNIA", "sector": "FMCG / Retail"},
-    {"name": "Nestle India Ltd", "ticker": "NESTLEIND", "sector": "FMCG / Retail"},
-    {"name": "Varun Beverages Ltd", "ticker": "VBL", "sector": "FMCG / Retail"},
-    {"name": "Zomato Ltd", "ticker": "ZOMATO", "sector": "SaaS / Subscription (B2B)"},
-    {"name": "Trent Ltd", "ticker": "TRENT", "sector": "FMCG / Retail"},
-    {"name": "Bharat Electronics Ltd", "ticker": "BEL", "sector": "Capital Goods / Industrial"},
-    {"name": "Hindustan Aeronautics Ltd", "ticker": "HAL", "sector": "Capital Goods / Industrial"},
-    {"name": "Dixon Technologies (India) Ltd", "ticker": "DIXON", "sector": "Consumer Durables / Retailer credit"},
-    {"name": "Polycab India Ltd", "ticker": "POLYCAB", "sector": "Capital Goods / Industrial"},
-    {"name": "Persistent Systems Ltd", "ticker": "PERSISTENT", "sector": "IT Services / Consulting"},
-    {"name": "Coforge Ltd", "ticker": "COFORGE", "sector": "IT Services / Consulting"},
-    {"name": "Central Depository Services (India) Ltd", "ticker": "CDSL", "sector": "Banks / NBFC"},
-    {"name": "BSE Ltd", "ticker": "BSE", "sector": "Banks / NBFC"},
-    {"name": "DLF Ltd", "ticker": "DLF", "sector": "Construction / Infra (milestone billing)"},
-    {"name": "Godrej Consumer Products Ltd", "ticker": "GODREJCP", "sector": "FMCG / Retail"},
-    {"name": "Havells India Ltd", "ticker": "HAVELLS", "sector": "Consumer Durables / Retailer credit"},
-    {"name": "Pidilite Industries Ltd", "ticker": "PIDILITIND", "sector": "Chemicals / Oil & Gas"},
-    {"name": "Siemens Ltd", "ticker": "SIEMENS", "sector": "Capital Goods / Industrial"},
-    {"name": "ABB India Ltd", "ticker": "ABB", "sector": "Capital Goods / Industrial"},
-    {"name": "Custom / Unlisted / Manual Entry", "ticker": "CUSTOM", "sector": "Other / Diversified"}
-]
+CSV_PATH = os.path.join(os.path.dirname(__file__), "nifty500.csv")
 
-def get_company_list():
-    """Returns sorted display names for UI selection."""
-    return [f"{c['name']} ({c['ticker']})" for c in NIFTY_COMPANIES]
+INDUSTRY_MAPPING = {
+    "Automobile and Auto Components": "Manufacturing / B2B",
+    "Capital Goods": "Capital Goods / Industrial",
+    "Chemicals": "Chemicals / Oil & Gas",
+    "Construction": "Construction / Infra (milestone billing)",
+    "Construction Materials": "Manufacturing / B2B",
+    "Consumer Durables": "Consumer Durables / Retailer credit",
+    "Consumer Services": "FMCG / Retail",
+    "Diversified": "Manufacturing / B2B",
+    "Fast Moving Consumer Goods": "FMCG / Retail",
+    "Financial Services": "Banks / NBFC",
+    "Healthcare": "Pharma / Formulations (trade)",
+    "Information Technology": "IT Services / Consulting",
+    "Media Entertainment & Publication": "SaaS / Subscription (B2B)",
+    "Metals & Mining": "Manufacturing / B2B",
+    "Oil Gas & Consumable Fuels": "Chemicals / Oil & Gas",
+    "Power": "Capital Goods / Industrial",
+    "Realty": "Construction / Infra (milestone billing)",
+    "Services": "Logistics / Transport",
+    "Telecommunication": "Logistics / Transport",
+    "Textiles": "Manufacturing / B2B"
+}
+
+_cached_nifty_list = None
+_cached_lookup = {}
+
+def load_nifty500() -> List[Dict[str, str]]:
+    """Loads and caches the complete Nifty 500 universe."""
+    global _cached_nifty_list, _cached_lookup
+    if _cached_nifty_list is not None:
+        return _cached_nifty_list
+
+    companies = []
+    _cached_lookup = {}
+
+    if os.path.exists(CSV_PATH):
+        try:
+            df = pd.read_csv(CSV_PATH)
+            for _, row in df.iterrows():
+                name = str(row.get("Company Name", "")).strip()
+                symbol = str(row.get("Symbol", "")).strip()
+                industry = str(row.get("Industry", "")).strip()
+                sector = INDUSTRY_MAPPING.get(industry, "Manufacturing / B2B")
+                
+                item = {
+                    "name": name,
+                    "ticker": symbol,
+                    "industry": industry,
+                    "sector": sector,
+                    "display": f"{name} ({symbol})"
+                }
+                companies.append(item)
+                _cached_lookup[item["display"]] = item
+                _cached_lookup[symbol] = item
+        except Exception:
+            pass
+
+    # Sort alphabetically by company name
+    companies.sort(key=lambda x: x["name"])
+
+    # Append Custom / Manual entry option at the end
+    custom_item = {
+        "name": "Custom / Unlisted / Manual Entry",
+        "ticker": "CUSTOM",
+        "industry": "Other",
+        "sector": "Other / Diversified",
+        "display": "Custom / Unlisted / Manual Entry (CUSTOM)"
+    }
+    companies.append(custom_item)
+    _cached_lookup[custom_item["display"]] = custom_item
+    _cached_lookup["CUSTOM"] = custom_item
+
+    _cached_nifty_list = companies
+    return _cached_nifty_list
+
+def get_company_list() -> List[str]:
+    """Returns sorted display strings for UI selection."""
+    comp_list = load_nifty500()
+    return [c["display"] for c in comp_list]
 
 def find_company_info(display_str: str) -> Dict[str, str]:
-    """Finds company dict given display string."""
-    for c in NIFTY_COMPANIES:
-        if f"{c['name']} ({c['ticker']})" == display_str:
-            return c
-    return {"name": display_str, "ticker": "CUSTOM", "sector": "FMCG / Retail"}
+    """Finds company metadata from display string or ticker."""
+    load_nifty500()
+    if display_str in _cached_lookup:
+        return _cached_lookup[display_str]
+    return {
+        "name": display_str,
+        "ticker": "CUSTOM",
+        "industry": "Other",
+        "sector": "FMCG / Retail",
+        "display": display_str
+    }
 
 def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
     """
@@ -94,7 +117,6 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
         info = stock.info
         
         if not info or "currentPrice" not in info:
-            # Fallback to BSE ticker if NSE missing
             stock = yf.Ticker(f"{ticker_symbol.upper()}.BO")
             info = stock.info
             

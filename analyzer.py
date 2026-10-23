@@ -265,21 +265,30 @@ Use these verified live market numbers to strictly calculate Pillar 4 (Valuation
         response = None
         last_error = None
         for model_name in SUPPORTED_MODELS:
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=contents_list,
-                    config=types.GenerateContentConfig(
-                        system_instruction=IDEX_SYSTEM_INSTRUCTION,
-                        response_mime_type="application/json",
-                        temperature=0.15,
+            for attempt in range(2):
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=contents_list,
+                        config=types.GenerateContentConfig(
+                            system_instruction=IDEX_SYSTEM_INSTRUCTION,
+                            response_mime_type="application/json",
+                            temperature=0.15,
+                        )
                     )
-                )
-                if response and response.text:
+                    if response and response.text:
+                        break
+                except Exception as me:
+                    last_error = me
+                    err_str = str(me).lower()
+                    # Retry automatically on transient Google traffic surges (503 / 429)
+                    if ("503" in err_str or "unavailable" in err_str or "429" in err_str) and attempt == 0:
+                        import time
+                        time.sleep(1.5)
+                        continue
                     break
-            except Exception as me:
-                last_error = me
-                continue
+            if response and response.text:
+                break
 
         if not response or not response.text:
             if last_error:

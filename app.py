@@ -515,7 +515,7 @@ if "idex_result" in st.session_state:
     # 5. EXPORT TOOLBAR
     st.write("")
     st.divider()
-    exp_col1, exp_col2, exp_col3 = st.columns([1, 1, 2])
+    exp_col1, exp_col2, exp_col3 = st.columns(3)
     
     with exp_col1:
         st.download_button(
@@ -556,5 +556,70 @@ if "idex_result" in st.session_state:
             data=md_text,
             file_name=f"{res.get('company_name', 'Company')}_Institutional_Memo.md",
             mime="text/markdown",
+            width="stretch"
+        )
+
+    with exp_col3:
+        # Printable Executive HTML Report for PDF generation via Browser Print
+        html_report = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{res.get('company_name', 'Company')} - IDEX-7.5SC Research Report</title>
+<style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #1e293b; max-width: 900px; margin: 40px auto; padding: 0 20px; }}
+    h1 {{ font-size: 24px; color: #0f172a; border-bottom: 2px solid #0284c7; padding-bottom: 8px; }}
+    h2 {{ font-size: 18px; color: #1e293b; margin-top: 24px; }}
+    .badge {{ display: inline-block; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 14px; background: #e0f2fe; color: #0369a1; }}
+    .tag-box {{ border: 1.5px solid #10b981; background: #f0fdf4; padding: 12px 16px; border-radius: 6px; margin: 16px 0; }}
+    table {{ width: 100%; border-collapse: collapse; margin: 16px 0; }}
+    th, td {{ border: 1px solid #cbd5e1; padding: 10px; text-align: left; font-size: 14px; }}
+    th {{ background: #f8fafc; font-weight: 600; }}
+    .metric-val {{ font-weight: 700; color: #0284c7; }}
+    @media print {{ body {{ margin: 0; padding: 10px; }} .no-print {{ display: none; }} }}
+</style>
+</head>
+<body>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h1>{res.get('company_name', 'Company')}</h1>
+            <p style="color:#64748b; margin-top:-8px;">Sector: {res.get('sector')} • Period: {res.get('financial_year')} • IDEX-7.5SC Institutional Research</p>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:32px; font-weight:800; color:#0284c7;">{res.get('final_score', 0):.1f}<span style="font-size:16px; color:#64748b;">/100</span></div>
+            <div class="badge">{res.get('verdict')}</div>
+        </div>
+    </div>
+
+    <div class="tag-box">
+        <strong>Mandatory Guardrail: {res.get('guardrail_tag')}</strong>
+        <ul>{''.join([f'<li>{e}</li>' for e in res.get('guardrail_evidence', [])])}</ul>
+    </div>
+
+    <h2>Core 8-Pillar Evaluation</h2>
+    <table>
+        <thead><tr><th>Pillar</th><th>Score</th><th>Max</th><th>Forensic Justification</th></tr></thead>
+        <tbody>
+            {''.join([f"<tr><td><strong>P{p.get('id')}: {p.get('name')}</strong></td><td><strong>{p.get('score')}</strong></td><td>{p.get('max_score')}</td><td>{p.get('justification')}</td></tr>" for p in res.get('pillars', [])])}
+        </tbody>
+    </table>
+
+    <h2>Sector Receivable Health</h2>
+    <table>
+        <tr><td><strong>DSO:</strong> {rec.get('dso_days')} days (Ideal: {rec.get('sector_ideal_dso')})</td><td><strong>Receivables/Sales:</strong> {rec.get('receivables_to_sales_pct')}</td></tr>
+        <tr><td><strong>Overdue >90d:</strong> {rec.get('pct_over_90_days')}</td><td><strong>Assessment:</strong> {rec.get('receivable_verdict')}</td></tr>
+    </table>
+
+    <h2>Analyst Recommendation</h2>
+    <div style="background:#f1f5f9; padding:14px; border-radius:6px; font-size:16px; font-weight:600;">
+        {res.get('final_call')}
+    </div>
+</body>
+</html>"""
+        st.download_button(
+            label="Printable HTML Report",
+            data=html_report,
+            file_name=f"{res.get('company_name', 'Company')}_Printable_Report.html",
+            mime="text/html",
             width="stretch"
         )

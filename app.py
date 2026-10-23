@@ -27,88 +27,52 @@ from nifty_universe import get_company_list, find_company_info, fetch_live_marke
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="IDEX-7.5SC Terminal | Ashu Elite Edition",
-    page_icon=":material/query_stats:",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Ultra-Premium Institutional CSS
+# Custom Ultra-Clean Institutional CSS
 st.markdown("""
 <style>
-    /* Metric styling */
+    /* Clean font & metrics */
     [data-testid="stMetricValue"] {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
         font-weight: 700;
         letter-spacing: -0.5px;
     }
     
-    /* Top Terminal Status Header */
-    .terminal-nav {
-        background: linear-gradient(90deg, #090D16 0%, #111827 50%, #090D16 100%);
-        border: 1px solid #1E293B;
-        border-radius: 8px;
-        padding: 12px 20px;
-        margin-bottom: 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    }
-    
-    /* Live Ticker Bar */
-    .market-ticker-bar {
-        background: rgba(19, 28, 46, 0.7);
-        border: 1px solid #334155;
-        border-radius: 8px;
-        padding: 10px 16px;
-        margin-bottom: 20px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 18px;
-        align-items: center;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.85rem;
-    }
-    .ticker-item {
-        color: #94A3B8;
-    }
-    .ticker-val {
-        color: #38BDF8;
-        font-weight: 600;
-        margin-left: 4px;
-    }
-    
-    /* Guardrail Cards */
+    /* Guardrail Banners */
     .guardrail-clean-box {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.04) 100%);
+        background: rgba(16, 185, 129, 0.08);
         border: 1.5px solid #10B981;
         border-radius: 8px;
         padding: 16px 20px;
         color: #E2E8F0;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
     }
     .guardrail-alert-box {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.04) 100%);
+        background: rgba(245, 158, 11, 0.08);
         border: 1.5px solid #F59E0B;
         border-radius: 8px;
         padding: 16px 20px;
         color: #E2E8F0;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
     }
     .guardrail-red-box {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.06) 100%);
+        background: rgba(239, 68, 68, 0.12);
         border: 2px solid #EF4444;
         border-radius: 8px;
         padding: 16px 20px;
         color: #FEE2E2;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
-    st.markdown("### :material/shield: **IDEX-7.5SC Terminal**")
+    st.markdown("### IDEX-7.5SC Terminal")
     st.caption("Ashu Elite Edition • Dalal Street Forensic Engine")
     st.divider()
 
@@ -124,11 +88,11 @@ with st.sidebar:
     active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
 
     if env_key:
-        st.caption(":material/lock: Auto-loaded from `.env`")
+        st.caption("Key auto-loaded from .env")
 
     col_btn1, col_btn2 = st.columns([1.2, 1])
     with col_btn1:
-        if st.button(":material/bolt: Test Key", width="stretch"):
+        if st.button("Test Key", width="stretch"):
             with st.spinner("Connecting to Google..."):
                 is_valid, msg = verify_gemini_api_key(active_api_key)
                 if is_valid:
@@ -141,7 +105,7 @@ with st.sidebar:
     st.divider()
     
     # Prompt Engine Inspector
-    with st.expander(":material/code: Prompt Model Settings", expanded=False):
+    with st.expander("Prompt Model Settings", expanded=False):
         st.caption("Core Prompt Model (Locked):")
         custom_prompt = st.text_area(
             "Prompt Template",
@@ -151,7 +115,7 @@ with st.sidebar:
         )
 
     st.divider()
-    st.caption("**:material/gavel: Forensic Mandates:**")
+    st.caption("**Forensic Mandates:**")
     st.markdown("""
     - **8 Pillars:** Core score ≤ 100
     - **PIO Hard Trigger:** Auto-cap Governance ≤6/20, blocks bonuses, forces `GOV-RED 🔴`
@@ -159,28 +123,12 @@ with st.sidebar:
     - **Bonus Cap:** Cumulative +10% max
     """)
 
-# --- TOP TERMINAL NAV BAR ---
-st.markdown("""
-<div class="terminal-nav">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; color: #38BDF8;">
-            FINSCAN <span style="color: #F8FAFC;">AI</span>
-        </span>
-        <span style="background-color: #1E293B; border: 1px solid #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: #94A3B8; font-weight: 600;">
-            IDEX-7.5SC HYBRID PRO
-        </span>
-    </div>
-    <div style="display: flex; align-items: center; gap: 18px; font-size: 0.85rem; color: #94A3B8;">
-        <span>:material/memory: <b>Gemini 3.5 Flash</b></span>
-        <span>:material/account_balance: <b>NSE / BSE Universe</b></span>
-        <span style="color: #34D399; font-weight: 700;">● LIVE INTELLIGENCE</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+st.title("IDEX-7.5SC Terminal")
+st.caption("Ashu Elite Edition • Institutional Financial & Forensic Research • Dalal Street Universe")
 
-# --- INTAKE CONSOLE (NIFTY SEARCH & LIVE MARKET DATA) ---
+# --- INTAKE CONSOLE ---
 with st.container(border=True):
-    st.markdown("#### :material/search: Company Selection & Live Market Ingestion")
+    st.markdown("#### Company Selection & Live Market Ingestion")
     
     c_list = get_company_list()
     default_idx = 11  # Tata Consumer Products Ltd
@@ -206,7 +154,6 @@ with st.container(border=True):
             target_ticker = matched_info["ticker"]
             st.text_input("NSE Ticker Symbol", value=target_ticker, disabled=True)
             
-    # Sector & Document Type Controls
     col_sec1, col_sec2 = st.columns([2, 2])
     with col_sec1:
         sector_list = [
@@ -224,7 +171,6 @@ with st.container(border=True):
             "Banks / NBFC"
         ]
         
-        # Auto-match sector based on selection
         def_sector_idx = sector_list.index(matched_info["sector"]) if matched_info["sector"] in sector_list else 0
         target_sector = st.selectbox(
             "Sector Benchmark Matrix",
@@ -252,34 +198,18 @@ with st.container(border=True):
 # Fetch Live Online Market Data
 live_data = None
 if target_ticker and target_ticker != "CUSTOM":
-    with st.spinner(f"Ingesting live market data from NSE for {target_ticker}..."):
-        live_data = fetch_live_market_data(target_ticker)
-
-# Render Live Market Ticker Tape
-if live_data and live_data.get("current_price") != "N/A":
-    st.markdown(f"""
-    <div class="market-ticker-bar">
-        <span class="ticker-item">:material/payments: <b>PRICE:</b><span class="ticker-val">₹{live_data.get('current_price')}</span></span>
-        <span class="ticker-item">:material/account_balance: <b>MCAP:</b><span class="ticker-val">₹{live_data.get('market_cap_cr'):,} Cr</span></span>
-        <span class="ticker-item">:material/monitoring: <b>P/E (TTM):</b><span class="ticker-val">{live_data.get('pe_ratio')}x</span></span>
-        <span class="ticker-item">:material/trending_up: <b>52W HIGH:</b><span class="ticker-val">₹{live_data.get('high_52w')}</span></span>
-        <span class="ticker-item">:material/trending_down: <b>52W LOW:</b><span class="ticker-val">₹{live_data.get('low_52w')}</span></span>
-        <span class="ticker-item">:material/pie_chart: <b>ROE:</b><span class="ticker-val">{live_data.get('roe')}</span></span>
-        <span class="ticker-item">:material/balance: <b>DEBT/EQ:</b><span class="ticker-val">{live_data.get('debt_to_equity')}</span></span>
-        <span class="ticker-item">:material/recommend: <b>CONSENSUS:</b><span class="ticker-val">{live_data.get('analyst_rating')}</span></span>
-    </div>
-    """, unsafe_allow_html=True)
+    live_data = fetch_live_market_data(target_ticker)
 
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])
 with btn_col1:
     run_btn = st.button(
-        f":material/rocket_launch: Execute IDEX-7.5SC AI Evaluation for {target_company_name}",
+        f"Execute IDEX-7.5SC AI Evaluation for {target_company_name}",
         type="primary",
         width="stretch"
     )
 with btn_col2:
-    if st.button(":material/visibility: Quick Demo", width="stretch"):
+    if st.button("Quick Demo", width="stretch"):
         demo_mode = True
         run_btn = True
 
@@ -329,14 +259,14 @@ def build_dark_radar_chart(pillars):
 
 # --- EXECUTION ENGINE ---
 if run_btn:
-    with st.status(f":material/sync: Auditing {target_company_name} with IDEX-7.5SC...", expanded=True) as status:
-        st.write(":material/cloud_download: Ingesting verified audited Ind AS financial tables & live market feeds...")
+    with st.status(f"Auditing {target_company_name} with IDEX-7.5SC...", expanded=True) as status:
+        st.write("Ingesting verified audited Ind AS financial tables & live market feeds...")
         time.sleep(0.3)
-        st.write(":material/policy: Auditing statutory auditor qualifications & related-party schedules...")
+        st.write("Auditing statutory auditor qualifications & related-party schedules...")
         time.sleep(0.3)
-        st.write(":material/account_balance: Testing Sector Receivable Health (DSO, Aging, Provision Coverage)...")
+        st.write("Testing Sector Receivable Health (DSO, Aging, Provision Coverage)...")
         time.sleep(0.3)
-        st.write(":material/shield: Enforcing Promoter Integrity Override (PIO) & PPRM Guardrails...")
+        st.write("Enforcing Promoter Integrity Override (PIO) & PPRM Guardrails...")
         
         try:
             if demo_mode:
@@ -352,11 +282,11 @@ if run_btn:
                     custom_prompt=custom_prompt
                 )
             st.session_state["idex_result"] = result
-            status.update(label=f":material/check_circle: Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
+            status.update(label=f"Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
         except Exception as e:
-            status.update(label=":material/error: Evaluation Failed", state="error")
+            status.update(label="Evaluation Failed", state="error")
             st.error(f"Analysis Error: {str(e)}")
-            with st.expander(":material/terminal: Technical Traceback"):
+            with st.expander("Technical Traceback"):
                 st.exception(e)
 
 # --- RESULTS DASHBOARD ---
@@ -461,7 +391,7 @@ if "idex_result" in st.session_state:
 
     with split_col1:
         with st.container(border=True):
-            st.markdown("##### :material/radar: 8-Pillar Quality Profile")
+            st.markdown("##### 8-Pillar Quality Profile")
             radar_fig = build_dark_radar_chart(res.get("pillars", []))
             st.plotly_chart(radar_fig, width="stretch", alt="8-Pillar Radar Chart")
             
@@ -472,7 +402,7 @@ if "idex_result" in st.session_state:
 
     with split_col2:
         with st.container(border=True):
-            st.markdown("##### :material/account_balance_wallet: Sector Receivable Health Layer")
+            st.markdown("##### Sector Receivable Health Layer")
             st.caption("Forensic Cash Conversion & Liquidity Benchmarking")
             
             rec = res.get("receivable_health_metrics", {})
@@ -485,20 +415,20 @@ if "idex_result" in st.session_state:
                 st.metric(">90 Days Delinquency", rec.get("pct_over_90_days", "N/A"), help="Delinquency threshold", border=True)
                 st.metric("Provision Coverage", rec.get("provision_coverage_pct", "N/A"), border=True)
             
-            st.info(f":material/info: **Assessment:** {rec.get('receivable_verdict', 'Normal')}", icon=":material/verified:")
+            st.info(f"**Assessment:** {rec.get('receivable_verdict', 'Normal')}")
 
     # 4. TABBED IN-DEPTH FORENSIC ANALYSIS
     st.write("")
     tab_pillars, tab_math, tab_peers, tab_thesis, tab_appendices = st.tabs([
-        ":material/bar_chart: 8-Pillar Scorecard",
-        ":material/balance: Penalties & Bonuses",
-        ":material/group: Peer Comparison",
-        ":material/trending_up: Final Call & Thesis",
-        ":material/inventory_2: Forensic Evidence & Calculations"
+        "8-Pillar Scorecard",
+        "Penalties & Bonuses",
+        "Peer Comparison",
+        "Final Call & Thesis",
+        "Forensic Evidence & Calculations"
     ])
 
     with tab_pillars:
-        st.markdown("#### :material/table_rows: Full 8-Pillar Evaluation Breakdown")
+        st.markdown("#### Full 8-Pillar Evaluation Breakdown")
         
         p_cols = st.columns(2)
         for i, p in enumerate(res.get("pillars", [])):
@@ -519,17 +449,17 @@ if "idex_result" in st.session_state:
         m_col1, m_col2 = st.columns(2)
         with m_col1:
             with st.container(border=True):
-                st.markdown("##### :material/warning: Deducted Penalties")
+                st.markdown("##### Deducted Penalties")
                 penalties = res.get("penalties_breakdown", [])
                 if penalties:
                     for pen in penalties:
                         st.markdown(f"- :red[**{pen.get('penalty_name')}**] (`{pen.get('points')} pts`): {pen.get('reason')}")
                 else:
-                    st.success("No statutory forensic penalties applied.", icon=":material/check_circle:")
+                    st.success("No statutory forensic penalties applied.")
         
         with m_col2:
             with st.container(border=True):
-                st.markdown("##### :material/star: Applied Bonuses (Max +10%)")
+                st.markdown("##### Applied Bonuses (Max +10%)")
                 bb = res.get("bonuses_breakdown", {})
                 st.markdown(f"- **COOL++ PRO Bonus:** `+{bb.get('cool_pro_bonus', 0):.1f}%`")
                 st.markdown(f"- **Trajectory Bonus:** `+{bb.get('trajectory_bonus', 0):.1f}%`")
@@ -539,7 +469,7 @@ if "idex_result" in st.session_state:
 
     with tab_peers:
         with st.container(border=True):
-            st.markdown("##### :material/compare: Peer Relative Matrix")
+            st.markdown("##### Peer Relative Matrix")
             peers = res.get("peer_matrix", [])
             if peers:
                 st.dataframe(peers, width="stretch", alt="Peer Matrix Table")
@@ -556,7 +486,7 @@ if "idex_result" in st.session_state:
 
     with tab_thesis:
         with st.container(border=True):
-            st.markdown("##### :material/verified: Final Analyst Recommendation")
+            st.markdown("##### Final Analyst Recommendation")
             st.markdown(f"### {res.get('final_call', 'N/A')}")
             
             st.divider()
@@ -570,13 +500,13 @@ if "idex_result" in st.session_state:
 
     with tab_appendices:
         with st.container(border=True):
-            st.markdown("##### :material/menu_book: Appendix A — Forensic Evidence Pack")
+            st.markdown("##### Appendix A — Forensic Evidence Pack")
             st.caption("Exact quotes, regulatory disclosures, and load-bearing audit excerpts:")
             for e in res.get("appendix_a_forensic_evidence", []):
                 st.markdown(f"- `{e}`")
             
             st.divider()
-            st.markdown("##### :material/calculate: Appendix B — Calculations & Stress Tests")
+            st.markdown("##### Appendix B — Calculations & Stress Tests")
             calcs = res.get("appendix_b_calculations", {})
             for k, v in calcs.items():
                 st.markdown(f"**{k.replace('_', ' ').title()}:** {v}")
@@ -588,7 +518,7 @@ if "idex_result" in st.session_state:
     
     with exp_col1:
         st.download_button(
-            label=":material/data_object: Export Structured JSON",
+            label="Export Structured JSON",
             data=json.dumps(res, indent=2),
             file_name=f"{res.get('company_name', 'Company')}_IDEX75SC.json",
             mime="application/json",
@@ -621,7 +551,7 @@ if "idex_result" in st.session_state:
 **{res.get('final_call')}**
 """
         st.download_button(
-            label=":material/description: Export Research Memo (.md)",
+            label="Export Research Memo (.md)",
             data=md_text,
             file_name=f"{res.get('company_name', 'Company')}_Institutional_Memo.md",
             mime="text/markdown",

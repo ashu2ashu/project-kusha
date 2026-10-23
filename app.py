@@ -26,45 +26,49 @@ from nifty_universe import get_company_list, find_company_info, fetch_live_marke
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="IDEX-7.5SC Terminal | Ashu Elite Edition",
-    page_icon="📊",
+    page_title="StockSage | Institutional AI Financial Intelligence",
+    page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Ultra-Clean Institutional CSS
+# Custom Ultra-Clean Institutional Black & White CSS
 st.markdown("""
 <style>
-    /* Clean font & metrics */
+    /* Clean institutional font & metrics in White & Black */
     [data-testid="stMetricValue"] {
         font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
         font-weight: 700;
         letter-spacing: -0.5px;
+        color: #0F172A;
     }
     
-    /* Guardrail Banners */
+    /* Guardrail Banners - Refined Crisp White & Black with subtle semantic borders */
     .guardrail-clean-box {
-        background: rgba(16, 185, 129, 0.08);
+        background: #F0FDF4;
         border: 1.5px solid #10B981;
         border-radius: 8px;
         padding: 16px 20px;
-        color: #E2E8F0;
+        color: #0F172A;
+        margin-top: 14px;
         margin-bottom: 18px;
     }
     .guardrail-alert-box {
-        background: rgba(245, 158, 11, 0.08);
+        background: #FFFBEB;
         border: 1.5px solid #F59E0B;
         border-radius: 8px;
         padding: 16px 20px;
-        color: #E2E8F0;
+        color: #0F172A;
+        margin-top: 14px;
         margin-bottom: 18px;
     }
     .guardrail-red-box {
-        background: rgba(239, 68, 68, 0.12);
+        background: #FEF2F2;
         border: 2px solid #EF4444;
         border-radius: 8px;
         padding: 16px 20px;
-        color: #FEE2E2;
+        color: #0F172A;
+        margin-top: 14px;
         margin-bottom: 18px;
     }
 </style>
@@ -72,7 +76,8 @@ st.markdown("""
 
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
-    st.markdown("### IDEX-7.5SC Terminal")
+    st.markdown("### StockSage")
+    st.caption("AI Financial Intelligence • Ashu Elite Edition")
     st.caption("Ashu Elite Edition • Dalal Street Forensic Engine")
     st.divider()
 
@@ -123,8 +128,8 @@ with st.sidebar:
     - **Bonus Cap:** Cumulative +10% max
     """)
 
-st.title("IDEX-7.5SC Terminal")
-st.caption("Ashu Elite Edition • Institutional Financial & Forensic Research • Dalal Street Universe")
+st.title("StockSage")
+st.caption("AI-Powered Institutional Financial & Forensic Intelligence • Ashu Elite Edition")
 
 # --- INTAKE CONSOLE ---
 with st.container(border=True):
@@ -308,8 +313,8 @@ with btn_col2:
         demo_mode = True
         run_btn = True
 
-# Helper to build Plotly 8-Pillar Radar Chart
-def build_dark_radar_chart(pillars):
+# Helper to build Plotly 8-Pillar Radar Chart in Institutional Black & White
+def build_radar_chart(pillars):
     names = [f"P{p['id']}: {p['name']}" for p in pillars]
     pct_scores = [(p["score"] / p["max_score"]) * 100 for p in pillars]
     
@@ -321,27 +326,27 @@ def build_dark_radar_chart(pillars):
         r=pct_closed,
         theta=names_closed,
         fill='toself',
-        fillcolor='rgba(56, 189, 248, 0.20)',
-        line=dict(color='#38BDF8', width=2.5),
-        marker=dict(size=6, color='#38BDF8'),
+        fillcolor='rgba(15, 23, 42, 0.08)',
+        line=dict(color='#0F172A', width=2.5),
+        marker=dict(size=6, color='#0F172A'),
         name='% of Max Score'
     ))
 
     fig.update_layout(
         polar=dict(
-            bgcolor='rgba(15, 23, 42, 0.6)',
+            bgcolor='rgba(248, 250, 252, 0.7)',
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
                 ticksuffix="%",
-                gridcolor='#334155',
-                linecolor='#334155',
-                tickfont=dict(color='#94A3B8', size=10)
+                gridcolor='#E2E8F0',
+                linecolor='#CBD5E1',
+                tickfont=dict(color='#64748B', size=10)
             ),
             angularaxis=dict(
-                gridcolor='#334155',
-                linecolor='#334155',
-                tickfont=dict(color='#E2E8F0', size=11, family='Inter')
+                gridcolor='#E2E8F0',
+                linecolor='#CBD5E1',
+                tickfont=dict(color='#0F172A', size=11, family='Inter', weight=600)
             )
         ),
         paper_bgcolor='rgba(0,0,0,0)',
@@ -388,58 +393,9 @@ if run_btn:
 if "idex_result" in st.session_state:
     res = st.session_state["idex_result"]
     st.write("")
+    st.markdown("### Institutional Evaluation Scorecard")
 
-    # 1. MANDATORY GUARDRAIL TAG CALLOUT
-    tag = res.get("guardrail_tag", "GOV-CLEAN 🟢")
-    evidence_list = res.get("guardrail_evidence", [])
-    
-    if "GOV-RED" in tag or res.get("pio_triggered", False):
-        st.markdown(f"""
-        <div class="guardrail-red-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 800; font-size: 1.15rem; color: #F87171;">
-                    🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO FIRED)
-                </span>
-                <span style="background-color: #7F1D1D; color: #FCA5A5; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
-                    CRITICAL FORENSIC RISK
-                </span>
-            </div>
-            <p style="margin: 0 0 10px 0; font-weight: 600;">{res.get('pio_reason', 'Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.')}</p>
-            <ul style="margin: 0; padding-left: 20px;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
-        </div>
-        """, unsafe_allow_html=True)
-    elif "PROM-ALERT" in tag:
-        st.markdown(f"""
-        <div class="guardrail-alert-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 800; font-size: 1.15rem; color: #FBBF24;">
-                    ⚠️ MANDATORY GUARDRAIL TAG: {tag}
-                </span>
-                <span style="background-color: #78350F; color: #FDE68A; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
-                    PROMOTER ALERT
-                </span>
-            </div>
-            <p style="margin: 0 0 10px 0;">Elevated promoter pledging or dilution observed under PPRM rules.</p>
-            <ul style="margin: 0; padding-left: 20px;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div class="guardrail-clean-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 800; font-size: 1.15rem; color: #34D399;">
-                    🛡️ MANDATORY GUARDRAIL TAG: {tag}
-                </span>
-                <span style="background-color: #064E3B; color: #A7F3D0; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
-                    INSTITUTIONAL GRADE
-                </span>
-            </div>
-            <p style="margin: 0 0 8px 0; color: #CBD5E1;">10Y+ clean auditor records, zero promoter share pledging, fully aligned minority shareholder governance.</p>
-            <ul style="margin: 0; padding-left: 20px; color: #94A3B8;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # 2. EXECUTIVE SCORE ROW (KPI CARDS)
+    # 1. EXECUTIVE SCORE ROW (KPI CARDS)
     kpi_col1, kpi_col2, kpi_col3, kpi_col4, kpi_col5 = st.columns(5)
     
     with kpi_col1:
@@ -481,18 +437,18 @@ if "idex_result" in st.session_state:
 
     st.write("")
 
-    # 3. RADAR & RECEIVABLE HEALTH SPLIT
+    # 2. RADAR & RECEIVABLE HEALTH SPLIT
     split_col1, split_col2 = st.columns([1.3, 1.7])
 
     with split_col1:
         with st.container(border=True):
             st.markdown("##### 8-Pillar Quality Profile")
-            radar_fig = build_dark_radar_chart(res.get("pillars", []))
+            radar_fig = build_radar_chart(res.get("pillars", []))
             st.plotly_chart(radar_fig, width="stretch", alt="8-Pillar Radar Chart")
             
             # Active Tags Row
             st.caption("Active Forensic Tags:")
-            tag_badges = " ".join([f":blue-badge[{t}]" for t in res.get("tags_applied", [])])
+            tag_badges = " ".join([f":gray-badge[{t}]" for t in res.get("tags_applied", [])])
             st.markdown(tag_badges)
 
     with split_col2:
@@ -512,7 +468,7 @@ if "idex_result" in st.session_state:
             
             st.info(f"**Assessment:** {rec.get('receivable_verdict', 'Normal')}")
 
-    # 4. TABBED IN-DEPTH FORENSIC ANALYSIS
+    # 3. TABBED IN-DEPTH FORENSIC ANALYSIS
     st.write("")
     tab_pillars, tab_math, tab_peers, tab_thesis, tab_appendices = st.tabs([
         "8-Pillar Scorecard",
@@ -606,6 +562,57 @@ if "idex_result" in st.session_state:
             for k, v in calcs.items():
                 st.markdown(f"**{k.replace('_', ' ').title()}:** {v}")
 
+    # 4. MANDATORY GUARDRAIL & PROMOTER INTEGRITY AUDIT (BELOW PILLARS)
+    st.write("")
+    tag = res.get("guardrail_tag", "GOV-CLEAN 🟢")
+    evidence_list = res.get("guardrail_evidence", [])
+    
+    if "GOV-RED" in tag or res.get("pio_triggered", False):
+        st.markdown(f"""
+        <div class="guardrail-red-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 800; font-size: 1.15rem; color: #DC2626;">
+                    🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO FIRED)
+                </span>
+                <span style="background-color: #FEE2E2; color: #991B1B; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCA5A5;">
+                    CRITICAL FORENSIC RISK
+                </span>
+            </div>
+            <p style="margin: 0 0 10px 0; font-weight: 600; color: #991B1B;">{res.get('pio_reason', 'Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.')}</p>
+            <ul style="margin: 0; padding-left: 20px; color: #7F1D1D;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
+        </div>
+        """, unsafe_allow_html=True)
+    elif "PROM-ALERT" in tag:
+        st.markdown(f"""
+        <div class="guardrail-alert-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 800; font-size: 1.15rem; color: #D97706;">
+                    ⚠️ MANDATORY GUARDRAIL TAG: {tag}
+                </span>
+                <span style="background-color: #FEF3C7; color: #92400E; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCD34D;">
+                    PROMOTER ALERT
+                </span>
+            </div>
+            <p style="margin: 0 0 10px 0; color: #92400E; font-weight: 500;">Elevated promoter pledging or dilution observed under PPRM rules.</p>
+            <ul style="margin: 0; padding-left: 20px; color: #78350F;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class="guardrail-clean-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 800; font-size: 1.15rem; color: #059669;">
+                    🛡️ MANDATORY GUARDRAIL TAG: {tag}
+                </span>
+                <span style="background-color: #D1FAE5; color: #065F46; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #A7F3D0;">
+                    INSTITUTIONAL GRADE
+                </span>
+            </div>
+            <p style="margin: 0 0 8px 0; color: #064E3B; font-weight: 600;">10Y+ clean auditor records, zero promoter share pledging, fully aligned minority shareholder governance.</p>
+            <ul style="margin: 0; padding-left: 20px; color: #1E293B;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
+        </div>
+        """, unsafe_allow_html=True)
+
     # 5. EXPORT TOOLBAR
     st.write("")
     st.divider()
@@ -615,12 +622,12 @@ if "idex_result" in st.session_state:
         st.download_button(
             label="Export Structured JSON",
             data=json.dumps(res, indent=2),
-            file_name=f"{res.get('company_name', 'Company')}_IDEX75SC.json",
+            file_name=f"{res.get('company_name', 'Company')}_StockSage.json",
             mime="application/json",
             width="stretch"
         )
     with exp_col2:
-        md_text = f"""# {res.get('cover_line', 'IDEX-7.5SC Institutional Research')}
+        md_text = f"""# StockSage | Institutional Research Memo: {res.get('company_name')}
 
 ## Metadata
 - **Target Company:** {res.get('company_name')}
@@ -648,7 +655,7 @@ if "idex_result" in st.session_state:
         st.download_button(
             label="Export Research Memo (.md)",
             data=md_text,
-            file_name=f"{res.get('company_name', 'Company')}_Institutional_Memo.md",
+            file_name=f"{res.get('company_name', 'Company')}_StockSage_Memo.md",
             mime="text/markdown",
             width="stretch"
         )
@@ -659,35 +666,30 @@ if "idex_result" in st.session_state:
 <html>
 <head>
 <meta charset="utf-8">
-<title>{res.get('company_name', 'Company')} - IDEX-7.5SC Research Report</title>
+<title>{res.get('company_name', 'Company')} - StockSage Institutional Report</title>
 <style>
-    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #1e293b; max-width: 900px; margin: 40px auto; padding: 0 20px; }}
-    h1 {{ font-size: 24px; color: #0f172a; border-bottom: 2px solid #0284c7; padding-bottom: 8px; }}
-    h2 {{ font-size: 18px; color: #1e293b; margin-top: 24px; }}
-    .badge {{ display: inline-block; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 14px; background: #e0f2fe; color: #0369a1; }}
-    .tag-box {{ border: 1.5px solid #10b981; background: #f0fdf4; padding: 12px 16px; border-radius: 6px; margin: 16px 0; }}
+    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #0f172a; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #ffffff; }}
+    h1 {{ font-size: 24px; color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 8px; }}
+    h2 {{ font-size: 18px; color: #0f172a; margin-top: 24px; }}
+    .badge {{ display: inline-block; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 14px; background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1; }}
+    .tag-box {{ border: 1.5px solid #10b981; background: #f0fdf4; padding: 12px 16px; border-radius: 6px; margin: 16px 0; color: #064e3b; }}
     table {{ width: 100%; border-collapse: collapse; margin: 16px 0; }}
-    th, td {{ border: 1px solid #cbd5e1; padding: 10px; text-align: left; font-size: 14px; }}
+    th, td {{ border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 14px; color: #0f172a; }}
     th {{ background: #f8fafc; font-weight: 600; }}
-    .metric-val {{ font-weight: 700; color: #0284c7; }}
+    .metric-val {{ font-weight: 700; color: #0f172a; }}
     @media print {{ body {{ margin: 0; padding: 10px; }} .no-print {{ display: none; }} }}
 </style>
 </head>
 <body>
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-            <h1>{res.get('company_name', 'Company')}</h1>
-            <p style="color:#64748b; margin-top:-8px;">Sector: {res.get('sector')} • Period: {res.get('financial_year')} • IDEX-7.5SC Institutional Research</p>
+            <h1>StockSage • {res.get('company_name', 'Company')}</h1>
+            <p style="color:#64748b; margin-top:-8px;">Sector: {res.get('sector')} • Period: {res.get('financial_year')} • Institutional Forensic Research</p>
         </div>
         <div style="text-align:right;">
-            <div style="font-size:32px; font-weight:800; color:#0284c7;">{res.get('final_score', 0):.1f}<span style="font-size:16px; color:#64748b;">/100</span></div>
+            <div style="font-size:32px; font-weight:800; color:#0f172a;">{res.get('final_score', 0):.1f}<span style="font-size:16px; color:#64748b;">/100</span></div>
             <div class="badge">{res.get('verdict')}</div>
         </div>
-    </div>
-
-    <div class="tag-box">
-        <strong>Mandatory Guardrail: {res.get('guardrail_tag')}</strong>
-        <ul>{''.join([f'<li>{e}</li>' for e in res.get('guardrail_evidence', [])])}</ul>
     </div>
 
     <h2>Core 8-Pillar Evaluation</h2>
@@ -704,8 +706,13 @@ if "idex_result" in st.session_state:
         <tr><td><strong>Overdue >90d:</strong> {rec.get('pct_over_90_days')}</td><td><strong>Assessment:</strong> {rec.get('receivable_verdict')}</td></tr>
     </table>
 
+    <div class="tag-box">
+        <strong>Mandatory Guardrail Tag: {res.get('guardrail_tag')}</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px;">{''.join([f'<li>{e}</li>' for e in res.get('guardrail_evidence', [])])}</ul>
+    </div>
+
     <h2>Analyst Recommendation</h2>
-    <div style="background:#f1f5f9; padding:14px; border-radius:6px; font-size:16px; font-weight:600;">
+    <div style="background:#f8fafc; border: 1px solid #e2e8f0; padding:14px; border-radius:6px; font-size:16px; font-weight:600; color: #0f172a;">
         {res.get('final_call')}
     </div>
 </body>
@@ -713,7 +720,7 @@ if "idex_result" in st.session_state:
         st.download_button(
             label="Printable HTML Report",
             data=html_report,
-            file_name=f"{res.get('company_name', 'Company')}_Printable_Report.html",
+            file_name=f"{res.get('company_name', 'Company')}_StockSage_Report.html",
             mime="text/html",
             width="stretch"
         )

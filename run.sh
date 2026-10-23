@@ -1,8 +1,8 @@
 #!/bin/bash
-# FinScan India - Launch Script
+# StockSage - Launch Script
 cd "$(dirname "$0")"
 
-echo "🚀 Starting FinScan India Web App..."
+echo "🚀 Starting StockSage Web App..."
 
 # Activate virtual environment
 if [ -d ".venv" ]; then

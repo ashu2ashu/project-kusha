@@ -1,4 +1,4 @@
-# FinScan India / IDEX-7.5SC - Professional Institutional Theme
+# StockSage - Professional Black & White Institutional Theme
 
 [server]
 port = 8501
@@ -10,21 +10,21 @@ enableXsrfProtection = false
 gatherUsageStats = false
 
 [theme]
-base = "dark"
-primaryColor = "#38BDF8"             # Cyan / Sky blue for dark mode
-backgroundColor = "#0B0F19"          # Deep institutional obsidian / midnight
-secondaryBackgroundColor = "#131C2E" # Card slate / navy
-codeBackgroundColor = "#131C2E"
-textColor = "#F1F5F9"                # Clean crisp white/slate
-linkColor = "#38BDF8"
-borderColor = "#1E293B"
-codeTextColor = "#CBD5E1"
+base = "light"
+primaryColor = "#000000"             # Solid monochrome black for key action buttons & highlights
+backgroundColor = "#FFFFFF"          # Pure crisp white background
+secondaryBackgroundColor = "#F8FAFC" # Subtle slate/off-white for containers and cards
+codeBackgroundColor = "#F1F5F9"
+textColor = "#0F172A"                # Deep rich charcoal / black typography
+linkColor = "#0F172A"
+borderColor = "#E2E8F0"              # Crisp subtle border outlines
+codeTextColor = "#0F172A"
 showWidgetBorder = true
 showSidebarBorder = true
 baseRadius = "8px"                   # Modern clean radius
 buttonRadius = "8px"
 
-# Typography - Clean, professional fonts
+# Typography - Clean, professional institutional fonts
 font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
 headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
 codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
@@ -36,19 +36,19 @@ headingFontWeights = [800, 700, 600, 600, 500, 500]
 linkUnderline = false
 
 # Semantic colors for financial indicators
-greenColor = "#10B981"  # Positive/gains
-redColor = "#EF4444"    # Negative/losses
-yellowColor = "#F59E0B" # Warnings
-orangeColor = "#F97316" # Alerts
-blueColor = "#38BDF8"   # Primary brand / AI
-violetColor = "#818CF8" # Accent
+greenColor = "#059669"  # Positive/gains
+redColor = "#DC2626"    # Negative/losses
+yellowColor = "#D97706" # Warnings
+orangeColor = "#EA580C" # Alerts
+blueColor = "#0F172A"   # Primary brand / monochrome black
+violetColor = "#334155" # Accent
 grayColor = "#64748B"   # Neutral slate
 
-# Sidebar
+# Sidebar - Clean Black & White
 [theme.sidebar]
-backgroundColor = "#090D16"
-secondaryBackgroundColor = "#0F172A"
-codeBackgroundColor = "#0F172A"
-textColor = "#E2E8F0"
-borderColor = "#1E293B"
-primaryColor = "#38BDF8"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#FFFFFF"
+codeBackgroundColor = "#FFFFFF"
+textColor = "#0F172A"
+borderColor = "#E2E8F0"
+primaryColor = "#000000"

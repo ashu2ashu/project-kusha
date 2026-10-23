@@ -299,8 +299,6 @@ with st.container(border=True):
     st.markdown("#### Company Selection & Live Market Grounding")
     
     c_list = get_company_list()
-    default_target = "Tata Consumer Products Ltd. (TATACONSUM)"
-    default_idx = c_list.index(default_target) if default_target in c_list else 0
     
     col_sel1, col_sel2 = st.columns([2.5, 1.5])
     
@@ -308,20 +306,25 @@ with st.container(border=True):
         selected_company_str = st.selectbox(
             "Select Indian Listed Stock (Nifty 500 Universe)",
             options=c_list,
-            index=default_idx,
+            index=None,
+            placeholder="Search company name or symbol (e.g. Reliance, HDFC Bank, Infosys, Dixon)...",
             help="Select any listed Indian company from the Nifty 500 to automatically fetch live market data."
         )
     
-    matched_info = find_company_info(selected_company_str)
+    matched_info = find_company_info(selected_company_str) if selected_company_str else None
     
     with col_sel2:
-        if matched_info["ticker"] == "CUSTOM":
+        if matched_info and matched_info["ticker"] == "CUSTOM":
             target_company_name = st.text_input("Enter Company Name", placeholder="e.g. Amber Enterprises Ltd")
             target_ticker = st.text_input("NSE/BSE Symbol (Optional)", placeholder="e.g. AMBER")
-        else:
+        elif matched_info:
             target_company_name = matched_info["name"]
             target_ticker = matched_info["ticker"]
             st.text_input("NSE Ticker Symbol", value=target_ticker, disabled=True)
+        else:
+            target_company_name = None
+            target_ticker = None
+            st.text_input("NSE Ticker Symbol", value="", placeholder="Awaiting company selection...", disabled=True)
             
     col_sec1, col_sec2 = st.columns([2, 2])
     with col_sec1:
@@ -340,7 +343,7 @@ with st.container(border=True):
             "Banks / NBFC"
         ]
         
-        def_sector_idx = sector_list.index(matched_info["sector"]) if matched_info["sector"] in sector_list else 0
+        def_sector_idx = sector_list.index(matched_info["sector"]) if (matched_info and matched_info.get("sector") in sector_list) else 0
         target_sector = st.selectbox(
             "Sector Industry Matrix",
             sector_list,
@@ -364,6 +367,14 @@ with st.container(border=True):
             help="Upload the annual report. 200–500 page Indian reports are fully ingested by Gemini 3.5 Flash."
         )
 
+# Reset evaluation if user cleared or switched selected company
+if "selected_company_memory" not in st.session_state:
+    st.session_state["selected_company_memory"] = selected_company_str
+elif st.session_state["selected_company_memory"] != selected_company_str:
+    st.session_state["selected_company_memory"] = selected_company_str
+    if "idex_result" in st.session_state:
+        del st.session_state["idex_result"]
+
 # Fetch Live Online Market Data (Cached for snappy performance)
 @st.cache_data(ttl=180, show_spinner=False)
 def get_cached_live_data(ticker_sym: str):
@@ -372,6 +383,26 @@ def get_cached_live_data(ticker_sym: str):
 live_data = None
 if target_ticker and target_ticker != "CUSTOM":
     live_data = get_cached_live_data(target_ticker)
+
+# Screener-grade Welcome / Empty State (When no company is selected)
+if not selected_company_str:
+    st.markdown("""
+    <div style="background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 44px 28px; text-align: center; margin-top: 18px; margin-bottom: 24px;">
+        <div style="font-size: 38px; margin-bottom: 12px;">📈</div>
+        <div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px; margin-bottom: 8px;">
+            Search or Select a Listed Indian Stock
+        </div>
+        <div style="font-size: 15px; color: #64748B; max-width: 620px; margin: 0 auto 20px auto; line-height: 1.6;">
+            Select any company from the 501 Nifty 500 universe above (or enter a custom stock) to inspect real-time NSE valuation metrics, 52-week price channels, and launch the 8-pillar institutional quality audit.
+        </div>
+        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">⚡ Real-time Market Cap & P/E</span>
+            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🏛️ Screener 8-Pillar Scorecard</span>
+            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🛡️ Promoter Integrity & Governance</span>
+            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">📊 Cash Flow & Forensic Checks</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- SCREENER-STYLE LIVE COMPANY INTELLIGENCE & KEY RATIOS ---
 if live_data:
@@ -450,15 +481,20 @@ if live_data:
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])
 with btn_col1:
+    btn_label = f"Execute StockSage AI Evaluation for {target_company_name}" if target_company_name else "Select a Company to Execute AI Evaluation"
     run_btn = st.button(
-        f"Execute StockSage AI Evaluation for {target_company_name}",
+        btn_label,
         type="primary",
-        width="stretch"
+        width="stretch",
+        disabled=not bool(target_company_name)
     )
 with btn_col2:
     if st.button("Quick Demo", width="stretch"):
         demo_mode = True
         run_btn = True
+        if not target_company_name:
+            target_company_name = "Tata Consumer Products Ltd"
+            target_sector = "FMCG / Retail"
 
 # Helper to build Plotly 8-Pillar Radar Chart in Institutional Green & White
 def build_radar_chart(pillars):

@@ -10,6 +10,30 @@ import tempfile
 from typing import Dict, Any, Optional
 from prompt_template import IDEX_SYSTEM_INSTRUCTION, IDEX_ANALYSIS_PROMPT
 
+def verify_gemini_api_key(api_key: str) -> tuple[bool, str]:
+    """Tests if the provided Gemini API key is valid by making a quick ping."""
+    key = api_key.strip() if api_key else ""
+    if not key:
+        return False, "API key field is empty. Please paste your key."
+    if not key.startswith("AIzaSy"):
+        return False, "Google Gemini API keys usually start with 'AIzaSy'. Please make sure you copied the full key from Google AI Studio."
+    try:
+        from google import genai
+        client = genai.Client(api_key=key)
+        resp = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents="ping",
+        )
+        if resp and resp.text:
+            return True, "✅ Your Gemini API key is valid and connected successfully!"
+        return False, "Received empty response from Gemini."
+    except Exception as e:
+        err = str(e)
+        if "API_KEY_INVALID" in err or "400" in err:
+            return False, "❌ Invalid API Key. Please re-copy the key from https://aistudio.google.com"
+        return False, f"Verification failed: {err}"
+
+
 def get_demo_analysis(company_name: str, sector: str) -> Dict[str, Any]:
     """Returns a realistic, high-grade institutional IDEX-7.5SC analysis."""
     c_name = company_name.strip() if company_name and company_name.strip() else "Tata Consumer Products Ltd"

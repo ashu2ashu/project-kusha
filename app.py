@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from prompt_template import IDEX_ANALYSIS_PROMPT
-from analyzer import analyze_document_with_gemini, get_demo_analysis
+from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -112,6 +112,16 @@ api_key = st.sidebar.text_input(
     type="password",
     help="Get a free Gemini API key from https://aistudio.google.com with 15 RPM and 1M token context."
 )
+
+if st.sidebar.button("🔍 Test Key Connection", use_container_width=True):
+    with st.sidebar:
+        with st.spinner("Testing API key with Gemini..."):
+            is_valid, msg = verify_gemini_api_key(api_key)
+            if is_valid:
+                st.success(msg)
+            else:
+                st.error(msg)
+
 
 demo_mode = st.sidebar.checkbox(
     "Run in Demo / Preview Mode",

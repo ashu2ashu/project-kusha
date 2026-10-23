@@ -261,149 +261,31 @@ st.markdown("""
         transform: translateY(-1px) !important;
     }
 
-    /* Screener.in Exact Key Ratio Card & Split About Styling */
-    .screener-card {
+    /* StockSage Equity Intelligence Factsheet & Thematic Domain Grid */
+    .facts-header-card {
         background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
+        border: 1.5px solid #E2E8F0;
+        border-radius: 12px;
         padding: 22px 24px;
         margin-top: 14px;
-        margin-bottom: 24px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        margin-bottom: 16px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
     }
-    .screener-header-flex {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding-bottom: 16px;
-        margin-bottom: 18px;
-        border-bottom: 1.5px solid #F1F5F9;
-    }
-    .screener-title-area {
-        display: flex;
+    .domain-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
         gap: 16px;
-        align-items: center;
+        margin-bottom: 24px;
     }
-    .screener-logo-box {
-        width: 46px;
-        height: 46px;
-        border-radius: 8px;
-        background: #F8FAFC;
-        border: 1.5px solid #E2E8F0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 18px;
-        color: #059669;
-        font-family: 'Inter', sans-serif;
+    @media (max-width: 1024px) {
+        .domain-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
-    .screener-company-name {
-        font-size: 28px;
-        font-weight: 800;
-        color: #0F172A;
-        letter-spacing: -0.5px;
-        line-height: 1.2;
-    }
-    .screener-price-inline {
-        font-size: 22px;
-        font-weight: 800;
-        color: #0F172A;
-        font-family: 'JetBrains Mono', monospace;
-        margin-left: 10px;
-    }
-    .screener-delta-pill {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 700;
-        margin-left: 8px;
-    }
-    .screener-links-bar {
-        display: flex;
-        gap: 14px;
-        align-items: center;
-        margin-top: 6px;
-        font-size: 13.5px;
-        color: #64748B;
-        font-weight: 500;
-    }
-    .screener-links-bar a {
-        color: #2563EB;
-        text-decoration: none;
-        font-weight: 600;
-    }
-    .screener-links-bar a:hover {
-        text-decoration: underline;
-    }
-    .screener-grid-split {
-        display: flex;
-        gap: 24px;
-        align-items: flex-start;
-    }
-    .screener-table-container {
-        flex: 2.15;
-    }
-    .screener-about-container {
-        flex: 1.0;
-        padding-left: 20px;
-        border-left: 1px solid #F1F5F9;
-    }
-    .screener-ratio-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .screener-ratio-table tr {
-        border-bottom: 1px solid #F1F5F9;
-    }
-    .screener-ratio-table tr:hover {
-        background-color: #F8FAFC;
-    }
-    .screener-ratio-table td.r-name {
-        font-size: 13.5px;
-        font-weight: 500;
-        color: #64748B;
-        padding: 9px 4px 9px 0;
-        text-align: left;
-        white-space: nowrap;
-        width: 17%;
-    }
-    .screener-ratio-table td.r-val {
-        font-size: 14px;
-        font-weight: 700;
-        color: #0F172A;
-        font-family: 'JetBrains Mono', monospace;
-        padding: 9px 18px 9px 4px;
-        text-align: right;
-        white-space: nowrap;
-        width: 16%;
-    }
-    .screener-table-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 14px;
-        padding-top: 8px;
-    }
-    .screener-footer-input {
-        background: #FFFFFF;
-        border: 1px solid #CBD5E1;
-        border-radius: 4px;
-        padding: 6px 12px;
-        font-size: 13px;
-        color: #475569;
-        width: 200px;
-        outline: none;
-    }
-    .screener-footer-btn {
-        background: transparent;
-        border: none;
-        color: #2563EB;
-        font-size: 12.5px;
-        font-weight: 700;
-        cursor: pointer;
-        letter-spacing: 0.3px;
+    @media (max-width: 640px) {
+        .domain-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -652,7 +534,7 @@ if not selected_company_str:
             st.session_state["selected_company_choice"] = find_company_info("TCS")["display"]
             st.rerun()
 
-# --- SCREENER-STYLE LIVE COMPANY INTELLIGENCE & 27 KEY RATIOS ---
+# --- STOCKSAGE BESPOKE COMPANY INTELLIGENCE & 27 KEY METRICS MATRIX ---
 if live_data:
     sm = live_data.get("screener_metrics", {})
     cur_p = live_data.get("current_price", 0)
@@ -669,90 +551,146 @@ if live_data:
     website_url = live_data.get("website_url", "#")
     website_display = live_data.get("website_display", "company.com")
     about_text = live_data.get("about_summary", "")
+    bse_code = live_data.get("bse_code", target_ticker)
     
     logo_initials = "".join([w[0] for w in target_company_name.split()[:2]]).upper() if target_company_name else "SS"
 
-    # 9 rows × 3 columns of Screener metrics matching exact Screener.in presentation
-    rows_data = [
-        [("Market Cap", sm.get("market_cap", "N/A")), ("Current Price", sm.get("current_price", cur_str)), ("High / Low", sm.get("high_low", "N/A"))],
-        [("Stock P/E", sm.get("stock_pe", "N/A")), ("Book Value", sm.get("book_value", "N/A")), ("Dividend Yield", sm.get("dividend_yield", "N/A"))],
-        [("ROCE", sm.get("roce", "N/A")), ("ROE", sm.get("roe", "N/A")), ("Face Value", sm.get("face_value", "N/A"))],
-        [("Graham Number", sm.get("graham_number", "N/A")), ("Current ratio", sm.get("current_ratio", "N/A")), ("Debt to equity", sm.get("debt_to_equity", "N/A"))],
-        [("Market Cap to Sales", sm.get("market_cap_to_sales", "N/A")), ("Asset Turnover", sm.get("asset_turnover", "N/A")), ("Intrinsic Value", sm.get("intrinsic_value", "N/A"))],
-        [("Promoter holding", sm.get("promoter_holding", "N/A")), ("Int Coverage", sm.get("int_coverage", "N/A")), ("OPM", sm.get("opm", "N/A"))],
-        [("Debt", sm.get("debt", "N/A")), ("Sales growth 5Years", sm.get("sales_growth_5yr", "N/A")), ("ROIC", sm.get("roic", "N/A"))],
-        [("NPM last year", sm.get("npm_last_year", "N/A")), ("CMP / FCF", sm.get("cmp_to_fcf", "N/A")), ("Earnings yield", sm.get("earnings_yield", "N/A"))],
-        [("Free Cash Flow 5Yrs", sm.get("free_cash_flow_5yr", "N/A")), ("PEG Ratio", sm.get("peg_ratio", "N/A")), ("EVEBITDA", sm.get("evebitda", "N/A"))]
+    # Helper function to format metric cells
+    def fmt_cell(name: str, val: str, style_type: str = "normal", is_alt: bool = False) -> str:
+        bg_attr = ' style="background-color: #F8FAFC;"' if is_alt else ''
+        if style_type == "emerald":
+            v_html = f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; padding: 2px 7px; border-radius: 4px; font-weight: 800;">{val}</span>'
+        elif style_type == "teal":
+            v_html = f'<span style="background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; padding: 2px 7px; border-radius: 4px; font-weight: 700;">{val}</span>'
+        elif style_type == "bold":
+            v_html = f'<span style="font-weight: 800; color: #0F172A;">{val}</span>'
+        else:
+            v_html = f'<span style="font-weight: 700; color: #1E293B;">{val}</span>'
+            
+        return (
+            f'<tr{bg_attr}>'
+            f'<td style="padding: 9px 12px; font-size: 13px; font-weight: 600; color: #475569; text-align: left; border-bottom: 1px solid #F1F5F9; white-space: nowrap;">{name}</td>'
+            f'<td style="padding: 9px 12px; font-size: 13.5px; font-family: \'JetBrains Mono\', monospace; text-align: right; border-bottom: 1px solid #F1F5F9; white-space: nowrap;">{v_html}</td>'
+            f'</tr>'
+        )
+
+    # 4 Financial Domains encompassing all 27 Screener metrics
+    card1_items = [
+        ("Market Cap", sm.get("market_cap", "N/A"), "bold"),
+        ("Stock P/E", sm.get("stock_pe", "N/A"), "normal"),
+        ("PEG Ratio", sm.get("peg_ratio", "N/A"), "normal"),
+        ("EV / EBITDA", sm.get("evebitda", "N/A"), "normal"),
+        ("Intrinsic Value", sm.get("intrinsic_value", "N/A"), "normal"),
+        ("Graham Number", sm.get("graham_number", "N/A"), "normal"),
+        ("MCap to Sales", sm.get("market_cap_to_sales", "N/A"), "normal"),
     ]
 
-    table_rows_html = []
-    for r_idx, r in enumerate(rows_data):
-        cells = ""
-        bg_style = ' style="background-color: #FAFAFA;"' if r_idx % 2 == 1 else ''
-        for name, val in r:
-            if name in ["ROCE", "ROE", "ROIC"]:
-                cells += f'<td class="r-name" style="color: #047857; font-weight: 700;">{name}</td><td class="r-val" style="color: #047857; font-weight: 800; background: #ECFDF5; border-radius: 4px; padding: 6px 12px 6px 4px;">{val}</td>'
-            elif name in ["Market Cap", "Current Price"]:
-                cells += f'<td class="r-name" style="color: #1E293B; font-weight: 600;">{name}</td><td class="r-val" style="color: #0F172A; font-weight: 800;">{val}</td>'
-            elif name in ["Free Cash Flow 5Yrs", "CMP / FCF"]:
-                cells += f'<td class="r-name" style="color: #0F766E; font-weight: 600;">{name}</td><td class="r-val" style="color: #115E59; font-weight: 700;">{val}</td>'
-            elif name in ["Promoter holding"]:
-                cells += f'<td class="r-name" style="color: #334155; font-weight: 600;">{name}</td><td class="r-val" style="color: #0F172A; font-weight: 700;">{val}</td>'
-            else:
-                cells += f'<td class="r-name">{name}</td><td class="r-val">{val}</td>'
-        table_rows_html.append(f'<tr{bg_style}>{cells}</tr>')
+    card2_items = [
+        ("ROCE", sm.get("roce", "N/A"), "emerald"),
+        ("ROE", sm.get("roe", "N/A"), "emerald"),
+        ("ROIC", sm.get("roic", "N/A"), "emerald"),
+        ("Operating Margin (OPM)", sm.get("opm", "N/A"), "normal"),
+        ("Net Margin (NPM)", sm.get("npm_last_year", "N/A"), "normal"),
+        ("Earnings Yield", sm.get("earnings_yield", "N/A"), "normal"),
+        ("Asset Turnover", sm.get("asset_turnover", "N/A"), "normal"),
+    ]
 
-    screener_full_html = (
-        f'<div class="screener-card">'
-        f'<div class="screener-header-flex">'
-        f'<div class="screener-title-area">'
-        f'<div class="screener-logo-box" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; font-weight: 800; box-shadow: 0 2px 5px rgba(5, 150, 105, 0.25); border: none;">{logo_initials}</div>'
+    card3_items = [
+        ("Total Debt", sm.get("debt", "N/A"), "normal"),
+        ("Debt to Equity", sm.get("debt_to_equity", "N/A"), "normal"),
+        ("Current Ratio", sm.get("current_ratio", "N/A"), "normal"),
+        ("Interest Coverage", sm.get("int_coverage", "N/A"), "normal"),
+        ("Book Value", sm.get("book_value", "N/A"), "normal"),
+        ("Face Value", sm.get("face_value", "N/A"), "normal"),
+        ("52W High / Low", sm.get("high_low", "N/A"), "normal"),
+    ]
+
+    card4_items = [
+        ("Free Cash Flow 5Yrs", sm.get("free_cash_flow_5yr", "N/A"), "teal"),
+        ("CMP / FCF Multiple", sm.get("cmp_to_fcf", "N/A"), "teal"),
+        ("Promoter Holding", sm.get("promoter_holding", "N/A"), "bold"),
+        ("Sales Growth 5Yrs", sm.get("sales_growth_5yr", "N/A"), "normal"),
+        ("Dividend Yield", sm.get("dividend_yield", "N/A"), "normal"),
+        ("Current Price", sm.get("current_price", cur_str), "bold"),
+    ]
+
+    def render_domain_card(title: str, icon: str, badge_text: str, hdr_gradient: str, border_hex: str, items: list) -> str:
+        row_html_list = []
+        for i, (m_name, m_val, s_type) in enumerate(items):
+            row_html_list.append(fmt_cell(m_name, m_val, s_type, is_alt=(i % 2 == 1)))
+        
+        tbody_content = "".join(row_html_list)
+        return (
+            f'<div style="background: #FFFFFF; border: 1.5px solid {border_hex}; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
+            f'<div style="background: {hdr_gradient}; padding: 11px 14px; border-bottom: 1.5px solid {border_hex}; display: flex; justify-content: space-between; align-items: center;">'
+            f'<div style="display: flex; align-items: center; gap: 8px;">'
+            f'<span style="font-size: 16px;">{icon}</span>'
+            f'<span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.2px;">{title}</span>'
+            f'</div>'
+            f'<span style="font-size: 11px; font-weight: 700; color: #475569; background: #FFFFFF; border: 1px solid {border_hex}; padding: 2px 7px; border-radius: 9999px;">{badge_text}</span>'
+            f'</div>'
+            f'<table style="width: 100%; border-collapse: collapse;">'
+            f'<tbody>{tbody_content}</tbody>'
+            f'</table>'
+            f'</div>'
+        )
+
+    dom_card1 = render_domain_card("Valuation & Multiples", "🏛️", "7 Ratios", "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)", "#BFDBFE", card1_items)
+    dom_card2 = render_domain_card("Profitability & Returns", "📈", "7 Ratios", "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", "#A7F3D0", card2_items)
+    dom_card3 = render_domain_card("Solvency & Balance Sheet", "🛡️", "7 Ratios", "linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)", "#DDD6FE", card3_items)
+    dom_card4 = render_domain_card("Cash Flow & Governance", "💵", "6 Ratios", "linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%)", "#99F6E4", card4_items)
+
+    facts_full_html = (
+        f'<div class="facts-header-card">'
+        f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; padding-bottom: 16px; border-bottom: 1.5px solid #F1F5F9;">'
+        f'<div style="display: flex; align-items: center; gap: 16px;">'
+        f'<div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(5,150,105,0.25);">'
+        f'{logo_initials}'
+        f'</div>'
         f'<div>'
-        f'<div style="display: flex; align-items: baseline; flex-wrap: wrap;">'
-        f'<span class="screener-company-name">{target_company_name}</span>'
-        f'<span class="screener-price-inline">• {cur_str}</span>'
-        f'<span class="screener-delta-pill" style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}33;">{delta_str}</span>'
-        f'<span style="color: #64748B; font-size: 12px; margin-left: 8px;">{price_date}</span>'
+        f'<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">'
+        f'<span style="font-size: 26px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px;">{target_company_name}</span>'
+        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #BBF7D0; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 12px;">NSE: {target_ticker} ●</span>'
+        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 600; font-size: 12px;">BSE: {bse_code}</span>'
+        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 12px;">🏛️ {target_sector}</span>'
         f'</div>'
-        f'<div class="screener-links-bar">'
-        f'<span>🔗 <a href="{website_url}" target="_blank">{website_display}</a></span>'
-        f'<span>• <span style="background: #F0FDF4; color: #047857; border: 1px solid #BBF7D0; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;">NSE: {target_ticker} ●</span></span>'
-        f'<span>• ↗ BSE: {live_data.get("bse_code", target_ticker)}</span>'
-        f'<span>• <span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;">🏛️ {target_sector}</span></span>'
-        f'</div>'
+        f'<div style="margin-top: 6px; font-size: 13.5px; color: #64748B; display: flex; align-items: center; gap: 14px;">'
+        f'<span>🌐 <a href="{website_url}" target="_blank" style="color: #2563EB; font-weight: 600; text-decoration: none;">{website_display} ↗</a></span>'
+        f'<span>• Nifty 500 Constituent</span>'
+        f'<span>• Ind AS Audit Compliant</span>'
         f'</div>'
         f'</div>'
-        f'<div style="display: flex; gap: 10px;">'
-        f'<button style="background: #FFFFFF; border: 1.5px solid #CBD5E1; color: #334155; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">📥 EXPORT TO EXCEL</button>'
-        f'<button style="background: #5B21B6; border: none; color: #FFFFFF; font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(91, 33, 182, 0.25);">+ FOLLOW ▾</button>'
+        f'</div>'
+        f'<div style="text-align: right;">'
+        f'<div style="display: flex; align-items: baseline; justify-content: flex-end; gap: 8px;">'
+        f'<span style="font-size: 28px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace;">{cur_str}</span>'
+        f'<span style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}33; padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 800;">{delta_str}</span>'
+        f'</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 4px;">Real-Time Quote • {price_date}</div>'
         f'</div>'
         f'</div>'
-        f'<div class="screener-grid-split">'
-        f'<div class="screener-table-container">'
-        f'<table class="screener-ratio-table">'
-        f'<tbody>{"".join(table_rows_html)}</tbody>'
-        f'</table>'
-        f'<div class="screener-table-footer">'
-        f'<div style="display: flex; align-items: center; gap: 12px;">'
-        f'<span style="font-size: 13px; font-weight: 600; color: #64748B;">Add ratio to table</span>'
-        f'<input class="screener-footer-input" placeholder="eg. Promoter holding" />'
+        f'<div style="margin-top: 16px; display: grid; grid-template-columns: 2fr 1fr; gap: 18px;">'
+        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px;">'
+        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
+        f'🏢 Corporate Profile & Operations'
         f'</div>'
-        f'<button class="screener-footer-btn">✏️ EDIT RATIOS</button>'
+        f'<div style="font-size: 13.5px; line-height: 1.6; color: #334155;">{about_text}</div>'
         f'</div>'
+        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px;">'
+        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
+        f'🔑 Institutional Grounding'
         f'</div>'
-        f'<div class="screener-about-container">'
-        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">🏢 ABOUT COMPANY</div>'
-        f'<div style="font-size: 13px; line-height: 1.6; color: #334155; margin-bottom: 18px; max-height: 185px; overflow-y: auto; padding-right: 4px;">{about_text}</div>'
-        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">🔑 KEY INVESTMENT POINTS</div>'
-        f'<div style="font-size: 13px; line-height: 1.55; color: #334155;">'
-        f'<strong>Market Position:</strong> The company is an established flagship {target_sector} constituent listed on NSE/BSE with significant institutional coverage, scale distribution moats, and Ind AS audit compliance.'
-        f'</div>'
-        f'<div style="margin-top: 10px;"><a style="color: #059669; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer;">READ MORE ›</a></div>'
+        f'<div style="font-size: 13px; line-height: 1.6; color: #334155;">'
+        f'Flagship constituent in the <strong>{target_sector}</strong> benchmark. Verified regulatory disclosures, institutional shareholding profile, and Ind AS audit compliance.'
         f'</div>'
         f'</div>'
+        f'</div>'
+        f'</div>'
+        f'<div class="domain-grid">'
+        f'{dom_card1}{dom_card2}{dom_card3}{dom_card4}'
         f'</div>'
     )
-    st.html(screener_full_html)
+    st.html(facts_full_html)
 
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])

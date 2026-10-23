@@ -32,6 +32,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Brand Logo Integration
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "assets", "logo.svg")
+ICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "icon.svg")
+if os.path.exists(LOGO_PATH):
+    st.logo(LOGO_PATH, icon_image=ICON_PATH if os.path.exists(ICON_PATH) else None, size="large")
+
 # Screener.in Inspired Green & White Institutional CSS
 st.markdown("""
 <style>
@@ -209,31 +215,50 @@ st.markdown("""
 
     /* Guardrail Banners - Refined Green & White with subtle semantic borders */
     .guardrail-clean-box {
-        background: #F0FDF4;
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
         border: 1.5px solid #10B981;
+        border-left: 5px solid #059669;
         border-radius: 8px;
         padding: 18px 24px;
         color: #0F172A;
         margin-top: 16px;
         margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.06);
     }
     .guardrail-alert-box {
-        background: #FFFBEB;
+        background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
         border: 1.5px solid #F59E0B;
+        border-left: 5px solid #D97706;
         border-radius: 8px;
         padding: 18px 24px;
         color: #0F172A;
         margin-top: 16px;
         margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.06);
     }
     .guardrail-red-box {
-        background: #FEF2F2;
+        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
         border: 2px solid #EF4444;
+        border-left: 5px solid #DC2626;
         border-radius: 8px;
         padding: 18px 24px;
         color: #0F172A;
         margin-top: 16px;
         margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.06);
+    }
+
+    /* Preset Benchmark Chips */
+    button[kind="secondary"] {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.15s ease !important;
+    }
+    button[kind="secondary"]:hover {
+        border-color: #059669 !important;
+        color: #047857 !important;
+        background-color: #F0FDF4 !important;
+        transform: translateY(-1px) !important;
     }
 
     /* Screener.in Exact Key Ratio Card & Split About Styling */
@@ -387,6 +412,16 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### StockSage")
     st.caption("Dalal Street Equity Intelligence • Ashu Elite Edition")
+    
+    st.html("""
+    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border: 1.5px solid #86EFAC; border-radius: 8px; padding: 10px 14px; margin-top: 8px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(5,150,105,0.08);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 11.5px; font-weight: 800; color: #065F46; letter-spacing: 0.3px;">NSE / BSE GROUNDING</span>
+            <span style="background: #059669; color: #FFFFFF; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">● LIVE</span>
+        </div>
+        <div style="font-size: 11px; color: #047857; margin-top: 4px; font-weight: 600;">501 Nifty Equities • 24 Sectors</div>
+    </div>
+    """)
     st.divider()
 
     # API Configuration
@@ -436,25 +471,74 @@ with st.sidebar:
     - **Bonus Cap:** Cumulative +10% max
     """)
 
-st.title("StockSage")
-st.caption("Institutional Equity Research & Forensic Intelligence Terminal • Ashu Elite Edition")
+# Top Hero Brand Navigation Banner
+st.html("""
+<div style="background: linear-gradient(135deg, #064E3B 0%, #065F46 45%, #047857 75%, #0F172A 100%); padding: 22px 28px; border-radius: 12px; margin-bottom: 20px; color: #FFFFFF; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.16);">
+  <div>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+      <span style="font-size: 26px; font-weight: 900; letter-spacing: -0.6px; color: #FFFFFF;">Stock<span style="color: #34D399;">Sage</span></span>
+      <span style="background: #10B981; color: #022C22; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px; letter-spacing: 0.5px;">PRO EDITION</span>
+      <span style="background: rgba(255,255,255,0.15); color: #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 9999px;">IDEX-7.5SC HYBRID</span>
+    </div>
+    <div style="font-size: 13.5px; color: #D1FAE5; font-weight: 400; max-width: 680px; line-height: 1.5;">
+      Institutional Equity Intelligence & Forensic Audit Terminal • Real-Time NSE/BSE Market Grounding & 501 Nifty 500 Constituents
+    </div>
+  </div>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 14px; text-align: center;">
+      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase;">Universe</div>
+      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">501 Stocks</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 14px; text-align: center;">
+      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase;">Taxonomy</div>
+      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">24 Sectors</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 14px; text-align: center;">
+      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase;">Feed</div>
+      <div style="font-size: 15px; font-weight: 800; color: #34D399;">● LIVE</div>
+    </div>
+  </div>
+</div>
+""")
 
 # --- INTAKE CONSOLE ---
 with st.container(border=True):
     st.markdown("#### Company Search")
     
+    # Fast Preset Benchmark Chips
+    st.caption("⚡ **Dalal Street Benchmarks (1-Click Instant Load):**")
+    preset_cols = st.columns(6)
+    presets = [
+        ("Reliance", "RELIANCE", "🔵"),
+        ("HDFC Bank", "HDFCBANK", "🟢"),
+        ("Tata Consumer", "TATACONSUM", "🟠"),
+        ("TCS", "TCS", "🟣"),
+        ("Dixon Tech", "DIXON", "🔷"),
+        ("HDFC Life", "HDFCLIFE", "🔴"),
+    ]
+    for idx, (label, sym, emoji) in enumerate(presets):
+        with preset_cols[idx]:
+            if st.button(f"{emoji} {label}", key=f"btn_preset_{sym}", width="stretch"):
+                info = find_company_info(sym)
+                st.session_state["selected_company_choice"] = info["display"]
+                st.rerun()
+
     c_list = get_company_list()
-    
+    cur_choice = st.session_state.get("selected_company_choice", None)
+    default_idx = c_list.index(cur_choice) if (cur_choice and cur_choice in c_list) else None
+
     col_sel1, col_sel2 = st.columns([2.5, 1.5])
     
     with col_sel1:
         selected_company_str = st.selectbox(
             "Company",
             options=c_list,
-            index=None,
+            index=default_idx,
             placeholder="Search by company name or symbol (e.g. Reliance, HDFC Bank, Infosys, Dixon)...",
             help="Select any listed Indian company from the Nifty 500 to pull live financial data."
         )
+        if selected_company_str != cur_choice:
+            st.session_state["selected_company_choice"] = selected_company_str
     
     matched_info = find_company_info(selected_company_str) if selected_company_str else None
     
@@ -518,18 +602,55 @@ if target_ticker and target_ticker != "CUSTOM":
 
 # Screener-grade Welcome / Empty State (When no company is selected)
 if not selected_company_str:
-    st.html(
-        f'<div style="background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 44px 28px; text-align: center; margin-top: 18px; margin-bottom: 24px;">'
-        f'<div style="font-size: 38px; margin-bottom: 12px;">📈</div>'
-        f'<div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px; margin-bottom: 8px;">Search or Select a Listed Indian Stock</div>'
-        f'<div style="font-size: 15px; color: #64748B; max-width: 620px; margin: 0 auto 20px auto; line-height: 1.6;">Select any company from the 501 Nifty 500 universe above (or enter a custom stock) to inspect real-time NSE valuation metrics, 52-week price channels, and launch the 8-pillar institutional quality audit.</div>'
-        f'<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">'
-        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">⚡ Real-time Market Cap & P/E</span>'
-        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🏛️ Screener 8-Pillar Scorecard</span>'
-        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🛡️ Promoter Integrity & Governance</span>'
-        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">📊 Cash Flow & Forensic Checks</span>'
-        f'</div></div>'
-    )
+    st.html("""
+    <div style="background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 36px 32px; text-align: center; margin-top: 18px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #A7F3D0; margin-bottom: 16px; font-size: 30px;">
+            📈
+        </div>
+        <div style="font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; margin-bottom: 8px;">
+            Dalal Street Institutional Intelligence Terminal
+        </div>
+        <div style="font-size: 14.5px; color: #64748B; max-width: 680px; margin: 0 auto 24px auto; line-height: 1.6;">
+            Select any constituent from the <strong>501 Nifty 500 universe</strong> above or click a benchmark chip to inspect real-time NSE market valuations, 27 Screener ratios, and initiate the comprehensive 8-pillar forensic audit.
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; text-align: left; max-width: 920px; margin: 0 auto 16px auto;">
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #059669; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-size: 13px; font-weight: 800; color: #065F46; margin-bottom: 4px;">⚡ 27 SCREENER RATIOS</div>
+                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Real-time Market Cap, P/E, ROCE, ROE, FCF & Graham Number calculated directly from NSE/BSE feeds.</div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #2563EB; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-size: 13px; font-weight: 800; color: #1E40AF; margin-bottom: 4px;">🏛️ 8-PILLAR AUDIT</div>
+                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Standardized 100-point forensic matrix across Governance, Accounting Forensics, FCF, and Moat durability.</div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #DC2626; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-size: 13px; font-weight: 800; color: #991B1B; margin-bottom: 4px;">🛡️ PROMOTER INTEGRITY</div>
+                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Hardwired PIO overrides, share pledge thresholds, and regulatory qualification tracking.</div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; border-top: 3.5px solid #D97706; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-size: 13px; font-weight: 800; color: #92400E; margin-bottom: 4px;">📊 24 SECTOR BENCHMARKS</div>
+                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Granular sector classification ensuring Insurance, Banks, AMCs, and NBFCs are properly evaluated.</div>
+            </div>
+        </div>
+    </div>
+    """)
+    
+    col_exp1, col_exp2, col_exp3, col_exp4 = st.columns(4)
+    with col_exp1:
+        if st.button("🏢 Explore Reliance Industries", width="stretch", key="welc_rel"):
+            st.session_state["selected_company_choice"] = find_company_info("RELIANCE")["display"]
+            st.rerun()
+    with col_exp2:
+        if st.button("🏦 Explore HDFC Bank", width="stretch", key="welc_hdfc"):
+            st.session_state["selected_company_choice"] = find_company_info("HDFCBANK")["display"]
+            st.rerun()
+    with col_exp3:
+        if st.button("🛒 Explore Tata Consumer", width="stretch", key="welc_tataconsum"):
+            st.session_state["selected_company_choice"] = find_company_info("TATACONSUM")["display"]
+            st.rerun()
+    with col_exp4:
+        if st.button("💻 Explore TCS", width="stretch", key="welc_tcs"):
+            st.session_state["selected_company_choice"] = find_company_info("TCS")["display"]
+            st.rerun()
 
 # --- SCREENER-STYLE LIVE COMPANY INTELLIGENCE & 27 KEY RATIOS ---
 if live_data:
@@ -565,35 +686,45 @@ if live_data:
     ]
 
     table_rows_html = []
-    for r in rows_data:
+    for r_idx, r in enumerate(rows_data):
         cells = ""
+        bg_style = ' style="background-color: #FAFAFA;"' if r_idx % 2 == 1 else ''
         for name, val in r:
-            cells += f'<td class="r-name">{name}</td><td class="r-val">{val}</td>'
-        table_rows_html.append(f'<tr>{cells}</tr>')
+            if name in ["ROCE", "ROE", "ROIC"]:
+                cells += f'<td class="r-name" style="color: #047857; font-weight: 700;">{name}</td><td class="r-val" style="color: #047857; font-weight: 800; background: #ECFDF5; border-radius: 4px; padding: 6px 12px 6px 4px;">{val}</td>'
+            elif name in ["Market Cap", "Current Price"]:
+                cells += f'<td class="r-name" style="color: #1E293B; font-weight: 600;">{name}</td><td class="r-val" style="color: #0F172A; font-weight: 800;">{val}</td>'
+            elif name in ["Free Cash Flow 5Yrs", "CMP / FCF"]:
+                cells += f'<td class="r-name" style="color: #0F766E; font-weight: 600;">{name}</td><td class="r-val" style="color: #115E59; font-weight: 700;">{val}</td>'
+            elif name in ["Promoter holding"]:
+                cells += f'<td class="r-name" style="color: #334155; font-weight: 600;">{name}</td><td class="r-val" style="color: #0F172A; font-weight: 700;">{val}</td>'
+            else:
+                cells += f'<td class="r-name">{name}</td><td class="r-val">{val}</td>'
+        table_rows_html.append(f'<tr{bg_style}>{cells}</tr>')
 
     screener_full_html = (
         f'<div class="screener-card">'
         f'<div class="screener-header-flex">'
         f'<div class="screener-title-area">'
-        f'<div class="screener-logo-box">{logo_initials}</div>'
+        f'<div class="screener-logo-box" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; font-weight: 800; box-shadow: 0 2px 5px rgba(5, 150, 105, 0.25); border: none;">{logo_initials}</div>'
         f'<div>'
         f'<div style="display: flex; align-items: baseline; flex-wrap: wrap;">'
         f'<span class="screener-company-name">{target_company_name}</span>'
         f'<span class="screener-price-inline">• {cur_str}</span>'
-        f'<span class="screener-delta-pill" style="color: {delta_fg}; background: {delta_bg};">{delta_str}</span>'
+        f'<span class="screener-delta-pill" style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}33;">{delta_str}</span>'
         f'<span style="color: #64748B; font-size: 12px; margin-left: 8px;">{price_date}</span>'
         f'</div>'
         f'<div class="screener-links-bar">'
         f'<span>🔗 <a href="{website_url}" target="_blank">{website_display}</a></span>'
+        f'<span>• <span style="background: #F0FDF4; color: #047857; border: 1px solid #BBF7D0; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;">NSE: {target_ticker} ●</span></span>'
         f'<span>• ↗ BSE: {live_data.get("bse_code", target_ticker)}</span>'
-        f'<span>• ↗ NSE: {target_ticker}</span>'
-        f'<span>• <span style="background: #F1F5F9; color: #334155; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 12px;">{target_sector}</span></span>'
+        f'<span>• <span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;">🏛️ {target_sector}</span></span>'
         f'</div>'
         f'</div>'
         f'</div>'
         f'<div style="display: flex; gap: 10px;">'
-        f'<button style="background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">📥 EXPORT TO EXCEL</button>'
-        f'<button style="background: #5B21B6; border: none; color: #FFFFFF; font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 6px; cursor: pointer;">+ FOLLOW ▾</button>'
+        f'<button style="background: #FFFFFF; border: 1.5px solid #CBD5E1; color: #334155; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">📥 EXPORT TO EXCEL</button>'
+        f'<button style="background: #5B21B6; border: none; color: #FFFFFF; font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(91, 33, 182, 0.25);">+ FOLLOW ▾</button>'
         f'</div>'
         f'</div>'
         f'<div class="screener-grid-split">'
@@ -610,9 +741,9 @@ if live_data:
         f'</div>'
         f'</div>'
         f'<div class="screener-about-container">'
-        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 8px;">ABOUT</div>'
+        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">🏢 ABOUT COMPANY</div>'
         f'<div style="font-size: 13px; line-height: 1.6; color: #334155; margin-bottom: 18px; max-height: 185px; overflow-y: auto; padding-right: 4px;">{about_text}</div>'
-        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 6px;">KEY POINTS</div>'
+        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">🔑 KEY INVESTMENT POINTS</div>'
         f'<div style="font-size: 13px; line-height: 1.55; color: #334155;">'
         f'<strong>Market Position:</strong> The company is an established flagship {target_sector} constituent listed on NSE/BSE with significant institutional coverage, scale distribution moats, and Ind AS audit compliance.'
         f'</div>'
@@ -641,6 +772,18 @@ with btn_col2:
             target_company_name = "Tata Consumer Products Ltd"
             target_sector = "FMCG / Retail"
 
+# Helper metadata for 8 Pillars
+PILLAR_METADATA = {
+    1: {"icon": "🏛️", "chip": "Governance", "chip_bg": "#ECFDF5", "chip_fg": "#047857", "border": "#A7F3D0"},
+    2: {"icon": "🔍", "chip": "Forensics", "chip_bg": "#EFF6FF", "chip_fg": "#1D4ED8", "border": "#BFDBFE"},
+    3: {"icon": "🛡️", "chip": "Solvency", "chip_bg": "#F5F3FF", "chip_fg": "#6D28D9", "border": "#DDD6FE"},
+    4: {"icon": "📈", "chip": "Efficiency", "chip_bg": "#ECFEFF", "chip_fg": "#0E7490", "border": "#A5F3FC"},
+    5: {"icon": "🔄", "chip": "Working Cap", "chip_bg": "#F0FDF4", "chip_fg": "#15803D", "border": "#BBF7D0"},
+    6: {"icon": "💵", "chip": "Cash Flow", "chip_bg": "#FDF2F8", "chip_fg": "#BE185D", "border": "#FBCFE8"},
+    7: {"icon": "🚀", "chip": "Moat / Longevity", "chip_bg": "#FAF5FF", "chip_fg": "#7E22CE", "border": "#E9D5FF"},
+    8: {"icon": "⚖️", "chip": "Capital Allocation", "chip_bg": "#FFFBEB", "chip_fg": "#B45309", "border": "#FDE68A"},
+}
+
 # Helper to build Plotly 8-Pillar Radar Chart in Institutional Green & White
 def build_radar_chart(pillars):
     names = [f"P{p['id']}: {p['name']}" for p in pillars]
@@ -654,33 +797,33 @@ def build_radar_chart(pillars):
         r=pct_closed,
         theta=names_closed,
         fill='toself',
-        fillcolor='rgba(5, 150, 105, 0.12)',
-        line=dict(color='#059669', width=3),
-        marker=dict(size=7, color='#059669'),
+        fillcolor='rgba(5, 150, 105, 0.18)',
+        line=dict(color='#059669', width=3.5),
+        marker=dict(size=8, color='#059669', line=dict(color='#FFFFFF', width=2)),
         name='% of Max Score'
     ))
 
     fig.update_layout(
         polar=dict(
-            bgcolor='rgba(240, 253, 244, 0.4)',
+            bgcolor='rgba(240, 253, 244, 0.45)',
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
                 ticksuffix="%",
-                gridcolor='#D1FAE5',
-                linecolor='#A7F3D0',
-                tickfont=dict(color='#047857', size=11, family='Inter', weight=500)
+                gridcolor='#A7F3D0',
+                linecolor='#6EE7B7',
+                tickfont=dict(color='#047857', size=11, family='Inter', weight=600)
             ),
             angularaxis=dict(
-                gridcolor='#E2E8F0',
-                linecolor='#CBD5E1',
+                gridcolor='#CBD5E1',
+                linecolor='#94A3B8',
                 tickfont=dict(color='#0F172A', size=12.5, family='Inter', weight=700)
             )
         ),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
-        margin=dict(l=50, r=50, t=30, b=30),
+        margin=dict(l=55, r=55, t=30, b=30),
         height=430
     )
     return fig
@@ -723,45 +866,79 @@ if "idex_result" in st.session_state:
     st.write("")
     st.markdown("### Institutional Equity Research Scorecard")
 
-    # 1. EXECUTIVE SCORE ROW (KPI CARDS)
-    kpi_col1, kpi_col2, kpi_col3, kpi_col4, kpi_col5 = st.columns(5)
-    
-    with kpi_col1:
-        st.metric(
-            label="FINAL SCORE",
-            value=f"{res.get('final_score', 0):.1f} / 100",
-            delta=res.get("verdict", "").split("—")[0].strip(),
-            border=True
-        )
-    with kpi_col2:
-        st.metric(
-            label="CORE QUALITY SCORE",
-            value=f"{res.get('core_score', 0):.1f}",
-            delta_description="Pre-penalties (100 Max)",
-            border=True
-        )
-    with kpi_col3:
-        st.metric(
-            label="RISK PENALTIES",
-            value=f"{res.get('total_penalties', 0):.1f} pts",
-            delta="-7.5% Cap",
-            delta_color="inverse",
-            border=True
-        )
-    with kpi_col4:
-        st.metric(
-            label="GROWTH BONUSES",
-            value=f"+{res.get('bonuses_breakdown', {}).get('total_bonus_applied', 0):.1f}%",
-            delta="+10% Cap",
-            border=True
-        )
-    with kpi_col5:
-        st.metric(
-            label="ALLOCATION SIZING",
-            value=res.get("position_sizing", "0%"),
-            delta_description="Portfolio Allocation",
-            border=True
-        )
+    # 1. EXECUTIVE SCORE ROW (Vibrant Gradient KPI Cards)
+    final_score = res.get('final_score', 0)
+    verdict = res.get("verdict", "").split("—")[0].strip()
+    core_score = res.get('core_score', 0)
+    total_penalties = res.get('total_penalties', 0)
+    total_bonus = res.get('bonuses_breakdown', {}).get('total_bonus_applied', 0)
+    position_sizing = res.get("position_sizing", "0%")
+
+    kpi_cards_html = (
+        f'<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px;">'
+        f'<div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #10B981; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.08);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #065F46; text-transform: uppercase;">FINAL IDEX SCORE</span>'
+        f'<span style="font-size: 18px;">🏆</span>'
+        f'</div>'
+        f'<div style="font-size: 28px; font-weight: 900; color: #064E3B; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'{final_score:.1f} <span style="font-size: 14px; font-weight: 600; color: #047857;">/ 100</span>'
+        f'</div>'
+        f'<div style="margin-top: 10px;">'
+        f'<span style="background: #059669; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 9999px; letter-spacing: 0.3px; display: inline-block;">{verdict}</span>'
+        f'</div>'
+        f'</div>'
+        f'<div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #60A5FA; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(59, 130, 246, 0.08);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #1E40AF; text-transform: uppercase;">CORE QUALITY</span>'
+        f'<span style="font-size: 18px;">💎</span>'
+        f'</div>'
+        f'<div style="font-size: 28px; font-weight: 900; color: #1E3A8A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'{core_score:.1f} <span style="font-size: 14px; font-weight: 600; color: #2563EB;">/ 100</span>'
+        f'</div>'
+        f'<div style="margin-top: 10px; font-size: 12px; font-weight: 600; color: #1D4ED8;">'
+        f'Pre-penalties baseline'
+        f'</div>'
+        f'</div>'
+        f'<div style="background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%); border: 1.5px solid #F87171; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.08);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #991B1B; text-transform: uppercase;">RISK PENALTIES</span>'
+        f'<span style="font-size: 18px;">🛡️</span>'
+        f'</div>'
+        f'<div style="font-size: 28px; font-weight: 900; color: #7F1D1D; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'-{total_penalties:.1f} <span style="font-size: 14px; font-weight: 600; color: #B91C1C;">pts</span>'
+        f'</div>'
+        f'<div style="margin-top: 10px;">'
+        f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">-7.5% Hard Cap</span>'
+        f'</div>'
+        f'</div>'
+        f'<div style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 1.5px solid #A78BFA; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(139, 92, 246, 0.08);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #5B21B6; text-transform: uppercase;">GROWTH BONUSES</span>'
+        f'<span style="font-size: 18px;">🚀</span>'
+        f'</div>'
+        f'<div style="font-size: 28px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'+{total_bonus:.1f}%'
+        f'</div>'
+        f'<div style="margin-top: 10px;">'
+        f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+10% Max Cap</span>'
+        f'</div>'
+        f'</div>'
+        f'<div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #FBBF24; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(245, 158, 11, 0.08);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #92400E; text-transform: uppercase;">PORTFOLIO WEIGHT</span>'
+        f'<span style="font-size: 18px;">⚖️</span>'
+        f'</div>'
+        f'<div style="font-size: 26px; font-weight: 900; color: #78350F; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'{position_sizing}'
+        f'</div>'
+        f'<div style="margin-top: 10px; font-size: 12px; font-weight: 600; color: #B45309;">'
+        f'Risk-Weighted Sizing'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    )
+    st.html(kpi_cards_html)
 
     st.write("")
 
@@ -774,10 +951,29 @@ if "idex_result" in st.session_state:
             radar_fig = build_radar_chart(res.get("pillars", []))
             st.plotly_chart(radar_fig, width="stretch", alt="8-Pillar Radar Chart")
             
-            # Active Tags Row
+            # Active Tags Row with Vibrant Semantic Pills
             st.caption("Active Forensic Tags:")
-            tag_badges = " ".join([f":gray-badge[{t}]" for t in res.get("tags_applied", [])])
-            st.markdown(tag_badges)
+            tag_pills = []
+            tag_color_map = {
+                "GOV-CLEAN": ("#ECFDF5", "#047857", "#A7F3D0"),
+                "GOV-RED": ("#FEF2F2", "#DC2626", "#FECACA"),
+                "PROM-ALERT": ("#FFFBEB", "#D97706", "#FDE68A"),
+                "ZERO-DEBT": ("#EFF6FF", "#1D4ED8", "#BFDBFE"),
+                "HIGH-ROCE": ("#ECFDF5", "#047857", "#A7F3D0"),
+                "COOL-PRO": ("#F5F3FF", "#6D28D9", "#DDD6FE"),
+                "DSO-PRISTINE": ("#ECFEFF", "#0E7490", "#A5F3FC"),
+            }
+            for t in res.get("tags_applied", []):
+                found_colors = None
+                for prefix, colors in tag_color_map.items():
+                    if prefix in t:
+                        found_colors = colors
+                        break
+                if not found_colors:
+                    found_colors = ("#F1F5F9", "#334155", "#CBD5E1")
+                bg, fg, bdr = found_colors
+                tag_pills.append(f'<span style="background: {bg}; color: {fg}; border: 1px solid {bdr}; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; display: inline-block; margin-right: 6px; margin-bottom: 6px;">{t}</span>')
+            st.html(f'<div style="display: flex; flex-wrap: wrap; margin-top: 6px;">{"".join(tag_pills)}</div>')
 
     with split_col2:
         with st.container(border=True):
@@ -785,16 +981,45 @@ if "idex_result" in st.session_state:
             st.caption("Forensic Cash Conversion & Liquidity Benchmarking")
             
             rec = res.get("receivable_health_metrics", {})
-            
-            r_row1, r_row2 = st.columns(2)
-            with r_row1:
-                st.metric("DSO (Days Sales Outstanding)", f"{rec.get('dso_days', 'N/A')} d", f"Sector Ideal: {rec.get('sector_ideal_dso', 'N/A')}", border=True)
-                st.metric("Receivables / Annual Sales", rec.get("receivables_to_sales_pct", "N/A"), border=True)
-            with r_row2:
-                st.metric(">90 Days Delinquency", rec.get("pct_over_90_days", "N/A"), help="Delinquency threshold", border=True)
-                st.metric("Provision Coverage", rec.get("provision_coverage_pct", "N/A"), border=True)
-            
-            st.info(f"**Assessment:** {rec.get('receivable_verdict', 'Normal')}")
+            dso_val = rec.get('dso_days', 'N/A')
+            ideal_dso = rec.get('sector_ideal_dso', 'N/A')
+            rec_sales = rec.get('receivables_to_sales_pct', 'N/A')
+            over_90 = rec.get('pct_over_90_days', 'N/A')
+            prov_cov = rec.get('provision_coverage_pct', 'N/A')
+            verdict_text = rec.get('receivable_verdict', 'Normal')
+
+            rec_cards_html = (
+                f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">'
+                f'<div style="background: #F0FDFA; border: 1px solid #99F6E4; border-radius: 8px; padding: 12px 16px;">'
+                f'<div style="font-size: 11.5px; font-weight: 700; color: #0F766E; text-transform: uppercase;">DSO (Days Sales)</div>'
+                f'<div style="font-size: 22px; font-weight: 800; color: #115E59; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{dso_val} d</div>'
+                f'<div style="font-size: 11.5px; color: #0D9488; font-weight: 600;">Sector Benchmark: {ideal_dso}</div>'
+                f'</div>'
+                f'<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 16px;">'
+                f'<div style="font-size: 11.5px; font-weight: 700; color: #1D4ED8; text-transform: uppercase;">Receivables / Sales</div>'
+                f'<div style="font-size: 22px; font-weight: 800; color: #1E40AF; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{rec_sales}</div>'
+                f'<div style="font-size: 11.5px; color: #2563EB; font-weight: 600;">Balance Sheet Weight</div>'
+                f'</div>'
+                f'<div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 16px;">'
+                f'<div style="font-size: 11.5px; font-weight: 700; color: #B45309; text-transform: uppercase;">>90 Days Overdue</div>'
+                f'<div style="font-size: 22px; font-weight: 800; color: #92400E; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{over_90}</div>'
+                f'<div style="font-size: 11.5px; color: #D97706; font-weight: 600;">Delinquency Risk</div>'
+                f'</div>'
+                f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px 16px;">'
+                f'<div style="font-size: 11.5px; font-weight: 700; color: #15803D; text-transform: uppercase;">Provision Coverage</div>'
+                f'<div style="font-size: 22px; font-weight: 800; color: #166534; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{prov_cov}</div>'
+                f'<div style="font-size: 11.5px; color: #16A34A; font-weight: 600;">ECL Buffer</div>'
+                f'</div>'
+                f'</div>'
+                f'<div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #059669; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">'
+                f'<span style="font-size: 20px;">🛡️</span>'
+                f'<div>'
+                f'<div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">Forensic Assessment</div>'
+                f'<div style="font-size: 13.5px; font-weight: 700; color: #064E3B;">{verdict_text}</div>'
+                f'</div>'
+                f'</div>'
+            )
+            st.html(rec_cards_html)
 
     # 3. TABBED IN-DEPTH FORENSIC ANALYSIS
     st.write("")
@@ -812,28 +1037,45 @@ if "idex_result" in st.session_state:
         
         table_rows = []
         for p in res.get("pillars", []):
+            p_id = p.get("id", 1)
             p_score = p.get("score", 0)
             p_max = p.get("max_score", 1)
-            pct = (p_score / p_max) * 100
+            pct = (p_score / p_max) * 100 if p_max > 0 else 0
             
-            # Screener-style Quality Rating Badge
+            meta = PILLAR_METADATA.get(p_id, {"icon": "📌", "chip": "Quality", "chip_bg": "#F1F5F9", "chip_fg": "#334155", "border": "#CBD5E1"})
+            
             if pct >= 85:
-                badge = f'<span style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Pristine</span>'
+                badge = f'<span style="background:#ECFDF5; color:#047857; border:1px solid #10B981; padding:5px 12px; border-radius:9999px; font-weight:800; font-size:12px; display:inline-flex; align-items:center; gap:4px; box-shadow: 0 1px 2px rgba(16,185,129,0.1);">✨ {pct:.0f}% • Pristine</span>'
+                bar_color = "#059669"
             elif pct >= 70:
-                badge = f'<span style="background:#F0FDF4; color:#059669; border:1px solid #BBF7D0; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Strong</span>'
+                badge = f'<span style="background:#F0FDF4; color:#059669; border:1px solid #86EFAC; padding:5px 12px; border-radius:9999px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:4px;">🟢 {pct:.0f}% • Strong</span>'
+                bar_color = "#10B981"
             elif pct >= 50:
-                badge = f'<span style="background:#FFFBEB; color:#D97706; border:1px solid #FDE68A; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Moderate</span>'
+                badge = f'<span style="background:#FFFBEB; color:#B45309; border:1px solid #FCD34D; padding:5px 12px; border-radius:9999px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:4px;">🟡 {pct:.0f}% • Moderate</span>'
+                bar_color = "#F59E0B"
             else:
-                badge = f'<span style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Fragile</span>'
+                badge = f'<span style="background:#FEF2F2; color:#DC2626; border:1px solid #FCA5A5; padding:5px 12px; border-radius:9999px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:4px;">🔴 {pct:.0f}% • Fragile</span>'
+                bar_color = "#EF4444"
                 
             rec_html = ""
             if "receivable_subscore" in p:
-                rec_html = f'<div style="margin-top: 8px; background: #ECFDF5; border-left: 3px solid #059669; padding: 4px 10px; font-size: 13px; font-weight: 600; color: #065F46; border-radius: 0 4px 4px 0;">Receivable Health Subscore: {p["receivable_subscore"]}</div>'
+                rec_html = f'<div style="margin-top: 10px; background: #ECFDF5; border-left: 3px solid #059669; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #065F46; border-radius: 0 4px 4px 0;">⚡ Sector Receivable Health Subscore: <strong>{p["receivable_subscore"]}</strong></div>'
                 
             row_html = (
                 f'<tr>'
-                f'<td style="width: 25%; font-weight: 700;"><div style="font-size: 15.5px; color: #0F172A; font-weight: 700;">P{p.get("id")}: {p.get("name")}</div></td>'
-                f'<td style="width: 14%; text-align: center;"><div style="font-family: \'JetBrains Mono\', monospace; font-size: 17px; font-weight: 800; color: #047857;">{p_score:.1f} <span style="font-size: 13px; font-weight: 500; color: #64748B;">/ {p_max:.1f}</span></div></td>'
+                f'<td style="width: 25%; font-weight: 700;">'
+                f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">'
+                f'<span style="font-size: 18px;">{meta["icon"]}</span>'
+                f'<span style="font-size: 15px; color: #0F172A; font-weight: 800;">P{p_id}: {p.get("name")}</span>'
+                f'</div>'
+                f'<span style="background: {meta["chip_bg"]}; color: {meta["chip_fg"]}; border: 1px solid {meta["border"]}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">{meta["chip"]}</span>'
+                f'</td>'
+                f'<td style="width: 14%; text-align: center;">'
+                f'<div style="font-family: \'JetBrains Mono\', monospace; font-size: 18px; font-weight: 800; color: #047857;">{p_score:.1f} <span style="font-size: 13px; font-weight: 500; color: #64748B;">/ {p_max:.1f}</span></div>'
+                f'<div style="background: #E2E8F0; border-radius: 9999px; height: 6px; width: 85%; margin: 6px auto 0 auto; overflow: hidden;">'
+                f'<div style="background: {bar_color}; width: {pct:.1f}%; height: 100%; border-radius: 9999px;"></div>'
+                f'</div>'
+                f'</td>'
                 f'<td style="width: 16%; text-align: center;">{badge}</td>'
                 f'<td style="width: 45%;"><div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{p.get("justification", "")}</div>{rec_html}</td>'
                 f'</tr>'
@@ -844,7 +1086,7 @@ if "idex_result" in st.session_state:
             f'<table class="pillar-table">'
             f'<thead><tr>'
             f'<th style="width: 25%; text-align: left;">Pillar Domain</th>'
-            f'<th style="width: 14%; text-align: center;">Score</th>'
+            f'<th style="width: 14%; text-align: center;">Score & Progress</th>'
             f'<th style="width: 16%; text-align: center;">Quality Rating</th>'
             f'<th style="width: 45%; text-align: left;">Forensic Assessment & Driver Justification</th>'
             f'</tr></thead>'
@@ -857,31 +1099,52 @@ if "idex_result" in st.session_state:
         m_col1, m_col2 = st.columns(2)
         with m_col1:
             with st.container(border=True):
-                st.markdown("##### Deducted Penalties")
+                st.markdown("##### Deducted Risk Penalties")
                 penalties = res.get("penalties_breakdown", [])
                 if penalties:
+                    pen_html = []
                     for pen in penalties:
-                        st.html(
-                            f'<div style="font-size: 15px; line-height: 1.6; margin-bottom: 10px;">'
-                            f'<strong style="color: #DC2626;">{pen.get("penalty_name")}</strong> (<code style="font-weight:700;">{pen.get("points")} pts</code>): {pen.get("reason")}'
+                        pen_html.append(
+                            f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #DC2626; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px;">'
+                            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">'
+                            f'<span style="font-size: 14.5px; font-weight: 800; color: #991B1B;">{pen.get("penalty_name")}</span>'
+                            f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-{pen.get("points")} pts</span>'
+                            f'</div>'
+                            f'<div style="font-size: 13.5px; color: #7F1D1D; line-height: 1.5;">{pen.get("reason")}</div>'
                             f'</div>'
                         )
+                    st.html("".join(pen_html))
                 else:
-                    st.success("No statutory forensic penalties applied.")
+                    st.html(
+                        '<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-left: 4px solid #10B981; border-radius: 6px; padding: 14px 18px; color: #064E3B; font-weight: 600; font-size: 14px;">'
+                        '✔ Zero statutory forensic risk deductions applied. Clean regulatory profile.'
+                        '</div>'
+                    )
         
         with m_col2:
             with st.container(border=True):
-                st.markdown("##### Applied Bonuses (Max +10%)")
+                st.markdown("##### Applied Growth Bonuses (Max +10%)")
                 bb = res.get("bonuses_breakdown", {})
                 st.html(
-                    f'<div style="font-size: 15px; line-height: 1.8;">'
-                    f'<div>• <strong>COOL++ PRO Bonus:</strong> <code>+{bb.get("cool_pro_bonus", 0):.1f}%</code></div>'
-                    f'<div>• <strong>Trajectory Bonus:</strong> <code>+{bb.get("trajectory_bonus", 0):.1f}%</code></div>'
-                    f'<div>• <strong>Resilience Bonus:</strong> <code>+{bb.get("resilience_bonus", 0):.1f}%</code></div>'
+                    f'<div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">'
+                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 700; color: #4C1D95; font-size: 14px;">COOL++ PRO Bonus</span><div style="font-size: 12px; color: #6D28D9;">Capital-Light Operating Leverage Outperformance</div></div>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">+{bb.get("cool_pro_bonus", 0):.1f}%</span>'
+                    f'</div>'
+                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 700; color: #4C1D95; font-size: 14px;">Trajectory Bonus</span><div style="font-size: 12px; color: #6D28D9;">Sustained Margin Expansion & FCF Compounding</div></div>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">+{bb.get("trajectory_bonus", 0):.1f}%</span>'
+                    f'</div>'
+                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 700; color: #4C1D95; font-size: 14px;">Resilience Bonus</span><div style="font-size: 12px; color: #6D28D9;">Balance Sheet Solvency & Counter-Cyclical Endurance</div></div>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">+{bb.get("resilience_bonus", 0):.1f}%</span>'
+                    f'</div>'
+                    f'</div>'
+                    f'<div style="background: #EDE9FE; border: 1.5px solid #A78BFA; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<span style="font-size: 13.5px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Total Growth Bonus Applied</span>'
+                    f'<span style="font-size: 22px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace;">+{bb.get("total_bonus_applied", 0):.1f}%</span>'
                     f'</div>'
                 )
-                st.divider()
-                st.metric("Total Bonus Impact", f"+{bb.get('total_bonus_applied', 0):.1f}%")
 
     with tab_peers:
         with st.container(border=True):
@@ -892,19 +1155,20 @@ if "idex_result" in st.session_state:
             
             p_str_col1, p_str_col2 = st.columns(2)
             with p_str_col1:
-                st.markdown("**Key Structural Strengths:**")
-                for s in res.get("strengths", []):
-                    st.html(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #059669; font-weight: 700;'>✔</span> {s}</div>")
+                st.markdown("##### Key Structural Strengths")
+                str_items = "".join([f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;"><span style="color: #059669; font-weight: 800; font-size: 15px;">✔</span> <span style="color: #064E3B;">{s}</span></div>' for s in res.get("strengths", [])])
+                st.html(f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px;">{str_items}</div>')
             with p_str_col2:
-                st.markdown("**Structural Weaknesses & Fragilities:**")
-                for w in res.get("weaknesses", []):
-                    st.html(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #DC2626; font-weight: 700;'>✖</span> {w}</div>")
+                st.markdown("##### Structural Fragilities & Cautions")
+                wk_items = "".join([f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;"><span style="color: #DC2626; font-weight: 800; font-size: 15px;">✖</span> <span style="color: #7F1D1D;">{w}</span></div>' for w in res.get("weaknesses", [])])
+                st.html(f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 14px 16px;">{wk_items}</div>')
 
     with tab_thesis:
         with st.container(border=True):
             st.markdown("##### Final Analyst Recommendation")
             st.html(
-                f'<div style="font-size: 22px; font-weight: 800; color: #0F172A; padding: 18px 22px; background: #F8FAFC; border-left: 4px solid #0F172A; border-radius: 0 8px 8px 0; margin: 12px 0 18px 0; line-height: 1.3;">'
+                f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; padding: 18px 22px; background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1.5px solid #CBD5E1; border-left: 5px solid #059669; border-radius: 0 8px 8px 0; margin: 12px 0 18px 0; line-height: 1.4;">'
+                f'<div style="font-size: 11.5px; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">DALAL STREET POSITION CALL</div>'
                 f'{res.get("final_call", "N/A")}'
                 f'</div>'
             )
@@ -912,47 +1176,47 @@ if "idex_result" in st.session_state:
             st.divider()
             t_col1, t_col2 = st.columns(2)
             with t_col1:
-                st.markdown("**ESG, Fragility & Foreign Exchange Notes:**")
-                st.html(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('fragility_esg_fx_notes', 'No material vulnerabilities observed.')}</p>")
+                st.markdown("**ESG, Governance & FX Sensitivity:**")
+                st.html(f"<div style='background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; font-size: 13.5px; line-height: 1.6; color: #334155;'>{res.get('fragility_esg_fx_notes', 'No material vulnerabilities observed.')}</div>")
             with t_col2:
-                st.markdown("**12–24 Month Catalyst & Drift Watch:**")
-                st.html(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('drift_optionality_update', 'Monitor upcoming capital deployment.')}</p>")
+                st.markdown("**12–24 Month Catalyst & Forensic Drift Watch:**")
+                st.html(f"<div style='background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; font-size: 13.5px; line-height: 1.6; color: #334155;'>{res.get('drift_optionality_update', 'Monitor upcoming capital deployment.')}</div>")
 
     with tab_appendices:
         with st.container(border=True):
             st.markdown("##### Appendix A — Forensic Evidence Pack")
             st.caption("Exact quotes, regulatory disclosures, and load-bearing audit excerpts:")
-            for e in res.get("appendix_a_forensic_evidence", []):
-                st.html(
-                    f'<div style="font-size: 14.5px; line-height: 1.6; color: #1E293B; margin-bottom: 8px; padding-left: 12px; border-left: 2px solid #CBD5E1;">'
-                    f'{e}'
-                    f'</div>'
-                )
+            ev_items = "".join([f'<div style="font-size: 13.5px; line-height: 1.6; color: #1E293B; margin-bottom: 10px; padding: 10px 14px; background: #F8FAFC; border-left: 3px solid #059669; border-radius: 0 6px 6px 0;">{e}</div>' for e in res.get("appendix_a_forensic_evidence", [])])
+            st.html(ev_items)
             
             st.divider()
-            st.markdown("##### Appendix B — Calculations & Stress Tests")
+            st.markdown("##### Appendix B — Forensic Calculations & Stress Tests")
             calcs = res.get("appendix_b_calculations", {})
+            calc_cards = []
             for k, v in calcs.items():
-                st.html(
-                    f'<div style="font-size: 14.5px; line-height: 1.6; margin-bottom: 8px;">'
-                    f'<strong>{k.replace("_", " ").title()}:</strong> <span style="color: #334155;">{v}</span>'
+                calc_cards.append(
+                    f'<div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">'
+                    f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">{k.replace("_", " ").title()}</div>'
+                    f'<div style="font-size: 14.5px; font-weight: 700; color: #0F172A; margin-top: 4px;">{v}</div>'
                     f'</div>'
                 )
+            st.html(f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">{"".join(calc_cards)}</div>')
 
     # 4. MANDATORY GUARDRAIL & PROMOTER INTEGRITY AUDIT (BELOW PILLARS)
     st.write("")
     tag = res.get("guardrail_tag", "GOV-CLEAN 🟢")
     evidence_list = res.get("guardrail_evidence", [])
+    ev_html_items = "".join([f'<li style="margin-bottom: 4px;">{e}</li>' for e in evidence_list])
     
     if "GOV-RED" in tag or res.get("pio_triggered", False):
         st.html(
             f'<div class="guardrail-red-box">'
             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-            f'<span style="font-weight: 800; font-size: 1.15rem; color: #DC2626;">🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO FIRED)</span>'
-            f'<span style="background-color: #FEE2E2; color: #991B1B; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCA5A5;">CRITICAL FORENSIC RISK</span>'
+            f'<span style="font-weight: 800; font-size: 1.15rem; color: #DC2626;">🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO HARD TRIGGER FIRED)</span>'
+            f'<span style="background-color: #FEE2E2; color: #991B1B; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #FCA5A5;">CRITICAL FORENSIC RISK</span>'
             f'</div>'
             f'<p style="margin: 0 0 10px 0; font-weight: 600; color: #991B1B;">{res.get("pio_reason", "Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.")}</p>'
-            f'<ul style="margin: 0; padding-left: 20px; color: #7F1D1D;">{"".join([f"<li>{e}</li>" for e in evidence_list])}</ul>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #7F1D1D;">{ev_html_items}</ul>'
             f'</div>'
         )
     elif "PROM-ALERT" in tag:
@@ -960,21 +1224,21 @@ if "idex_result" in st.session_state:
             f'<div class="guardrail-alert-box">'
             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
             f'<span style="font-weight: 800; font-size: 1.15rem; color: #D97706;">⚠️ MANDATORY GUARDRAIL TAG: {tag}</span>'
-            f'<span style="background-color: #FEF3C7; color: #92400E; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCD34D;">PROMOTER ALERT</span>'
+            f'<span style="background-color: #FEF3C7; color: #92400E; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #FCD34D;">PROMOTER ALERT</span>'
             f'</div>'
-            f'<p style="margin: 0 0 10px 0; color: #92400E; font-weight: 500;">Elevated promoter pledging or dilution observed under PPRM rules.</p>'
-            f'<ul style="margin: 0; padding-left: 20px; color: #78350F;">{"".join([f"<li>{e}</li>" for e in evidence_list])}</ul>'
+            f'<p style="margin: 0 0 10px 0; color: #92400E; font-weight: 600;">Elevated promoter pledging or dilution observed under PPRM rules.</p>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #78350F;">{ev_html_items}</ul>'
             f'</div>'
         )
     else:
         st.html(
             f'<div class="guardrail-clean-box">'
             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-            f'<span style="font-weight: 800; font-size: 1.15rem; color: #059669;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}</span>'
-            f'<span style="background-color: #D1FAE5; color: #065F46; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #A7F3D0;">INSTITUTIONAL GRADE</span>'
+            f'<span style="font-weight: 800; font-size: 1.15rem; color: #047857;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}</span>'
+            f'<span style="background-color: #D1FAE5; color: #065F46; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #A7F3D0;">INSTITUTIONAL GRADE</span>'
             f'</div>'
             f'<p style="margin: 0 0 8px 0; color: #064E3B; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm\'s length related-party disclosures.</p>'
-            f'<ul style="margin: 0; padding-left: 20px; color: #1E293B;">{"".join([f"<li>{e}</li>" for e in evidence_list])}</ul>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #1E293B;">{ev_html_items}</ul>'
             f'</div>'
         )
 

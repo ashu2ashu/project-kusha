@@ -32,7 +32,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Screener.in Inspired Institutional Black & White CSS
+# Screener.in Inspired Green & White Institutional CSS
 st.markdown("""
 <style>
     /* Global Screener-grade Typography */
@@ -64,7 +64,7 @@ st.markdown("""
         color: #0F172A !important;
     }
 
-    /* Screener.in Iconic Tabs: Big, Bold, Clean Underline */
+    /* Screener.in Iconic Tabs: Big, Bold, Clean Green Underline */
     div[data-baseweb="tab-list"] {
         gap: 8px !important;
         border-bottom: 2px solid #E2E8F0 !important;
@@ -84,20 +84,20 @@ st.markdown("""
         transition: all 0.15s ease-in-out !important;
     }
     button[data-baseweb="tab"]:hover {
-        color: #0F172A !important;
-        background-color: #F8FAFC !important;
+        color: #059669 !important;
+        background-color: #F0FDF4 !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: #000000 !important;
+        color: #047857 !important;
         font-weight: 700 !important;
-        border-bottom: 3.5px solid #000000 !important;
+        border-bottom: 3.5px solid #059669 !important;
         background-color: transparent !important;
     }
     div[data-baseweb="tab-border"] {
         display: none !important;
     }
     div[data-baseweb="tab-highlight"] {
-        background-color: #000000 !important;
+        background-color: #059669 !important;
         height: 3.5px !important;
     }
 
@@ -108,6 +108,10 @@ st.markdown("""
         border-radius: 8px !important;
         border: 1px solid #E2E8F0 !important;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+        transition: border-color 0.15s ease !important;
+    }
+    [data-testid="stMetric"]:hover {
+        border-color: #A7F3D0 !important;
     }
     [data-testid="stMetricValue"] {
         font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace !important;
@@ -129,26 +133,27 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* Screener-Style Institutional Primary Button */
+    /* Screener-Style Institutional Emerald Primary Button */
     button[kind="primary"] {
-        background-color: #000000 !important;
+        background-color: #059669 !important;
         color: #FFFFFF !important;
         font-size: 16px !important;
         font-weight: 700 !important;
         padding: 14px 28px !important;
         border-radius: 8px !important;
-        border: 1px solid #000000 !important;
+        border: 1px solid #047857 !important;
         letter-spacing: -0.2px !important;
         transition: all 0.2s ease !important;
     }
     button[kind="primary"]:hover {
-        opacity: 0.88 !important;
+        background-color: #047857 !important;
+        opacity: 0.95 !important;
         transform: translateY(-1px) !important;
     }
 
-    /* Progress Bar (Screener-Style) */
+    /* Progress Bar (Screener Green Style) */
     .stProgress > div > div > div > div {
-        background-color: #0F172A !important;
+        background-color: #059669 !important;
         border-radius: 6px !important;
     }
     .stProgress > div > div > div {
@@ -157,7 +162,52 @@ st.markdown("""
         border-radius: 6px !important;
     }
 
-    /* Guardrail Banners - Refined Crisp White & Black with subtle semantic borders */
+    /* 8-Pillar Screener-Grade Financial Table */
+    .pillar-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #FFFFFF;
+        margin: 14px 0 24px 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .pillar-table th {
+        background-color: #F8FAFC;
+        padding: 14px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #E2E8F0;
+        border-right: 1px solid #F1F5F9;
+    }
+    .pillar-table th:last-child {
+        border-right: none;
+    }
+    .pillar-table td {
+        padding: 16px 18px;
+        border-bottom: 1px solid #F1F5F9;
+        border-right: 1px solid #F1F5F9;
+        vertical-align: top;
+        font-size: 14.5px;
+        color: #1E293B;
+        line-height: 1.55;
+    }
+    .pillar-table td:last-child {
+        border-right: none;
+    }
+    .pillar-table tr:last-child td {
+        border-bottom: none;
+    }
+    .pillar-table tr:hover td {
+        background-color: #F0FDF4;
+    }
+
+    /* Guardrail Banners - Refined Green & White with subtle semantic borders */
     .guardrail-clean-box {
         background: #F0FDF4;
         border: 1.5px solid #10B981;
@@ -191,8 +241,7 @@ st.markdown("""
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
     st.markdown("### StockSage")
-    st.caption("AI Financial Intelligence • Ashu Elite Edition")
-    st.caption("Ashu Elite Edition • Dalal Street Forensic Engine")
+    st.caption("Dalal Street Equity Intelligence • Ashu Elite Edition")
     st.divider()
 
     # API Configuration
@@ -243,11 +292,11 @@ with st.sidebar:
     """)
 
 st.title("StockSage")
-st.caption("AI-Powered Institutional Financial & Forensic Intelligence • Ashu Elite Edition")
+st.caption("Institutional Equity Research & Forensic Intelligence Terminal • Ashu Elite Edition")
 
 # --- INTAKE CONSOLE ---
 with st.container(border=True):
-    st.markdown("#### Company Selection & Live Market Ingestion")
+    st.markdown("#### Company Selection & Live Market Grounding")
     
     c_list = get_company_list()
     default_target = "Tata Consumer Products Ltd. (TATACONSUM)"
@@ -257,7 +306,7 @@ with st.container(border=True):
     
     with col_sel1:
         selected_company_str = st.selectbox(
-            "Select Listed Indian Company (Nifty 500 Universe)",
+            "Select Indian Listed Stock (Nifty 500 Universe)",
             options=c_list,
             index=default_idx,
             help="Select any listed Indian company from the Nifty 500 to automatically fetch live market data."
@@ -293,7 +342,7 @@ with st.container(border=True):
         
         def_sector_idx = sector_list.index(matched_info["sector"]) if matched_info["sector"] in sector_list else 0
         target_sector = st.selectbox(
-            "Sector Benchmark Matrix",
+            "Sector Industry Matrix",
             sector_list,
             index=def_sector_idx,
             help="Applies sector-specific DSO, inventory, and margin thresholds."
@@ -301,14 +350,14 @@ with st.container(border=True):
         
     with col_sec2:
         doc_type = st.segmented_control(
-            "Evaluation Source",
-            ["Online Grounding + Knowledge Base", "Upload Annual Report PDF"],
-            default="Online Grounding + Knowledge Base"
+            "Data Ingestion Source",
+            ["Live Online Grounding (NSE & Filings)", "Upload Annual Report (PDF)"],
+            default="Live Online Grounding (NSE & Filings)"
         )
 
     # Optional PDF Upload
     uploaded_file = None
-    if doc_type == "Upload Annual Report PDF":
+    if doc_type == "Upload Annual Report (PDF)":
         uploaded_file = st.file_uploader(
             "Upload Financial Document (PDF)",
             type=["pdf"],
@@ -402,7 +451,7 @@ if live_data:
 btn_col1, btn_col2 = st.columns([3, 1])
 with btn_col1:
     run_btn = st.button(
-        f"Execute IDEX-7.5SC AI Evaluation for {target_company_name}",
+        f"Execute StockSage AI Evaluation for {target_company_name}",
         type="primary",
         width="stretch"
     )
@@ -411,7 +460,7 @@ with btn_col2:
         demo_mode = True
         run_btn = True
 
-# Helper to build Plotly 8-Pillar Radar Chart in Institutional Black & White
+# Helper to build Plotly 8-Pillar Radar Chart in Institutional Green & White
 def build_radar_chart(pillars):
     names = [f"P{p['id']}: {p['name']}" for p in pillars]
     pct_scores = [(p["score"] / p["max_score"]) * 100 for p in pillars]
@@ -424,22 +473,22 @@ def build_radar_chart(pillars):
         r=pct_closed,
         theta=names_closed,
         fill='toself',
-        fillcolor='rgba(15, 23, 42, 0.08)',
-        line=dict(color='#0F172A', width=3),
-        marker=dict(size=7, color='#0F172A'),
+        fillcolor='rgba(5, 150, 105, 0.12)',
+        line=dict(color='#059669', width=3),
+        marker=dict(size=7, color='#059669'),
         name='% of Max Score'
     ))
 
     fig.update_layout(
         polar=dict(
-            bgcolor='rgba(248, 250, 252, 0.7)',
+            bgcolor='rgba(240, 253, 244, 0.4)',
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
                 ticksuffix="%",
-                gridcolor='#E2E8F0',
-                linecolor='#CBD5E1',
-                tickfont=dict(color='#64748B', size=11)
+                gridcolor='#D1FAE5',
+                linecolor='#A7F3D0',
+                tickfont=dict(color='#047857', size=11, family='Inter', weight=500)
             ),
             angularaxis=dict(
                 gridcolor='#E2E8F0',
@@ -491,7 +540,7 @@ if run_btn:
 if "idex_result" in st.session_state:
     res = st.session_state["idex_result"]
     st.write("")
-    st.markdown("### Institutional Evaluation Scorecard")
+    st.markdown("### Institutional Equity Research Scorecard")
 
     # 1. EXECUTIVE SCORE ROW (KPI CARDS)
     kpi_col1, kpi_col2, kpi_col3, kpi_col4, kpi_col5 = st.columns(5)
@@ -505,14 +554,14 @@ if "idex_result" in st.session_state:
         )
     with kpi_col2:
         st.metric(
-            label="CORE SCORE",
+            label="CORE QUALITY SCORE",
             value=f"{res.get('core_score', 0):.1f}",
             delta_description="Pre-penalties (100 Max)",
             border=True
         )
     with kpi_col3:
         st.metric(
-            label="PENALTIES",
+            label="RISK PENALTIES",
             value=f"{res.get('total_penalties', 0):.1f} pts",
             delta="-7.5% Cap",
             delta_color="inverse",
@@ -520,14 +569,14 @@ if "idex_result" in st.session_state:
         )
     with kpi_col4:
         st.metric(
-            label="BONUS APPLIED",
+            label="GROWTH BONUSES",
             value=f"+{res.get('bonuses_breakdown', {}).get('total_bonus_applied', 0):.1f}%",
             delta="+10% Cap",
             border=True
         )
     with kpi_col5:
         st.metric(
-            label="POSITION SIZING",
+            label="ALLOCATION SIZING",
             value=res.get("position_sizing", "0%"),
             delta_description="Portfolio Allocation",
             border=True
@@ -570,44 +619,73 @@ if "idex_result" in st.session_state:
     st.write("")
     tab_pillars, tab_math, tab_peers, tab_thesis, tab_appendices = st.tabs([
         "8-Pillar Scorecard",
-        "Penalties & Bonuses",
-        "Peer Comparison",
-        "Final Call & Thesis",
-        "Forensic Evidence & Calculations"
+        "Risk Deductions & Bonuses",
+        "Peer Relative Matrix",
+        "Investment Thesis & Final Call",
+        "Auditor Evidence & Valuation Math"
     ])
 
     with tab_pillars:
-        st.markdown("#### Full 8-Pillar Evaluation Breakdown")
+        st.markdown("#### Comprehensive 8-Pillar Quality Table")
+        st.caption("Standardized Dalal Street Evaluation Matrix across Governance, Forensics, Capital Allocation & Durability")
         
-        p_cols = st.columns(2)
-        for i, p in enumerate(res.get("pillars", [])):
-            col = p_cols[i % 2]
-            with col:
-                with st.container(border=True):
-                    p_score = p.get("score", 0)
-                    p_max = p.get("max_score", 1)
-                    pct = (p_score / p_max) * 100
-                    
-                    st.markdown(f"""
-                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 8px;">
-                        <span style="font-size: 17.5px; font-weight: 700; color: #0F172A;">Pillar {p.get('id')}: {p.get('name')}</span>
-                        <span style="font-family:'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #0F172A;">
-                            {p_score:.1f} <span style="font-size: 13.5px; color: #64748B;">/ {p_max:.1f} pts ({pct:.0f}%)</span>
-                        </span>
+        table_rows = []
+        for p in res.get("pillars", []):
+            p_score = p.get("score", 0)
+            p_max = p.get("max_score", 1)
+            pct = (p_score / p_max) * 100
+            
+            # Screener-style Quality Rating Badge
+            if pct >= 85:
+                badge = f'<span style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Pristine</span>'
+            elif pct >= 70:
+                badge = f'<span style="background:#F0FDF4; color:#059669; border:1px solid #BBF7D0; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Strong</span>'
+            elif pct >= 50:
+                badge = f'<span style="background:#FFFBEB; color:#D97706; border:1px solid #FDE68A; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Moderate</span>'
+            else:
+                badge = f'<span style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:4px 10px; border-radius:9999px; font-weight:700; font-size:12.5px; display:inline-block;">{pct:.0f}% • Fragile</span>'
+                
+            rec_html = ""
+            if "receivable_subscore" in p:
+                rec_html = f'<div style="margin-top: 8px; background: #ECFDF5; border-left: 3px solid #059669; padding: 4px 10px; font-size: 13px; font-weight: 600; color: #065F46; border-radius: 0 4px 4px 0;">Receivable Health Subscore: {p["receivable_subscore"]}</div>'
+                
+            row_html = f"""
+            <tr>
+                <td style="width: 25%; font-weight: 700;">
+                    <div style="font-size: 15.5px; color: #0F172A; font-weight: 700;">P{p.get('id')}: {p.get('name')}</div>
+                </td>
+                <td style="width: 14%; text-align: center;">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 800; color: #047857;">
+                        {p_score:.1f} <span style="font-size: 13px; font-weight: 500; color: #64748B;">/ {p_max:.1f}</span>
                     </div>
-                    """, unsafe_allow_html=True)
-                    st.progress(pct / 100)
-                    st.markdown(f"""
-                    <p style="font-size: 14.5px; line-height: 1.6; color: #334155; margin: 10px 0 6px 0;">
-                        {p.get('justification', '')}
-                    </p>
-                    """, unsafe_allow_html=True)
-                    if "receivable_subscore" in p:
-                        st.markdown(f"""
-                        <div style="background: #F8FAFC; border-left: 3px solid #0F172A; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #0F172A; border-radius: 0 4px 4px 0; margin-top: 8px;">
-                            Receivable Subscore: {p['receivable_subscore']}
-                        </div>
-                        """, unsafe_allow_html=True)
+                </td>
+                <td style="width: 16%; text-align: center;">
+                    {badge}
+                </td>
+                <td style="width: 45%;">
+                    <div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{p.get('justification', '')}</div>
+                    {rec_html}
+                </td>
+            </tr>
+            """
+            table_rows.append(row_html)
+            
+        full_table_html = f"""
+        <table class="pillar-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%; text-align: left;">Pillar Domain</th>
+                    <th style="width: 14%; text-align: center;">Score</th>
+                    <th style="width: 16%; text-align: center;">Quality Rating</th>
+                    <th style="width: 45%; text-align: left;">Forensic Assessment & Driver Justification</th>
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(table_rows)}
+            </tbody>
+        </table>
+        """
+        st.markdown(full_table_html, unsafe_allow_html=True)
 
     with tab_math:
         m_col1, m_col2 = st.columns(2)
@@ -735,13 +813,13 @@ if "idex_result" in st.session_state:
         <div class="guardrail-clean-box">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span style="font-weight: 800; font-size: 1.15rem; color: #059669;">
-                    🛡️ MANDATORY GUARDRAIL TAG: {tag}
+                    🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}
                 </span>
                 <span style="background-color: #D1FAE5; color: #065F46; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #A7F3D0;">
                     INSTITUTIONAL GRADE
                 </span>
             </div>
-            <p style="margin: 0 0 8px 0; color: #064E3B; font-weight: 600;">10Y+ clean auditor records, zero promoter share pledging, fully aligned minority shareholder governance.</p>
+            <p style="margin: 0 0 8px 0; color: #064E3B; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm's length related-party disclosures.</p>
             <ul style="margin: 0; padding-left: 20px; color: #1E293B;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
         </div>
         """, unsafe_allow_html=True)
@@ -753,7 +831,7 @@ if "idex_result" in st.session_state:
     
     with exp_col1:
         st.download_button(
-            label="Export Structured JSON",
+            label="Download Structured JSON",
             data=json.dumps(res, indent=2),
             file_name=f"{res.get('company_name', 'Company')}_StockSage.json",
             mime="application/json",
@@ -786,7 +864,7 @@ if "idex_result" in st.session_state:
 **{res.get('final_call')}**
 """
         st.download_button(
-            label="Export Research Memo (.md)",
+            label="Download Investment Memo (.md)",
             data=md_text,
             file_name=f"{res.get('company_name', 'Company')}_StockSage_Memo.md",
             mime="text/markdown",
@@ -802,14 +880,14 @@ if "idex_result" in st.session_state:
 <title>{res.get('company_name', 'Company')} - StockSage Institutional Report</title>
 <style>
     body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #0f172a; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #ffffff; }}
-    h1 {{ font-size: 24px; color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 8px; }}
+    h1 {{ font-size: 24px; color: #047857; border-bottom: 2px solid #059669; padding-bottom: 8px; }}
     h2 {{ font-size: 18px; color: #0f172a; margin-top: 24px; }}
-    .badge {{ display: inline-block; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 14px; background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1; }}
+    .badge {{ display: inline-block; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 14px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }}
     .tag-box {{ border: 1.5px solid #10b981; background: #f0fdf4; padding: 12px 16px; border-radius: 6px; margin: 16px 0; color: #064e3b; }}
     table {{ width: 100%; border-collapse: collapse; margin: 16px 0; }}
     th, td {{ border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 14px; color: #0f172a; }}
     th {{ background: #f8fafc; font-weight: 600; }}
-    .metric-val {{ font-weight: 700; color: #0f172a; }}
+    .metric-val {{ font-weight: 700; color: #047857; }}
     @media print {{ body {{ margin: 0; padding: 10px; }} .no-print {{ display: none; }} }}
 </style>
 </head>
@@ -820,7 +898,7 @@ if "idex_result" in st.session_state:
             <p style="color:#64748b; margin-top:-8px;">Sector: {res.get('sector')} • Period: {res.get('financial_year')} • Institutional Forensic Research</p>
         </div>
         <div style="text-align:right;">
-            <div style="font-size:32px; font-weight:800; color:#0f172a;">{res.get('final_score', 0):.1f}<span style="font-size:16px; color:#64748b;">/100</span></div>
+            <div style="font-size:32px; font-weight:800; color:#047857;">{res.get('final_score', 0):.1f}<span style="font-size:16px; color:#64748b;">/100</span></div>
             <div class="badge">{res.get('verdict')}</div>
         </div>
     </div>
@@ -851,7 +929,7 @@ if "idex_result" in st.session_state:
 </body>
 </html>"""
         st.download_button(
-            label="Printable HTML Report",
+            label="Print Analyst Report (PDF/HTML)",
             data=html_report,
             file_name=f"{res.get('company_name', 'Company')}_StockSage_Report.html",
             mime="text/html",

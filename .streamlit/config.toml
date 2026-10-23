@@ -1,4 +1,4 @@
-# StockSage - Professional Black & White Institutional Theme
+# StockSage - Professional Green & White Institutional Theme (Screener.in Inspired)
 
 [server]
 port = 8501
@@ -11,14 +11,14 @@ gatherUsageStats = false
 
 [theme]
 base = "light"
-primaryColor = "#000000"             # Solid monochrome black for key action buttons & highlights
+primaryColor = "#059669"             # Signature Dalal Street Emerald Green
 backgroundColor = "#FFFFFF"          # Pure crisp white background
 secondaryBackgroundColor = "#F8FAFC" # Subtle slate/off-white for containers and cards
-codeBackgroundColor = "#F1F5F9"
+codeBackgroundColor = "#F0FDF4"
 textColor = "#0F172A"                # Deep rich charcoal / black typography
-linkColor = "#0F172A"
+linkColor = "#059669"                # Emerald green links
 borderColor = "#E2E8F0"              # Crisp subtle border outlines
-codeTextColor = "#0F172A"
+codeTextColor = "#065F46"
 showWidgetBorder = true
 showSidebarBorder = true
 baseRadius = "8px"                   # Modern clean radius
@@ -40,15 +40,15 @@ greenColor = "#059669"  # Positive/gains
 redColor = "#DC2626"    # Negative/losses
 yellowColor = "#D97706" # Warnings
 orangeColor = "#EA580C" # Alerts
-blueColor = "#0F172A"   # Primary brand / monochrome black
+blueColor = "#059669"   # Emerald brand
 violetColor = "#334155" # Accent
 grayColor = "#64748B"   # Neutral slate
 
-# Sidebar - Clean Black & White
+# Sidebar - Clean Green & White
 [theme.sidebar]
 backgroundColor = "#F8FAFC"
 secondaryBackgroundColor = "#FFFFFF"
-codeBackgroundColor = "#FFFFFF"
+codeBackgroundColor = "#F0FDF4"
 textColor = "#0F172A"
 borderColor = "#E2E8F0"
-primaryColor = "#000000"
+primaryColor = "#059669"

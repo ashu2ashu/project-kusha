@@ -1,7 +1,7 @@
 """
 app.py
 FinScan India | IDEX-7.5SC Hybrid Pro (Ashu Elite Edition)
-Institutional-Grade AI Financial & Forensic Research Platform
+Institutional AI Financial Intelligence Terminal for Indian Listed Equities
 """
 
 import streamlit as st
@@ -17,18 +17,22 @@ load_dotenv(override=True)
 from prompt_template import IDEX_ANALYSIS_PROMPT
 import importlib
 import analyzer
+import nifty_universe
 importlib.reload(analyzer)
+importlib.reload(nifty_universe)
+
 from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key
+from nifty_universe import get_company_list, find_company_info, fetch_live_market_data
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="IDEX-7.5SC Institutional | Ashu Elite Edition",
+    page_title="IDEX-7.5SC Terminal | Ashu Elite Edition",
     page_icon=":material/query_stats:",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Institutional CSS for Bloomberg/Fintech Terminal Polish
+# Custom Ultra-Premium Institutional CSS
 st.markdown("""
 <style>
     /* Metric styling */
@@ -38,21 +42,45 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
     
-    /* Terminal header bar */
-    .terminal-header {
-        background: linear-gradient(90deg, #0F172A 0%, #1E293B 100%);
-        border: 1px solid #334155;
+    /* Top Terminal Status Header */
+    .terminal-nav {
+        background: linear-gradient(90deg, #090D16 0%, #111827 50%, #090D16 100%);
+        border: 1px solid #1E293B;
         border-radius: 8px;
-        padding: 14px 20px;
-        margin-bottom: 20px;
+        padding: 12px 20px;
+        margin-bottom: 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+    
+    /* Live Ticker Bar */
+    .market-ticker-bar {
+        background: rgba(19, 28, 46, 0.7);
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+    }
+    .ticker-item {
+        color: #94A3B8;
+    }
+    .ticker-val {
+        color: #38BDF8;
+        font-weight: 600;
+        margin-left: 4px;
     }
     
     /* Guardrail Cards */
     .guardrail-clean-box {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.05) 100%);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.04) 100%);
         border: 1.5px solid #10B981;
         border-radius: 8px;
         padding: 16px 20px;
@@ -60,7 +88,7 @@ st.markdown("""
         margin-bottom: 16px;
     }
     .guardrail-alert-box {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.05) 100%);
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.04) 100%);
         border: 1.5px solid #F59E0B;
         border-radius: 8px;
         padding: 16px 20px;
@@ -68,30 +96,20 @@ st.markdown("""
         margin-bottom: 16px;
     }
     .guardrail-red-box {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.08) 100%);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.06) 100%);
         border: 2px solid #EF4444;
         border-radius: 8px;
         padding: 16px 20px;
         color: #FEE2E2;
         margin-bottom: 16px;
     }
-    
-    /* Score Glow Card */
-    .hero-score-card {
-        background: radial-gradient(circle at 50% 0%, #1E293B 0%, #0F172A 100%);
-        border: 1px solid #38BDF8;
-        box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
-        border-radius: 10px;
-        padding: 24px;
-        text-align: center;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
-    st.markdown("### :material/shield: **IDEX-7.5SC Pro**")
-    st.caption("Ashu Elite Edition • Forensic Guardrails")
+    st.markdown("### :material/shield: **IDEX-7.5SC Terminal**")
+    st.caption("Ashu Elite Edition • Dalal Street Forensic Engine")
     st.divider()
 
     # API Configuration
@@ -106,12 +124,12 @@ with st.sidebar:
     active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
 
     if env_key:
-        st.caption(":material/lock: Auto-detected from `.env`")
+        st.caption(":material/lock: Auto-loaded from `.env`")
 
     col_btn1, col_btn2 = st.columns([1.2, 1])
     with col_btn1:
         if st.button(":material/bolt: Test Key", width="stretch"):
-            with st.spinner("Connecting..."):
+            with st.spinner("Connecting to Google..."):
                 is_valid, msg = verify_gemini_api_key(active_api_key)
                 if is_valid:
                     st.success(msg)
@@ -141,81 +159,131 @@ with st.sidebar:
     - **Bonus Cap:** Cumulative +10% max
     """)
 
-# --- TOP TERMINAL HEADER BAR ---
+# --- TOP TERMINAL NAV BAR ---
 st.markdown("""
-<div class="terminal-header">
+<div class="terminal-nav">
     <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; color: #38BDF8;">
+        <span style="font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; color: #38BDF8;">
             FINSCAN <span style="color: #F8FAFC;">AI</span>
         </span>
-        <span style="background-color: #1E293B; border: 1px solid #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: #94A3B8;">
+        <span style="background-color: #1E293B; border: 1px solid #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: #94A3B8; font-weight: 600;">
             IDEX-7.5SC HYBRID PRO
         </span>
     </div>
-    <div style="display: flex; align-items: center; gap: 16px; font-size: 0.85rem; color: #94A3B8;">
+    <div style="display: flex; align-items: center; gap: 18px; font-size: 0.85rem; color: #94A3B8;">
         <span>:material/memory: <b>Gemini 3.5 Flash</b></span>
-        <span>:material/account_balance: <b>Ind AS Standards</b></span>
-        <span style="color: #34D399;">● ENGINE ONLINE</span>
+        <span>:material/account_balance: <b>NSE / BSE Universe</b></span>
+        <span style="color: #34D399; font-weight: 700;">● LIVE INTELLIGENCE</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- INTAKE & EVALUATION FORM ---
+# --- INTAKE CONSOLE (NIFTY SEARCH & LIVE MARKET DATA) ---
 with st.container(border=True):
-    st.markdown("#### :material/manage_search: Target Company Ingestion")
+    st.markdown("#### :material/search: Company Selection & Live Market Ingestion")
     
-    c1, c2, c3 = st.columns([2.5, 2, 2])
-    with c1:
-        company_name = st.text_input(
-            "Company Name / Ticker",
-            placeholder="e.g. Tata Consumer Products Ltd, Titan, Dixon Tech",
-            help="Enter the listed BSE/NSE firm name."
+    c_list = get_company_list()
+    default_idx = 11  # Tata Consumer Products Ltd
+    
+    col_sel1, col_sel2 = st.columns([2.5, 1.5])
+    
+    with col_sel1:
+        selected_company_str = st.selectbox(
+            "Select Listed Indian Company (Nifty 50 / Next 50)",
+            options=c_list,
+            index=default_idx,
+            help="Select any listed Indian company to automatically fetch live market data."
         )
-    with c2:
-        sector = st.selectbox(
+    
+    matched_info = find_company_info(selected_company_str)
+    
+    with col_sel2:
+        if matched_info["ticker"] == "CUSTOM":
+            target_company_name = st.text_input("Enter Company Name", placeholder="e.g. Amber Enterprises Ltd")
+            target_ticker = st.text_input("NSE/BSE Symbol (Optional)", placeholder="e.g. AMBER")
+        else:
+            target_company_name = matched_info["name"]
+            target_ticker = matched_info["ticker"]
+            st.text_input("NSE Ticker Symbol", value=target_ticker, disabled=True)
+            
+    # Sector & Document Type Controls
+    col_sec1, col_sec2 = st.columns([2, 2])
+    with col_sec1:
+        sector_list = [
+            "FMCG / Retail",
+            "Consumer Durables / Retailer credit",
+            "Pharma / Formulations (trade)",
+            "Manufacturing / B2B",
+            "Capital Goods / Industrial",
+            "Construction / Infra (milestone billing)",
+            "IT Services / Consulting",
+            "SaaS / Subscription (B2B)",
+            "Hospitals / Healthcare (insurer payments)",
+            "Logistics / Transport",
+            "Chemicals / Oil & Gas",
+            "Banks / NBFC"
+        ]
+        
+        # Auto-match sector based on selection
+        def_sector_idx = sector_list.index(matched_info["sector"]) if matched_info["sector"] in sector_list else 0
+        target_sector = st.selectbox(
             "Sector Benchmark Matrix",
-            [
-                "FMCG / Retail",
-                "Consumer Durables / Retailer credit",
-                "Pharma / Formulations (trade)",
-                "Manufacturing / B2B",
-                "Capital Goods / Industrial",
-                "Construction / Infra (milestone billing)",
-                "IT Services / Consulting",
-                "SaaS / Subscription (B2B)",
-                "Hospitals / Healthcare (insurer payments)",
-                "Logistics / Transport",
-                "Chemicals / Oil & Gas",
-                "Banks / NBFC"
-            ]
+            sector_list,
+            index=def_sector_idx,
+            help="Applies sector-specific DSO, inventory, and margin thresholds."
         )
-    with c3:
+        
+    with col_sec2:
         doc_type = st.segmented_control(
-            "Document Type",
-            ["Annual Report", "Investor PPT", "Audited Financials"],
-            default="Annual Report"
+            "Evaluation Source",
+            ["Online Grounding + Knowledge Base", "Upload Annual Report PDF"],
+            default="Online Grounding + Knowledge Base"
         )
 
-    # File Drag-and-Drop
-    uploaded_file = st.file_uploader(
-        "Upload Financial Filing (PDF)",
-        type=["pdf"],
-        help="Handles comprehensive 200–500 page Indian Annual Reports using Gemini 3.5 Flash multimodal ingestion."
+    # Optional PDF Upload
+    uploaded_file = None
+    if doc_type == "Upload Annual Report PDF":
+        uploaded_file = st.file_uploader(
+            "Upload Financial Document (PDF)",
+            type=["pdf"],
+            help="Upload the annual report. 200–500 page Indian reports are fully ingested by Gemini 3.5 Flash."
+        )
+
+# Fetch Live Online Market Data
+live_data = None
+if target_ticker and target_ticker != "CUSTOM":
+    with st.spinner(f"Ingesting live market data from NSE for {target_ticker}..."):
+        live_data = fetch_live_market_data(target_ticker)
+
+# Render Live Market Ticker Tape
+if live_data and live_data.get("current_price") != "N/A":
+    st.markdown(f"""
+    <div class="market-ticker-bar">
+        <span class="ticker-item">:material/payments: <b>PRICE:</b><span class="ticker-val">₹{live_data.get('current_price')}</span></span>
+        <span class="ticker-item">:material/account_balance: <b>MCAP:</b><span class="ticker-val">₹{live_data.get('market_cap_cr'):,} Cr</span></span>
+        <span class="ticker-item">:material/monitoring: <b>P/E (TTM):</b><span class="ticker-val">{live_data.get('pe_ratio')}x</span></span>
+        <span class="ticker-item">:material/trending_up: <b>52W HIGH:</b><span class="ticker-val">₹{live_data.get('high_52w')}</span></span>
+        <span class="ticker-item">:material/trending_down: <b>52W LOW:</b><span class="ticker-val">₹{live_data.get('low_52w')}</span></span>
+        <span class="ticker-item">:material/pie_chart: <b>ROE:</b><span class="ticker-val">{live_data.get('roe')}</span></span>
+        <span class="ticker-item">:material/balance: <b>DEBT/EQ:</b><span class="ticker-val">{live_data.get('debt_to_equity')}</span></span>
+        <span class="ticker-item">:material/recommend: <b>CONSENSUS:</b><span class="ticker-val">{live_data.get('analyst_rating')}</span></span>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Action Buttons
+btn_col1, btn_col2 = st.columns([3, 1])
+with btn_col1:
+    run_btn = st.button(
+        f":material/rocket_launch: Execute IDEX-7.5SC AI Evaluation for {target_company_name}",
+        type="primary",
+        width="stretch"
     )
+with btn_col2:
+    if st.button(":material/visibility: Quick Demo", width="stretch"):
+        demo_mode = True
+        run_btn = True
 
-    btn_col1, btn_col2 = st.columns([3, 1])
-    with btn_col1:
-        run_btn = st.button(
-            ":material/rocket_launch: Execute Institutional IDEX-7.5SC Analysis",
-            type="primary",
-            width="stretch"
-        )
-    with btn_col2:
-        if st.button(":material/visibility: Preview Sample", width="stretch"):
-            demo_mode = True
-            run_btn = True
-
-# Helper to build Plotly 8-Pillar Radar Chart with Dark Financial Aesthetic
+# Helper to build Plotly 8-Pillar Radar Chart
 def build_dark_radar_chart(pillars):
     names = [f"P{p['id']}: {p['name']}" for p in pillars]
     pct_scores = [(p["score"] / p["max_score"]) * 100 for p in pillars]
@@ -261,38 +329,35 @@ def build_dark_radar_chart(pillars):
 
 # --- EXECUTION ENGINE ---
 if run_btn:
-    if not uploaded_file and not demo_mode:
-        st.error("Please upload an Annual Report PDF or click 'Preview Sample' / toggle Demo Mode in the sidebar.")
-    else:
-        # Visual Progress Simulation
-        with st.status(":material/sync: Running IDEX-7.5SC Forensic Audit...", expanded=True) as status:
-            st.write(":material/description: Parsing and indexing Ind AS financial tables...")
-            time.sleep(0.3)
-            st.write(":material/policy: Auditing statutory auditor remarks & related-party schedules...")
-            time.sleep(0.3)
-            st.write(":material/account_balance: Testing Sector Receivable Health (DSO, Aging, Provision Coverage)...")
-            time.sleep(0.3)
-            st.write(":material/shield: Enforcing Promoter Integrity Override (PIO) & PPRM Guardrails...")
-            
-            try:
-                if demo_mode:
-                    result = get_demo_analysis(company_name, sector)
-                else:
-                    pdf_bytes = uploaded_file.read()
-                    result = analyze_document_with_gemini(
-                        pdf_bytes=pdf_bytes,
-                        company_name=company_name,
-                        sector=sector,
-                        api_key=active_api_key,
-                        custom_prompt=custom_prompt
-                    )
-                st.session_state["idex_result"] = result
-                status.update(label=":material/check_circle: IDEX-7.5SC Analysis Complete!", state="complete", expanded=False)
-            except Exception as e:
-                status.update(label=":material/error: Evaluation Failed", state="error")
-                st.error(f"Analysis Error: {str(e)}")
-                with st.expander(":material/terminal: Technical Traceback"):
-                    st.exception(e)
+    with st.status(f":material/sync: Auditing {target_company_name} with IDEX-7.5SC...", expanded=True) as status:
+        st.write(":material/cloud_download: Ingesting verified audited Ind AS financial tables & live market feeds...")
+        time.sleep(0.3)
+        st.write(":material/policy: Auditing statutory auditor qualifications & related-party schedules...")
+        time.sleep(0.3)
+        st.write(":material/account_balance: Testing Sector Receivable Health (DSO, Aging, Provision Coverage)...")
+        time.sleep(0.3)
+        st.write(":material/shield: Enforcing Promoter Integrity Override (PIO) & PPRM Guardrails...")
+        
+        try:
+            if demo_mode:
+                result = get_demo_analysis(target_company_name, target_sector, live_data)
+            else:
+                pdf_bytes = uploaded_file.read() if uploaded_file else None
+                result = analyze_document_with_gemini(
+                    company_name=target_company_name,
+                    sector=target_sector,
+                    api_key=active_api_key,
+                    pdf_bytes=pdf_bytes,
+                    live_data=live_data,
+                    custom_prompt=custom_prompt
+                )
+            st.session_state["idex_result"] = result
+            status.update(label=f":material/check_circle: Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
+        except Exception as e:
+            status.update(label=":material/error: Evaluation Failed", state="error")
+            st.error(f"Analysis Error: {str(e)}")
+            with st.expander(":material/terminal: Technical Traceback"):
+                st.exception(e)
 
 # --- RESULTS DASHBOARD ---
 if "idex_result" in st.session_state:
@@ -435,7 +500,6 @@ if "idex_result" in st.session_state:
     with tab_pillars:
         st.markdown("#### :material/table_rows: Full 8-Pillar Evaluation Breakdown")
         
-        # Grid of cards for each pillar
         p_cols = st.columns(2)
         for i, p in enumerate(res.get("pillars", [])):
             col = p_cols[i % 2]
@@ -531,7 +595,6 @@ if "idex_result" in st.session_state:
             width="stretch"
         )
     with exp_col2:
-        # Generate formatted markdown research memo
         md_text = f"""# {res.get('cover_line', 'IDEX-7.5SC Institutional Research')}
 
 ## Metadata

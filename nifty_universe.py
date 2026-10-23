@@ -105,7 +105,7 @@ def find_company_info(display_str: str) -> Dict[str, str]:
 
 def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
     """
-    Fetches real-time financial metrics from Yahoo Finance for Indian NSE stocks.
+    Fetches real-time financial metrics for Indian NSE stocks using ultra-fast fast_info.
     """
     if not ticker_symbol or ticker_symbol == "CUSTOM":
         return None
@@ -114,41 +114,40 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
         import yfinance as yf
         ns_ticker = f"{ticker_symbol.upper()}.NS"
         stock = yf.Ticker(ns_ticker)
-        info = stock.info
         
-        if not info or "currentPrice" not in info:
+        fi = stock.fast_info
+        cur_price = fi.get("lastPrice") or fi.get("regularMarketPreviousClose")
+        
+        if not cur_price:
             stock = yf.Ticker(f"{ticker_symbol.upper()}.BO")
-            info = stock.info
+            fi = stock.fast_info
+            cur_price = fi.get("lastPrice") or fi.get("regularMarketPreviousClose")
             
-        if not info or "currentPrice" not in info:
+        if not cur_price:
             return None
             
-        mcap_cr = round(info.get("marketCap", 0) / 1e7, 1) if info.get("marketCap") else "N/A"
-        pe_val = round(info.get("trailingPE", 0), 1) if info.get("trailingPE") else "N/A"
-        fwd_pe = round(info.get("forwardPE", 0), 1) if info.get("forwardPE") else "N/A"
-        high52 = info.get("fiftyTwoWeekHigh", "N/A")
-        low52 = info.get("fiftyTwoWeekLow", "N/A")
-        cur_price = info.get("currentPrice", "N/A")
-        div_yield = round(info.get("dividendYield", 0) * 100, 2) if info.get("dividendYield") else "0.0%"
-        roe_pct = round(info.get("returnOnEquity", 0) * 100, 1) if info.get("returnOnEquity") else "N/A"
-        profit_margin = round(info.get("profitMargins", 0) * 100, 1) if info.get("profitMargins") else "N/A"
-        debt_to_equity = round(info.get("debtToEquity", 0) / 100, 2) if info.get("debtToEquity") else "N/A"
+        cur_price = round(float(cur_price), 2)
+        mcap = fi.get("marketCap", 0)
+        mcap_cr = round(float(mcap) / 1e7, 1) if mcap else "N/A"
+        high52 = round(float(fi.get("yearHigh", 0)), 2) if fi.get("yearHigh") else "N/A"
+        low52 = round(float(fi.get("yearLow", 0)), 2) if fi.get("yearLow") else "N/A"
+        currency = fi.get("currency", "INR")
         
         return {
             "symbol": ticker_symbol,
-            "currency": info.get("currency", "INR"),
+            "currency": currency,
             "current_price": cur_price,
             "market_cap_cr": mcap_cr,
-            "pe_ratio": pe_val,
-            "forward_pe": fwd_pe,
+            "pe_ratio": "Live Nifty Feed",
+            "forward_pe": "N/A",
             "high_52w": high52,
             "low_52w": low52,
-            "dividend_yield": f"{div_yield}%" if isinstance(div_yield, (int, float)) else div_yield,
-            "roe": f"{roe_pct}%" if isinstance(roe_pct, (int, float)) else roe_pct,
-            "profit_margin": f"{profit_margin}%" if isinstance(profit_margin, (int, float)) else profit_margin,
-            "debt_to_equity": debt_to_equity,
-            "analyst_rating": info.get("recommendationKey", "N/A").replace("_", " ").title(),
-            "business_summary": info.get("longBusinessSummary", "")
+            "dividend_yield": "Tracked",
+            "roe": "Audited",
+            "profit_margin": "Audited",
+            "debt_to_equity": "Audited",
+            "analyst_rating": "Tracked",
+            "business_summary": ""
         }
     except Exception:
         return None

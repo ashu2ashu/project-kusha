@@ -1,105 +1,148 @@
 """
 analyzer.py
-Handles PDF parsing and LLM communication with Google Gemini Flash.
-Includes fallback demo mode for testing without an API key.
+Engine for IDEX-7.5SC Hybrid Pro (Ashu Elite Edition).
+Handles PDF ingestion, communication with Gemini Flash, and full 8-pillar parsing.
 """
 
 import json
 import os
 import tempfile
 from typing import Dict, Any, Optional
-from prompt_template import SYSTEM_INSTRUCTION, DEFAULT_ANALYSIS_PROMPT
+from prompt_template import IDEX_SYSTEM_INSTRUCTION, IDEX_ANALYSIS_PROMPT
 
 def get_demo_analysis(company_name: str, sector: str) -> Dict[str, Any]:
-    """Returns a realistic sample analysis for demonstration and preview."""
+    """Returns a realistic, high-grade institutional IDEX-7.5SC analysis."""
+    c_name = company_name.strip() if company_name and company_name.strip() else "Tata Consumer Products Ltd"
+    c_sec = sector.strip() if sector and sector.strip() else "FMCG / Retail"
+
     return {
-        "company_name": company_name or "Tata Consumer Products Ltd",
-        "sector": sector or "FMCG / Food & Beverages",
+        "cover_line": f"Evaluate {c_name} in {c_sec} using IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) — Updated with Promoter Integrity Guardrails",
+        "company_name": c_name,
+        "sector": c_sec,
         "financial_year": "FY24",
-        "total_score": 79,
-        "verdict_grade": "A - Strong Performer",
-        "executive_summary": (
-            f"{company_name or 'Tata Consumer Products Ltd'} demonstrates resilient operational growth in {sector or 'FMCG'}, "
-            "backed by high brand equity, expansion into premium categories, and consistent cash generation. "
-            "Operating margins have shown steady expansion despite input cost volatility. Working capital management remains prudent, "
-            "and leverage ratios are well within safe thresholds for an Indian consumer goods company."
-        ),
+        "guardrail_tag": "GOV-CLEAN 🟢",
+        "guardrail_evidence": [
+            "Pristine 10Y+ audit history under Big 4 statutory auditor with unmodified opinion",
+            "0.0% promoter share pledging with stable promoter ownership (33.5%)",
+            "Zero SEBI, ED, or regulatory show-cause notices or ongoing fraud investigations"
+        ],
+        "pio_triggered": False,
+        "pio_reason": None,
+        "core_score": 83.0,
+        "total_penalties": -1.5,
+        "penalties_breakdown": [
+            {
+                "penalty_name": "Valuation Distortion",
+                "points": -1.5,
+                "reason": "Trailing P/E of ~75x is elevated; requires sustained 18%+ earnings compounding to justify."
+            }
+        ],
+        "adjusted_pre_bonus_score": 81.5,
+        "bonuses_breakdown": {
+            "cool_pro_bonus": 3.0,
+            "trajectory_bonus": 1.0,
+            "resilience_bonus": 1.5,
+            "total_bonus_applied": 5.5
+        },
+        "final_score": 87.0,
+        "verdict": "PCGC (85–89) — Potential Compounder",
+        "position_sizing": "5–10%",
+        "tags_applied": ["GOV-CLEAN 🟢", "COOL++", "Trajectory", "OCP"],
         "pillars": [
             {
-                "name": "Profitability & Growth",
-                "score": 16,
-                "max_score": 20,
-                "assessment": "Revenue grew at 10.5% YoY with EBITDA margins steady at ~14.8%. Strong domestic volume growth.",
-                "key_positives": ["Double-digit revenue growth in core categories", "EBITDA margin expansion of 70 bps"],
-                "key_negatives": ["Raw material inflation in tea/coffee segments putting short-term pressure"]
+                "id": 1,
+                "name": "Governance & Capital Allocation",
+                "score": 18.0,
+                "max_score": 20.0,
+                "justification": "Exemplary board independence, Tata governance code compliance, zero promoter dilution, disciplined M&A integration."
             },
             {
-                "name": "Capital Allocation & Return",
-                "score": 15,
-                "max_score": 20,
-                "assessment": "ROCE stands at 14.5% and ROE at 11.2%. Strategic acquisitions being integrated smoothly.",
-                "key_positives": ["Disciplined capex with focus on supply chain digitization", "Healthy asset turnover ratio"],
-                "key_negatives": ["Goodwill amortization from past M&A slightly dilutes reported ROCE"]
+                "id": 2,
+                "name": "Forensic Accounting & Cash Flow",
+                "score": 16.5,
+                "max_score": 20.0,
+                "receivable_subscore": "3.6 / 4.0 (DSO at 28d vs FMCG sector ideal 15–30d; >90d = 1.4%)",
+                "justification": "CFO/PAT conversion at 89%, high earnings quality, no aggressive revenue recognition, receivables well contained."
             },
             {
-                "name": "Solvency & Balance Sheet",
-                "score": 18,
-                "max_score": 20,
-                "assessment": "Virtually zero net debt with an Interest Coverage Ratio exceeding 12x. Rock-solid balance sheet.",
-                "key_positives": ["Net Debt to EBITDA is below 0.2x", "Strong credit rating (CRISIL AAA)"],
-                "key_negatives": ["Slight increase in short-term trade payables"]
+                "id": 3,
+                "name": "Risk, ESG & Fragility",
+                "score": 10.5,
+                "max_score": 12.0,
+                "justification": "Net Debt/EBITDA is negative (net cash balance sheet). Strong CRISIL AAA rating with minimal environmental risks."
             },
             {
-                "name": "Cash Flow Quality",
-                "score": 14,
-                "max_score": 20,
-                "assessment": "Operating cash flow conversion (CFO / PAT) reached 88%. Positive Free Cash Flow (FCF) throughout the year.",
-                "key_positives": ["Strong cash conversion cycle of 38 days", "Predictable operating cash flow"],
-                "key_negatives": ["Seasonal inventory build-up temporarily tied up cash in Q3"]
+                "id": 4,
+                "name": "Valuation & Sanity Layer",
+                "score": 3.0,
+                "max_score": 6.0,
+                "justification": "Multiples trade at a premium to historical median. DCF fair value implies modest margin of safety at current levels."
             },
             {
-                "name": "Governance & Forensic Audit",
-                "score": 16,
-                "max_score": 20,
-                "assessment": "Unmodified/clean statutory auditor opinion. Zero promoter pledging and high board independence.",
-                "key_positives": ["Big 4 statutory auditor with clean report", "Zero promoter share pledging"],
-                "key_negatives": ["Minor routine related-party transactions with group entities (within arm's length)"]
+                "id": 5,
+                "name": "Moat Durability & Scalability",
+                "score": 11.5,
+                "max_score": 13.0,
+                "justification": "Formidable distribution reach across 4M+ outlets in India; high pricing power in salt and branded tea."
+            },
+            {
+                "id": 6,
+                "name": "Simplicity & Repeatability",
+                "score": 4.5,
+                "max_score": 5.0,
+                "justification": "Straightforward FMCG business model with transparent reporting across India beverages and food verticals."
+            },
+            {
+                "id": 7,
+                "name": "Innovation & TAM Optionality",
+                "score": 14.0,
+                "max_score": 18.0,
+                "justification": "Rapid rollout into Sampann pulses/spices, Soulfull cereals, and premium organic RTD segments expanding addressable TAM."
+            },
+            {
+                "id": 8,
+                "name": "Insider & Minority Shareholder Risk",
+                "score": 5.0,
+                "max_score": 6.0,
+                "justification": "Zero promoter pledging, equitable treatment of minority shareholders, transparent arm's length RPT disclosures."
             }
         ],
-        "indian_red_flags": [
-            {
-                "flag": "Auditor Opinion",
-                "status": "Clean",
-                "detail": "Statutory auditors issued an unmodified report with no adverse qualifications or disclaimers."
-            },
-            {
-                "flag": "Related Party Transactions",
-                "status": "Low Risk",
-                "detail": "Transactions are ordinary-course operational services with Tata Group affiliates, fully disclosed under Ind AS 24."
-            },
-            {
-                "flag": "Contingent Liabilities",
-                "status": "Low Risk",
-                "detail": "Contingent tax claims represent less than 3.5% of total Net Worth, well within safe parameters."
-            },
-            {
-                "flag": "Promoter Pledging / Dilution",
-                "status": "None",
-                "detail": "0.0% of promoter shares are pledged. Promoter holding remains stable."
-            }
+        "receivable_health_metrics": {
+            "dso_days": 28,
+            "sector_ideal_dso": "15–30 days",
+            "receivables_to_sales_pct": "6.8%",
+            "pct_over_90_days": "1.4%",
+            "top_debtor_concentration_pct": "6.2%",
+            "provision_coverage_pct": "3.5%",
+            "receivable_verdict": "Ideal — well inside sector benchmark limits with negligible delinquency risk"
+        },
+        "peer_matrix": [
+            {"peer_name": "Hindustan Unilever Ltd", "score": "88.5", "position": "Benchmark Leader"},
+            {"peer_name": "Nestle India Ltd", "score": "86.0", "position": "High Quality Peer"},
+            {"peer_name": "Marico Ltd", "score": "82.5", "position": "Quality Tracker"}
         ],
-        "top_strengths": [
-            "Strong brand portfolio and distribution network across urban and rural India",
-            "Near debt-free balance sheet offering high resilience during economic downturns",
-            "High corporate governance standard backed by a reputable promoter group"
+        "strengths": [
+            "Dominant market share in Tata Salt and Branded Tea with resilient pricing power",
+            "Virtually debt-free balance sheet providing strategic M&A flexibility",
+            "Strong corporate governance backing with zero promoter share pledging"
         ],
-        "top_risks": [
-            "Commodity price volatility (tea, coffee, and packaging costs)",
-            "Intense competition from regional players and D2C brands in packaged food"
+        "weaknesses": [
+            "Elevated valuation leaving minimal room for execution missteps",
+            "Sensitivity of gross margins to raw tea and coffee commodity price cycles"
         ],
-        "final_recommendation": (
-            "Suitable for conservative, long-term wealth compounding. High financial quality with minimal governance risk."
-        )
+        "fragility_esg_fx_notes": "Negligible environmental litigation. Minor FX exposure from international tea operations hedged via forward contracts.",
+        "drift_optionality_update": "Integration of recently acquired Capital Foods (Ching's Secret) and Organic India to drive margin expansion in FY25-26.",
+        "final_call": "BUY ON DIPS — High-quality compounder with fortress governance and runway for growth; accumulate during market pullbacks.",
+        "appendix_a_forensic_evidence": [
+            "Statutory Auditor's Report (Annual Report FY24): Unmodified opinion issued by Walker Chandiok & Co LLP.",
+            "Promoter Pledge Disclosure: BSE filing confirms 0.0% promoter shareholding pledged.",
+            "Ind AS 24 Related Party Disclosures: Transactions with Tata Sons and group affiliates are routine operational services on an arm's length basis."
+        ],
+        "appendix_b_calculations": {
+            "dcf_fair_value_estimate": "INR 1,020 - 1,080 (WACC 10.8%, Terminal Growth 5.5%)",
+            "stress_test_20pct_revenue_drop": "EBITDA margin compresses from 15.1% to 12.8%; ROCE remains above 10%; Net Cash position prevents financial distress.",
+            "working_capital_math": "Cash Conversion Cycle: Inventory (45d) + DSO (28d) - DPO (48d) = 25 days net cycle."
+        }
     }
 
 def analyze_document_with_gemini(
@@ -110,7 +153,7 @@ def analyze_document_with_gemini(
     custom_prompt: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Uploads the PDF to Google Gemini Flash and runs structured forensic financial analysis.
+    Executes IDEX-7.5SC Hybrid Pro evaluation on the uploaded PDF using Gemini Flash.
     """
     if not api_key or api_key.strip() == "":
         raise ValueError("Gemini API Key is missing. Please provide your free Google AI Studio key.")
@@ -123,36 +166,32 @@ def analyze_document_with_gemini(
 
     client = genai.Client(api_key=api_key)
 
-    # Save PDF bytes to a temporary file for upload to Gemini
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
         tmp_file.write(pdf_bytes)
         tmp_path = tmp_file.name
 
     uploaded_file = None
     try:
-        # Upload file directly to Gemini File API (Handles large 300+ page Indian reports seamlessly)
+        # Upload directly to Gemini File API (Handles 300+ page Indian reports seamlessly)
         uploaded_file = client.files.upload(file=tmp_path)
 
-        # Prepare prompt
-        prompt_template = custom_prompt if custom_prompt and custom_prompt.strip() else DEFAULT_ANALYSIS_PROMPT
+        prompt_template = custom_prompt if custom_prompt and custom_prompt.strip() else IDEX_ANALYSIS_PROMPT
         formatted_prompt = prompt_template.format(
             company_name=company_name or "the Company",
-            sector=sector or "Diversified / General"
+            sector=sector or "Diversified"
         )
 
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=[uploaded_file, formatted_prompt],
             config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
+                system_instruction=IDEX_SYSTEM_INSTRUCTION,
                 response_mime_type="application/json",
-                temperature=0.2,  # Low temperature for accurate, grounded analysis
+                temperature=0.15,  # Low temperature for strict, forensic accuracy
             )
         )
 
-        # Parse JSON
         result_text = response.text.strip()
-        # Clean potential markdown wrapping if present
         if result_text.startswith("```json"):
             result_text = result_text[7:]
         if result_text.startswith("```"):
@@ -168,10 +207,8 @@ def analyze_document_with_gemini(
     except Exception as e:
         raise RuntimeError(f"Error during Gemini analysis: {str(e)}")
     finally:
-        # Cleanup temporary local file
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
-        # Attempt to clean up remote file from Gemini
         if uploaded_file and hasattr(uploaded_file, 'name'):
             try:
                 client.files.delete(name=uploaded_file.name)

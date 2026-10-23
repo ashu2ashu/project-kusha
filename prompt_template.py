@@ -1,127 +1,201 @@
 """
 prompt_template.py
-Defines the financial analysis prompt and output schema.
-You can replace or refine this prompt as needed!
+Defines the institutional IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) prompt and JSON output schema.
+Locked & Updated with Promoter Integrity Guardrails & Sector-Specific Receivable Health Layer.
 """
 
-SYSTEM_INSTRUCTION = """
-You are a senior Indian Chartered Accountant (CA) and Forensic Equity Research Analyst specializing in BSE/NSE listed companies and Indian Accounting Standards (Ind AS).
-Your job is to thoroughly analyze the provided company financial documents (Annual Report, Investor Presentation, or Financial Statements) and score the company across 5 critical pillars.
-You must maintain a strict, objective, and conservative analytical standard. Be alert to Indian market red flags such as related-party transactions, high promoter pledging, auditor qualifications, high contingent liabilities, and divergences between net profit and operating cash flow.
+IDEX_SYSTEM_INSTRUCTION = """
+You are an elite equity researcher running the IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) | Final (Locked, Updated with Promoter Integrity Guardrails).
+Be forensic, precise, numerical, and citation-backed. Produce the output strictly matching the required schema.
+Enforce all caps, penalty & bonus rules, and the mandatory Guardrail Tag.
+Be ruthless on governance — do not allow growth or accounting niceties to override promoter integrity red flags.
 """
 
-DEFAULT_ANALYSIS_PROMPT = """
-You are analyzing the financial report for:
+IDEX_ANALYSIS_PROMPT = """
+You are evaluating:
 - Company Name: {company_name}
-- Industry / Sector: {sector}
+- Sector / Industry: {sector}
 
-Analyze the provided financial document and evaluate the company across the following 5 Pillars (Score each pillar out of 20 points, total 100 points):
+Using the IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) — Updated with Promoter Integrity Guardrails and the integrated Sector-Specific Receivable Health Layer.
 
-1. **Profitability & Operating Growth (0 - 20 marks)**:
-   - Revenue trajectory & 3-5 yr CAGR (if available).
-   - Operating margin (EBITDA margin) stability/expansion.
-   - Net Profit (PAT) margin and pricing power.
+Perform forensic data extraction and rigorous scoring across the 8 Pillars (Core <= 100 Max):
+1. Governance & Capital Allocation (Max: 20.0) — Founder alignment, board quality, capital returns, dilution, ESOPs, M&A discipline, promoter honesty.
+2. Forensic Accounting & Cash Flow (Max: 20.0) — OCF vs PAT, accruals, FCF conversion, working capital stress, auditor remarks, one-offs. (Embed a Receivable Subscore up to 4.0 pts).
+3. Risk, ESG & Fragility (Max: 12.0) — Liquidity, leverage, regulatory/external fragility, environmental liabilities, subsidy dependence.
+4. Valuation & Sanity Layer (Max: 6.0) — Relative multiples, DCF sanity checks, stress test (20% revenue decline scenario).
+5. Moat Durability & Scalability (Max: 13.0) — Pricing power, network effects, market share, cost advantage, IP.
+6. Simplicity & Repeatability (Max: 5.0) — Business clarity, execution hygiene, concentration risk.
+7. Innovation & TAM Optionality (Max: 18.0) — R&D / product velocity, new markets optionality, sector-adjusted R&D threshold.
+8. Insider & Minority Shareholder Risk (Max: 6.0) — Insider trades, related-party risk, promoter pledging, minority protection.
 
-2. **Capital Allocation & Return Efficiency (0 - 20 marks)**:
-   - Return on Capital Employed (ROCE) and Return on Equity (ROE).
-   - Asset turnover and working capital management.
-   - Prudent reinvestment of profits vs dilutive capital allocation.
+ENFORCE MANDATORY PROMOTER INTEGRITY GUARDRAILS (PIO Hard Triggers):
+- Auditor resignation or qualification letter citing governance/RPT concerns.
+- SEBI / ED / Police / Regulatory enforcement or probe into promoters/management.
+- Repeated/material related-party misuse (quantified).
+- Promoter stake dumping (>15% sold in 24 months).
+- Promoter pledging >50% of holding OR sudden jump >30% within 12 months.
+- Material misrepresentation in statutory filings.
+IF ANY PIO TRIGGERS:
+1. Cap Pillar 1 (Governance) <= 6.0 / 20.
+2. Apply CZP logic: force final score into Red Zone (<70).
+3. Block all bonuses (No COOL++, Trajectory, or Resilience bonus).
+4. Guardrail Tag = "GOV-RED 🔴".
+5. Require explicit Forensic Appendix A entries.
 
-3. **Solvency, Leverage & Balance Sheet Strength (0 - 20 marks)**:
-   - Net Debt / Equity and Net Debt / EBITDA.
-   - Interest coverage ratio (EBIT / Finance costs).
-   - Working capital cycle (Debtor days, inventory days, payable days).
+PPRM (Promoter Pledge Risk Meter):
+- <10% pledged: Neutral
+- 10-30% pledged: -1.0 point under Pillar 8
+- >30% pledged: -3.0 points under Pillar 8 + PROM-ALERT tag
+- >50% pledged: Trigger PIO (GOV-RED)
 
-4. **Cash Flow Reality Check & Earnings Quality (0 - 20 marks)**:
-   - Ratio of Cash Flow from Operations (CFO) to Net Profit (PAT) over time (Is profit backed by real cash?).
-   - Free Cash Flow (FCF) generation after capital expenditures.
-   - Quality of receivables and revenue recognition aggressiveness.
+RECEIVABLE HEALTH & SECTOR BENCHMARK LAYER:
+- Extract/estimate: DSO (Days Sales Outstanding), Receivables / Annual Sales %, % >90 days overdue, Top debtor concentration %, Provision coverage %.
+- Check against sector benchmark. Apply penalties or trajectory bonus accordingly.
 
-5. **Corporate Governance & Forensic Red Flags (0 - 20 marks)**:
-   - Statutory Auditor's Report (Any qualifications, emphasis of matter, or disclaimer?).
-   - Related Party Transactions (RPTs) – are funds routed to promoter entities?
-   - Contingent liabilities relative to Net Worth.
-   - Promoter share pledging or frequent changes in key managerial personnel (KMP).
+PENALTIES & BONUSES:
+- Penalties (Pre-bonus): Stagnation (-2 to -6), Innovation Decay (-2 to -4), CZP Red Flag (-10), Other Income Trap (-2), Narrative Inflation (-2 to -3), Subsidy Dependence (-2 to -5), Geopolitical Fragility (-1 to -5), Execution Complexity (-1 to -3), Valuation Distortion (-1 to -3).
+- Total penalties capped at -7.5% of final score (except CZP which forces red zone).
+- Bonuses (Cumulative cap +10%):
+  - COOL++ PRO (Max +8%): 8/12 key traits met, 3Y CAGR >=25% (Rev & PAT), clean forensic filters.
+  - Trajectory Bonus (Max +4%): Inflection, improving OCF/PAT gap, rising R&D, better receivables.
+  - Resilience Bonus (Max +2%): Steady compounders (10-25% CAGR, clean governance).
 
-### OUTPUT REQUIREMENT:
-You must return your output ONLY in valid JSON format matching this exact structure:
+VERDICT MAPPING:
+- ECS (>=90) — Emerging Compounder (Position size: 10-15%)
+- PCGC (85-89) — Potential Compounder (Position size: 5-10%)
+- Watchlist (70-84) — Quality Tracker (Position size: 0-5%)
+- Red Flag (<70) — Avoid (Position size: 0%)
+(If PIO triggered: "Auto-Red Flag due to PIO — GOV-RED 🔴", Position size: 0%)
+
+OUTPUT REQUIREMENT:
+Return ONLY valid JSON matching this exact structure:
 ```json
 {{
+  "cover_line": "Evaluate {company_name} in {sector} using IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) — Updated with Promoter Integrity Guardrails",
   "company_name": "{company_name}",
   "sector": "{sector}",
-  "financial_year": "FY24 (or as identified from document)",
-  "total_score": 75,
-  "verdict_grade": "A - Strong / B - Moderate / C - Risky / D - Distressed",
-  "executive_summary": "2-3 concise paragraphs summarizing the company's financial state and trajectory.",
+  "financial_year": "FY24 (or latest analyzed)",
+  "guardrail_tag": "GOV-CLEAN 🟢",
+  "guardrail_evidence": [
+    "Clean statutory audit track record",
+    "Zero promoter share pledge",
+    "No regulatory enforcement or investigations"
+  ],
+  "pio_triggered": false,
+  "pio_reason": null,
+  "core_score": 82.5,
+  "total_penalties": -2.0,
+  "penalties_breakdown": [
+    {{"penalty_name": "Valuation Distortion", "points": -2.0, "reason": "P/E ratio exceeds 65x without near-term earnings doubling"}}
+  ],
+  "adjusted_pre_bonus_score": 80.5,
+  "bonuses_breakdown": {{
+    "cool_pro_bonus": 4.0,
+    "trajectory_bonus": 1.0,
+    "resilience_bonus": 1.5,
+    "total_bonus_applied": 6.5
+  }},
+  "final_score": 87.0,
+  "verdict": "PCGC (85–89) — Potential Compounder",
+  "position_sizing": "5–10%",
+  "tags_applied": ["GOV-CLEAN 🟢", "Trajectory", "OCP"],
   "pillars": [
     {{
-      "name": "Profitability & Growth",
-      "score": 16,
-      "max_score": 20,
-      "assessment": "Strong EBITDA margins supported by volume growth...",
-      "key_positives": ["Positive 1", "Positive 2"],
-      "key_negatives": ["Concern 1", "Concern 2"]
+      "id": 1,
+      "name": "Governance & Capital Allocation",
+      "score": 17.5,
+      "max_score": 20.0,
+      "justification": "High promoter integrity, prudent capital reinvestment, zero dilution."
     }},
     {{
-      "name": "Capital Allocation & Efficiency",
-      "score": 15,
-      "max_score": 20,
-      "assessment": "ROCE stands at 18%, asset turnover improved...",
-      "key_positives": ["Positive 1"],
-      "key_negatives": ["Concern 1"]
+      "id": 2,
+      "name": "Forensic Accounting & Cash Flow",
+      "score": 16.5,
+      "max_score": 20.0,
+      "receivable_subscore": "3.5 / 4.0 (DSO at 32d vs sector ideal 30d; >90d = 1.8%)",
+      "justification": "CFO/PAT ratio 0.92, strong cash conversion, receivables tightly controlled."
     }},
     {{
-      "name": "Solvency & Balance Sheet",
-      "score": 14,
-      "max_score": 20,
-      "assessment": "Manageable debt with interest coverage above 4x...",
-      "key_positives": ["Positive 1"],
-      "key_negatives": ["Concern 1"]
+      "id": 3,
+      "name": "Risk, ESG & Fragility",
+      "score": 10.0,
+      "max_score": 12.0,
+      "justification": "Low leverage with interest coverage >8x; modest raw material FX exposure."
     }},
     {{
-      "name": "Cash Flow Quality",
-      "score": 13,
-      "max_score": 20,
-      "assessment": "CFO/PAT ratio is 0.85, positive free cash flow...",
-      "key_positives": ["Positive 1"],
-      "key_negatives": ["Concern 1"]
+      "id": 4,
+      "name": "Valuation & Sanity Layer",
+      "score": 3.5,
+      "max_score": 6.0,
+      "justification": "Trading at elevated multiples; 20% stress test shows manageable drawdown."
     }},
     {{
-      "name": "Governance & Forensic Audit",
-      "score": 17,
-      "max_score": 20,
-      "assessment": "Clean auditor report, low contingent liabilities...",
-      "key_positives": ["Positive 1"],
-      "key_negatives": ["Concern 1"]
+      "id": 5,
+      "name": "Moat Durability & Scalability",
+      "score": 11.5,
+      "max_score": 13.0,
+      "justification": "Strong brand recall and nationwide distribution moat with high switching costs."
+    }},
+    {{
+      "id": 6,
+      "name": "Simplicity & Repeatability",
+      "score": 4.5,
+      "max_score": 5.0,
+      "justification": "Clear business model with predictable unit economics and clean subsidiary structure."
+    }},
+    {{
+      "id": 7,
+      "name": "Innovation & TAM Optionality",
+      "score": 14.5,
+      "max_score": 18.0,
+      "justification": "Continuous new product development and expansion into adjacent high-growth categories."
+    }},
+    {{
+      "id": 8,
+      "name": "Insider & Minority Shareholder Risk",
+      "score": 5.5,
+      "max_score": 6.0,
+      "justification": "Stable promoter shareholding, zero pledge, transparent related-party transactions."
     }}
   ],
-  "indian_red_flags": [
-    {{
-      "flag": "Auditor Opinion",
-      "status": "Clean / Qualified / Emphasis of Matter",
-      "detail": "Description of auditor observation"
-    }},
-    {{
-      "flag": "Related Party Transactions",
-      "status": "Low Risk / Moderate Risk / High Risk",
-      "detail": "Description of any transactions with promoter group"
-    }},
-    {{
-      "flag": "Contingent Liabilities",
-      "status": "Low / Moderate / High",
-      "detail": "Total contingent liabilities as % of net worth"
-    }},
-    {{
-      "flag": "Promoter Pledging / Dilution",
-      "status": "Low / Moderate / High / None",
-      "detail": "Promoter share pledge status"
-    }}
+  "receivable_health_metrics": {{
+    "dso_days": 32,
+    "sector_ideal_dso": "15–30 days",
+    "receivables_to_sales_pct": "8.5%",
+    "pct_over_90_days": "1.8%",
+    "top_debtor_concentration_pct": "7.5%",
+    "provision_coverage_pct": "3.2%",
+    "receivable_verdict": "Healthy — within ideal sector benchmarks"
+  }},
+  "peer_matrix": [
+    {{"peer_name": "Peer 1", "score": "84.0", "position": "Laggard"}},
+    {{"peer_name": "Peer 2", "score": "88.5", "position": "Leader"}},
+    {{"peer_name": "Peer 3", "score": "79.0", "position": "Laggard"}}
   ],
-  "top_strengths": ["Strength 1", "Strength 2", "Strength 3"],
-  "top_risks": ["Risk 1", "Risk 2", "Risk 3"],
-  "final_recommendation": "Summary conclusion for Indian retail/institutional investors."
+  "strengths": [
+    "Industry-leading ROCE backed by strong pricing power",
+    "Pristine balance sheet with minimal net debt",
+    "Clean auditor opinion with zero qualifications"
+  ],
+  "weaknesses": [
+    "Rich valuation leaving low margin of safety",
+    "Vulnerability to sudden commodity price spikes"
+  ],
+  "fragility_esg_fx_notes": "Minimal environmental liability. Raw material import exposes margin to INR depreciation.",
+  "drift_optionality_update": "Upcoming capacity expansion in Q3 FY25 may trigger operational leverage inflection.",
+  "final_call": "Buy on Dips — High-quality compounder with exceptional governance; accumulate at reasonable valuations.",
+  "appendix_a_forensic_evidence": [
+    "Auditor's Report (Page 45): Unmodified opinion with no adverse remarks or qualifications.",
+    "Promoter Pledge Filing: 0.0% shares pledged as of latest quarter filing.",
+    "RPT Note 34: Ordinary course operational transactions within arm's length standards."
+  ],
+  "appendix_b_calculations": {{
+    "dcf_fair_value_estimate": "INR 1,150 (WACC 11.5%, Terminal Growth 5.0%)",
+    "stress_test_20pct_revenue_drop": "EBITDA margin compresses by 220 bps; debt covenants remain safe",
+    "working_capital_math": "Working capital cycle = 42 days (Inventory 55d + Debtor 32d - Creditor 45d)"
+  }}
 }}
 ```
 
-Do not wrap in any commentary outside the JSON block. Return ONLY the JSON object.
+Return ONLY the JSON. No conversational fluff or text outside the JSON block.
 """

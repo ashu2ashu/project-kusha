@@ -386,23 +386,18 @@ if target_ticker and target_ticker != "CUSTOM":
 
 # Screener-grade Welcome / Empty State (When no company is selected)
 if not selected_company_str:
-    st.markdown("""
-    <div style="background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 44px 28px; text-align: center; margin-top: 18px; margin-bottom: 24px;">
-        <div style="font-size: 38px; margin-bottom: 12px;">📈</div>
-        <div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px; margin-bottom: 8px;">
-            Search or Select a Listed Indian Stock
-        </div>
-        <div style="font-size: 15px; color: #64748B; max-width: 620px; margin: 0 auto 20px auto; line-height: 1.6;">
-            Select any company from the 501 Nifty 500 universe above (or enter a custom stock) to inspect real-time NSE valuation metrics, 52-week price channels, and launch the 8-pillar institutional quality audit.
-        </div>
-        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">⚡ Real-time Market Cap & P/E</span>
-            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🏛️ Screener 8-Pillar Scorecard</span>
-            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🛡️ Promoter Integrity & Governance</span>
-            <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">📊 Cash Flow & Forensic Checks</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.html(
+        f'<div style="background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 44px 28px; text-align: center; margin-top: 18px; margin-bottom: 24px;">'
+        f'<div style="font-size: 38px; margin-bottom: 12px;">📈</div>'
+        f'<div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px; margin-bottom: 8px;">Search or Select a Listed Indian Stock</div>'
+        f'<div style="font-size: 15px; color: #64748B; max-width: 620px; margin: 0 auto 20px auto; line-height: 1.6;">Select any company from the 501 Nifty 500 universe above (or enter a custom stock) to inspect real-time NSE valuation metrics, 52-week price channels, and launch the 8-pillar institutional quality audit.</div>'
+        f'<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">'
+        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">⚡ Real-time Market Cap & P/E</span>'
+        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🏛️ Screener 8-Pillar Scorecard</span>'
+        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">🛡️ Promoter Integrity & Governance</span>'
+        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">📊 Cash Flow & Forensic Checks</span>'
+        f'</div></div>'
+    )
 
 # --- SCREENER-STYLE LIVE COMPANY INTELLIGENCE & KEY RATIOS ---
 if live_data:
@@ -420,26 +415,18 @@ if live_data:
         cap_category = "Large Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 20000 else ("Mid Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 5000 else "Small Cap")
 
         # Screener.in Signature Company Headline Banner
-        st.markdown(f"""
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid #0F172A; padding-bottom: 14px; margin-bottom: 18px;">
-            <div>
-                <div style="font-size: 32px; font-weight: 800; color: #0F172A; letter-spacing: -0.6px; line-height: 1.2;">
-                    {target_company_name}
-                </div>
-                <div style="color: #64748B; font-size: 14.5px; font-weight: 500; margin-top: 6px;">
-                    NSE: <strong style="color:#0F172A;">{target_ticker}</strong> • Sector: <strong style="color:#0F172A;">{target_sector}</strong> • <span style="background:#F1F5F9; color:#0F172A; padding:3px 10px; border-radius:4px; font-weight:700; font-size:12.5px; border:1px solid #E2E8F0;">{cap_category}</span>
-                </div>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 34px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace; line-height: 1.1;">
-                    {cur_str}
-                </div>
-                <div style="font-size: 15px; font-weight: 700; color: {delta_color}; margin-top: 4px;">
-                    {delta_str}
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.html(
+            f'<div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid #0F172A; padding-bottom: 14px; margin-bottom: 18px;">'
+            f'<div>'
+            f'<div style="font-size: 32px; font-weight: 800; color: #0F172A; letter-spacing: -0.6px; line-height: 1.2;">{target_company_name}</div>'
+            f'<div style="color: #64748B; font-size: 14.5px; font-weight: 500; margin-top: 6px;">NSE: <strong style="color:#0F172A;">{target_ticker}</strong> • Sector: <strong style="color:#0F172A;">{target_sector}</strong> • <span style="background:#F1F5F9; color:#0F172A; padding:3px 10px; border-radius:4px; font-weight:700; font-size:12.5px; border:1px solid #E2E8F0;">{cap_category}</span></div>'
+            f'</div>'
+            f'<div style="text-align: right;">'
+            f'<div style="font-size: 34px; font-weight: 800; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{cur_str}</div>'
+            f'<div style="font-size: 15px; font-weight: 700; color: {delta_color}; margin-top: 4px;">{delta_str}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
         # Screener Row 1: Core Valuation & Corridor Metrics (5 Columns)
         r_col1, r_col2, r_col3, r_col4, r_col5 = st.columns(5)
@@ -685,43 +672,28 @@ if "idex_result" in st.session_state:
             if "receivable_subscore" in p:
                 rec_html = f'<div style="margin-top: 8px; background: #ECFDF5; border-left: 3px solid #059669; padding: 4px 10px; font-size: 13px; font-weight: 600; color: #065F46; border-radius: 0 4px 4px 0;">Receivable Health Subscore: {p["receivable_subscore"]}</div>'
                 
-            row_html = f"""
-            <tr>
-                <td style="width: 25%; font-weight: 700;">
-                    <div style="font-size: 15.5px; color: #0F172A; font-weight: 700;">P{p.get('id')}: {p.get('name')}</div>
-                </td>
-                <td style="width: 14%; text-align: center;">
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 800; color: #047857;">
-                        {p_score:.1f} <span style="font-size: 13px; font-weight: 500; color: #64748B;">/ {p_max:.1f}</span>
-                    </div>
-                </td>
-                <td style="width: 16%; text-align: center;">
-                    {badge}
-                </td>
-                <td style="width: 45%;">
-                    <div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{p.get('justification', '')}</div>
-                    {rec_html}
-                </td>
-            </tr>
-            """
+            row_html = (
+                f'<tr>'
+                f'<td style="width: 25%; font-weight: 700;"><div style="font-size: 15.5px; color: #0F172A; font-weight: 700;">P{p.get("id")}: {p.get("name")}</div></td>'
+                f'<td style="width: 14%; text-align: center;"><div style="font-family: \'JetBrains Mono\', monospace; font-size: 17px; font-weight: 800; color: #047857;">{p_score:.1f} <span style="font-size: 13px; font-weight: 500; color: #64748B;">/ {p_max:.1f}</span></div></td>'
+                f'<td style="width: 16%; text-align: center;">{badge}</td>'
+                f'<td style="width: 45%;"><div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{p.get("justification", "")}</div>{rec_html}</td>'
+                f'</tr>'
+            )
             table_rows.append(row_html)
             
-        full_table_html = f"""
-        <table class="pillar-table">
-            <thead>
-                <tr>
-                    <th style="width: 25%; text-align: left;">Pillar Domain</th>
-                    <th style="width: 14%; text-align: center;">Score</th>
-                    <th style="width: 16%; text-align: center;">Quality Rating</th>
-                    <th style="width: 45%; text-align: left;">Forensic Assessment & Driver Justification</th>
-                </tr>
-            </thead>
-            <tbody>
-                {''.join(table_rows)}
-            </tbody>
-        </table>
-        """
-        st.markdown(full_table_html, unsafe_allow_html=True)
+        full_table_html = (
+            f'<table class="pillar-table">'
+            f'<thead><tr>'
+            f'<th style="width: 25%; text-align: left;">Pillar Domain</th>'
+            f'<th style="width: 14%; text-align: center;">Score</th>'
+            f'<th style="width: 16%; text-align: center;">Quality Rating</th>'
+            f'<th style="width: 45%; text-align: left;">Forensic Assessment & Driver Justification</th>'
+            f'</tr></thead>'
+            f'<tbody>{"".join(table_rows)}</tbody>'
+            f'</table>'
+        )
+        st.html(full_table_html)
 
     with tab_math:
         m_col1, m_col2 = st.columns(2)
@@ -731,11 +703,11 @@ if "idex_result" in st.session_state:
                 penalties = res.get("penalties_breakdown", [])
                 if penalties:
                     for pen in penalties:
-                        st.markdown(f"""
-                        <div style="font-size: 15px; line-height: 1.6; margin-bottom: 10px;">
-                            <strong style="color: #DC2626;">{pen.get('penalty_name')}</strong> (<code style="font-weight:700;">{pen.get('points')} pts</code>): {pen.get('reason')}
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.html(
+                            f'<div style="font-size: 15px; line-height: 1.6; margin-bottom: 10px;">'
+                            f'<strong style="color: #DC2626;">{pen.get("penalty_name")}</strong> (<code style="font-weight:700;">{pen.get("points")} pts</code>): {pen.get("reason")}'
+                            f'</div>'
+                        )
                 else:
                     st.success("No statutory forensic penalties applied.")
         
@@ -743,13 +715,13 @@ if "idex_result" in st.session_state:
             with st.container(border=True):
                 st.markdown("##### Applied Bonuses (Max +10%)")
                 bb = res.get("bonuses_breakdown", {})
-                st.markdown(f"""
-                <div style="font-size: 15px; line-height: 1.8;">
-                    <div>• <strong>COOL++ PRO Bonus:</strong> <code>+{bb.get('cool_pro_bonus', 0):.1f}%</code></div>
-                    <div>• <strong>Trajectory Bonus:</strong> <code>+{bb.get('trajectory_bonus', 0):.1f}%</code></div>
-                    <div>• <strong>Resilience Bonus:</strong> <code>+{bb.get('resilience_bonus', 0):.1f}%</code></div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.html(
+                    f'<div style="font-size: 15px; line-height: 1.8;">'
+                    f'<div>• <strong>COOL++ PRO Bonus:</strong> <code>+{bb.get("cool_pro_bonus", 0):.1f}%</code></div>'
+                    f'<div>• <strong>Trajectory Bonus:</strong> <code>+{bb.get("trajectory_bonus", 0):.1f}%</code></div>'
+                    f'<div>• <strong>Resilience Bonus:</strong> <code>+{bb.get("resilience_bonus", 0):.1f}%</code></div>'
+                    f'</div>'
+                )
                 st.divider()
                 st.metric("Total Bonus Impact", f"+{bb.get('total_bonus_applied', 0):.1f}%")
 
@@ -764,50 +736,50 @@ if "idex_result" in st.session_state:
             with p_str_col1:
                 st.markdown("**Key Structural Strengths:**")
                 for s in res.get("strengths", []):
-                    st.markdown(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #059669; font-weight: 700;'>✔</span> {s}</div>", unsafe_allow_html=True)
+                    st.html(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #059669; font-weight: 700;'>✔</span> {s}</div>")
             with p_str_col2:
                 st.markdown("**Structural Weaknesses & Fragilities:**")
                 for w in res.get("weaknesses", []):
-                    st.markdown(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #DC2626; font-weight: 700;'>✖</span> {w}</div>", unsafe_allow_html=True)
+                    st.html(f"<div style='font-size: 14.5px; line-height: 1.6; margin-bottom: 6px;'><span style='color: #DC2626; font-weight: 700;'>✖</span> {w}</div>")
 
     with tab_thesis:
         with st.container(border=True):
             st.markdown("##### Final Analyst Recommendation")
-            st.markdown(f"""
-            <div style="font-size: 22px; font-weight: 800; color: #0F172A; padding: 18px 22px; background: #F8FAFC; border-left: 4px solid #0F172A; border-radius: 0 8px 8px 0; margin: 12px 0 18px 0; line-height: 1.3;">
-                {res.get('final_call', 'N/A')}
-            </div>
-            """, unsafe_allow_html=True)
+            st.html(
+                f'<div style="font-size: 22px; font-weight: 800; color: #0F172A; padding: 18px 22px; background: #F8FAFC; border-left: 4px solid #0F172A; border-radius: 0 8px 8px 0; margin: 12px 0 18px 0; line-height: 1.3;">'
+                f'{res.get("final_call", "N/A")}'
+                f'</div>'
+            )
             
             st.divider()
             t_col1, t_col2 = st.columns(2)
             with t_col1:
                 st.markdown("**ESG, Fragility & Foreign Exchange Notes:**")
-                st.markdown(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('fragility_esg_fx_notes', 'No material vulnerabilities observed.')}</p>", unsafe_allow_html=True)
+                st.html(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('fragility_esg_fx_notes', 'No material vulnerabilities observed.')}</p>")
             with t_col2:
                 st.markdown("**12–24 Month Catalyst & Drift Watch:**")
-                st.markdown(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('drift_optionality_update', 'Monitor upcoming capital deployment.')}</p>", unsafe_allow_html=True)
+                st.html(f"<p style='font-size: 14.5px; line-height: 1.6; color: #334155;'>{res.get('drift_optionality_update', 'Monitor upcoming capital deployment.')}</p>")
 
     with tab_appendices:
         with st.container(border=True):
             st.markdown("##### Appendix A — Forensic Evidence Pack")
             st.caption("Exact quotes, regulatory disclosures, and load-bearing audit excerpts:")
             for e in res.get("appendix_a_forensic_evidence", []):
-                st.markdown(f"""
-                <div style="font-size: 14.5px; line-height: 1.6; color: #1E293B; margin-bottom: 8px; padding-left: 12px; border-left: 2px solid #CBD5E1;">
-                    {e}
-                </div>
-                """, unsafe_allow_html=True)
+                st.html(
+                    f'<div style="font-size: 14.5px; line-height: 1.6; color: #1E293B; margin-bottom: 8px; padding-left: 12px; border-left: 2px solid #CBD5E1;">'
+                    f'{e}'
+                    f'</div>'
+                )
             
             st.divider()
             st.markdown("##### Appendix B — Calculations & Stress Tests")
             calcs = res.get("appendix_b_calculations", {})
             for k, v in calcs.items():
-                st.markdown(f"""
-                <div style="font-size: 14.5px; line-height: 1.6; margin-bottom: 8px;">
-                    <strong>{k.replace('_', ' ').title()}:</strong> <span style="color: #334155;">{v}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                st.html(
+                    f'<div style="font-size: 14.5px; line-height: 1.6; margin-bottom: 8px;">'
+                    f'<strong>{k.replace("_", " ").title()}:</strong> <span style="color: #334155;">{v}</span>'
+                    f'</div>'
+                )
 
     # 4. MANDATORY GUARDRAIL & PROMOTER INTEGRITY AUDIT (BELOW PILLARS)
     st.write("")
@@ -815,50 +787,38 @@ if "idex_result" in st.session_state:
     evidence_list = res.get("guardrail_evidence", [])
     
     if "GOV-RED" in tag or res.get("pio_triggered", False):
-        st.markdown(f"""
-        <div class="guardrail-red-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 800; font-size: 1.15rem; color: #DC2626;">
-                    🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO FIRED)
-                </span>
-                <span style="background-color: #FEE2E2; color: #991B1B; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCA5A5;">
-                    CRITICAL FORENSIC RISK
-                </span>
-            </div>
-            <p style="margin: 0 0 10px 0; font-weight: 600; color: #991B1B;">{res.get('pio_reason', 'Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.')}</p>
-            <ul style="margin: 0; padding-left: 20px; color: #7F1D1D;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
-        </div>
-        """, unsafe_allow_html=True)
+        st.html(
+            f'<div class="guardrail-red-box">'
+            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+            f'<span style="font-weight: 800; font-size: 1.15rem; color: #DC2626;">🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO FIRED)</span>'
+            f'<span style="background-color: #FEE2E2; color: #991B1B; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCA5A5;">CRITICAL FORENSIC RISK</span>'
+            f'</div>'
+            f'<p style="margin: 0 0 10px 0; font-weight: 600; color: #991B1B;">{res.get("pio_reason", "Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.")}</p>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #7F1D1D;">{"".join([f"<li>{e}</li>" for e in evidence_list])}</ul>'
+            f'</div>'
+        )
     elif "PROM-ALERT" in tag:
-        st.markdown(f"""
-        <div class="guardrail-alert-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 800; font-size: 1.15rem; color: #D97706;">
-                    ⚠️ MANDATORY GUARDRAIL TAG: {tag}
-                </span>
-                <span style="background-color: #FEF3C7; color: #92400E; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCD34D;">
-                    PROMOTER ALERT
-                </span>
-            </div>
-            <p style="margin: 0 0 10px 0; color: #92400E; font-weight: 500;">Elevated promoter pledging or dilution observed under PPRM rules.</p>
-            <ul style="margin: 0; padding-left: 20px; color: #78350F;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
-        </div>
-        """, unsafe_allow_html=True)
+        st.html(
+            f'<div class="guardrail-alert-box">'
+            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+            f'<span style="font-weight: 800; font-size: 1.15rem; color: #D97706;">⚠️ MANDATORY GUARDRAIL TAG: {tag}</span>'
+            f'<span style="background-color: #FEF3C7; color: #92400E; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #FCD34D;">PROMOTER ALERT</span>'
+            f'</div>'
+            f'<p style="margin: 0 0 10px 0; color: #92400E; font-weight: 500;">Elevated promoter pledging or dilution observed under PPRM rules.</p>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #78350F;">{"".join([f"<li>{e}</li>" for e in evidence_list])}</ul>'
+            f'</div>'
+        )
     else:
-        st.markdown(f"""
-        <div class="guardrail-clean-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-weight: 800; font-size: 1.15rem; color: #059669;">
-                    🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}
-                </span>
-                <span style="background-color: #D1FAE5; color: #065F46; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #A7F3D0;">
-                    INSTITUTIONAL GRADE
-                </span>
-            </div>
-            <p style="margin: 0 0 8px 0; color: #064E3B; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm's length related-party disclosures.</p>
-            <ul style="margin: 0; padding-left: 20px; color: #1E293B;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
-        </div>
-        """, unsafe_allow_html=True)
+        st.html(
+            f'<div class="guardrail-clean-box">'
+            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
+            f'<span style="font-weight: 800; font-size: 1.15rem; color: #059669;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}</span>'
+            f'<span style="background-color: #D1FAE5; color: #065F46; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; border: 1px solid #A7F3D0;">INSTITUTIONAL GRADE</span>'
+            f'</div>'
+            f'<p style="margin: 0 0 8px 0; color: #064E3B; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm\'s length related-party disclosures.</p>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #1E293B;">{"".join([f"<li>{e}</li>" for e in evidence_list])}</ul>'
+            f'</div>'
+        )
 
     # 5. EXPORT TOOLBAR
     st.write("")

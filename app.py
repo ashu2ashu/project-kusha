@@ -261,31 +261,69 @@ st.markdown("""
         transform: translateY(-1px) !important;
     }
 
-    /* StockSage Equity Intelligence Factsheet & Thematic Domain Grid */
+    /* StockSage Bespoke Financial Factsheet & 3-Column Matrix */
     .facts-header-card {
         background: #FFFFFF;
         border: 1.5px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 22px 24px;
-        margin-top: 14px;
-        margin-bottom: 16px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+        border-radius: 14px;
+        padding: 26px 30px;
+        margin-top: 16px;
+        margin-bottom: 22px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     }
-    .domain-grid {
+    .metrics-3col-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 24px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+        margin-bottom: 26px;
     }
-    @media (max-width: 1024px) {
-        .domain-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    @media (max-width: 640px) {
-        .domain-grid {
+    @media (max-width: 1100px) {
+        .metrics-3col-grid {
             grid-template-columns: 1fr;
         }
+    }
+    .metric-domain-card {
+        background: #FFFFFF;
+        border: 1.5px solid #E2E8F0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .metric-domain-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+    .metric-table-spacious {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .metric-table-spacious tr {
+        border-bottom: 1px solid #F1F5F9;
+        transition: background-color 0.12s ease;
+    }
+    .metric-table-spacious tr:last-child {
+        border-bottom: none;
+    }
+    .metric-table-spacious tr:hover {
+        background-color: #F0FDF4 !important;
+    }
+    .metric-table-spacious td.m-label {
+        padding: 12px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #475569;
+        text-align: left;
+        white-space: nowrap;
+    }
+    .metric-table-spacious td.m-value {
+        padding: 12px 18px;
+        font-size: 14.5px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        color: #0F172A;
+        text-align: right;
+        white-space: nowrap;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -555,139 +593,159 @@ if live_data:
     
     logo_initials = "".join([w[0] for w in target_company_name.split()[:2]]).upper() if target_company_name else "SS"
 
-    # Helper function to format metric cells
-    def fmt_cell(name: str, val: str, style_type: str = "normal", is_alt: bool = False) -> str:
-        bg_attr = ' style="background-color: #F8FAFC;"' if is_alt else ''
-        if style_type == "emerald":
-            v_html = f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; padding: 2px 7px; border-radius: 4px; font-weight: 800;">{val}</span>'
-        elif style_type == "teal":
-            v_html = f'<span style="background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; padding: 2px 7px; border-radius: 4px; font-weight: 700;">{val}</span>'
-        elif style_type == "bold":
-            v_html = f'<span style="font-weight: 800; color: #0F172A;">{val}</span>'
+    # 52-Week Range Slider Math
+    h52_num = live_data.get("high_52w", cur_p)
+    l52_num = live_data.get("low_52w", cur_p)
+    if isinstance(cur_p, (int, float)) and isinstance(h52_num, (int, float)) and isinstance(l52_num, (int, float)) and h52_num > l52_num:
+        range_pct = min(max(((cur_p - l52_num) / (h52_num - l52_num)) * 100, 0), 100)
+    else:
+        range_pct = 50.0
+
+    # Helper function to format metric cells with spacious typography
+    def fmt_metric_row(label: str, value: str, style_mode: str = "normal", is_even: bool = False) -> str:
+        row_bg = ' style="background-color: #F8FAFC;"' if is_even else ''
+        if style_mode == "emerald":
+            val_span = f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 13.5px;">{value}</span>'
+        elif style_mode == "teal":
+            val_span = f'<span style="background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 13.5px;">{value}</span>'
+        elif style_mode == "bold":
+            val_span = f'<span style="font-weight: 800; color: #0F172A; font-size: 14.5px;">{value}</span>'
         else:
-            v_html = f'<span style="font-weight: 700; color: #1E293B;">{val}</span>'
+            val_span = f'<span style="font-weight: 700; color: #1E293B; font-size: 14px;">{value}</span>'
             
         return (
-            f'<tr{bg_attr}>'
-            f'<td style="padding: 9px 12px; font-size: 13px; font-weight: 600; color: #475569; text-align: left; border-bottom: 1px solid #F1F5F9; white-space: nowrap;">{name}</td>'
-            f'<td style="padding: 9px 12px; font-size: 13.5px; font-family: \'JetBrains Mono\', monospace; text-align: right; border-bottom: 1px solid #F1F5F9; white-space: nowrap;">{v_html}</td>'
+            f'<tr{row_bg}>'
+            f'<td class="m-label">{label}</td>'
+            f'<td class="m-value">{val_span}</td>'
             f'</tr>'
         )
 
-    # 4 Financial Domains encompassing all 27 Screener metrics
-    card1_items = [
+    # 3 Balanced Columns containing all 27 fundamental metrics (9 per column)
+    col1_items = [
         ("Market Cap", sm.get("market_cap", "N/A"), "bold"),
-        ("Stock P/E", sm.get("stock_pe", "N/A"), "normal"),
+        ("Current Price", sm.get("current_price", cur_str), "bold"),
+        ("52-Week High / Low", sm.get("high_low", "N/A"), "normal"),
+        ("Stock P/E Ratio", sm.get("stock_pe", "N/A"), "normal"),
         ("PEG Ratio", sm.get("peg_ratio", "N/A"), "normal"),
         ("EV / EBITDA", sm.get("evebitda", "N/A"), "normal"),
-        ("Intrinsic Value", sm.get("intrinsic_value", "N/A"), "normal"),
+        ("Intrinsic Value (Est.)", sm.get("intrinsic_value", "N/A"), "normal"),
         ("Graham Number", sm.get("graham_number", "N/A"), "normal"),
-        ("MCap to Sales", sm.get("market_cap_to_sales", "N/A"), "normal"),
+        ("Market Cap to Sales", sm.get("market_cap_to_sales", "N/A"), "normal"),
     ]
 
-    card2_items = [
-        ("ROCE", sm.get("roce", "N/A"), "emerald"),
-        ("ROE", sm.get("roe", "N/A"), "emerald"),
-        ("ROIC", sm.get("roic", "N/A"), "emerald"),
+    col2_items = [
+        ("ROCE (Return on Capital)", sm.get("roce", "N/A"), "emerald"),
+        ("ROE (Return on Equity)", sm.get("roe", "N/A"), "emerald"),
+        ("ROIC (Invested Capital)", sm.get("roic", "N/A"), "emerald"),
         ("Operating Margin (OPM)", sm.get("opm", "N/A"), "normal"),
-        ("Net Margin (NPM)", sm.get("npm_last_year", "N/A"), "normal"),
+        ("Net Profit Margin (NPM)", sm.get("npm_last_year", "N/A"), "normal"),
         ("Earnings Yield", sm.get("earnings_yield", "N/A"), "normal"),
-        ("Asset Turnover", sm.get("asset_turnover", "N/A"), "normal"),
-    ]
-
-    card3_items = [
-        ("Total Debt", sm.get("debt", "N/A"), "normal"),
-        ("Debt to Equity", sm.get("debt_to_equity", "N/A"), "normal"),
-        ("Current Ratio", sm.get("current_ratio", "N/A"), "normal"),
-        ("Interest Coverage", sm.get("int_coverage", "N/A"), "normal"),
-        ("Book Value", sm.get("book_value", "N/A"), "normal"),
+        ("Asset Turnover Ratio", sm.get("asset_turnover", "N/A"), "normal"),
+        ("Book Value Per Share", sm.get("book_value", "N/A"), "normal"),
         ("Face Value", sm.get("face_value", "N/A"), "normal"),
-        ("52W High / Low", sm.get("high_low", "N/A"), "normal"),
     ]
 
-    card4_items = [
-        ("Free Cash Flow 5Yrs", sm.get("free_cash_flow_5yr", "N/A"), "teal"),
-        ("CMP / FCF Multiple", sm.get("cmp_to_fcf", "N/A"), "teal"),
-        ("Promoter Holding", sm.get("promoter_holding", "N/A"), "bold"),
-        ("Sales Growth 5Yrs", sm.get("sales_growth_5yr", "N/A"), "normal"),
+    col3_items = [
+        ("Total Debt", sm.get("debt", "N/A"), "normal"),
+        ("Debt to Equity Ratio", sm.get("debt_to_equity", "N/A"), "normal"),
+        ("Current Ratio", sm.get("current_ratio", "N/A"), "normal"),
+        ("Interest Coverage Ratio", sm.get("int_coverage", "N/A"), "normal"),
+        ("Free Cash Flow (5 Years)", sm.get("free_cash_flow_5yr", "N/A"), "teal"),
+        ("CMP to Free Cash Flow", sm.get("cmp_to_fcf", "N/A"), "teal"),
+        ("Promoter Shareholding", sm.get("promoter_holding", "N/A"), "bold"),
+        ("Sales Growth (5 Years)", sm.get("sales_growth_5yr", "N/A"), "normal"),
         ("Dividend Yield", sm.get("dividend_yield", "N/A"), "normal"),
-        ("Current Price", sm.get("current_price", cur_str), "bold"),
     ]
 
-    def render_domain_card(title: str, icon: str, badge_text: str, hdr_gradient: str, border_hex: str, items: list) -> str:
-        row_html_list = []
-        for i, (m_name, m_val, s_type) in enumerate(items):
-            row_html_list.append(fmt_cell(m_name, m_val, s_type, is_alt=(i % 2 == 1)))
-        
-        tbody_content = "".join(row_html_list)
+    def build_spacious_card(title: str, icon: str, badge_lbl: str, hdr_bg: str, border_col: str, title_col: str, badge_fg: str, items: list) -> str:
+        rows_html = []
+        for idx, (lbl, val, smode) in enumerate(items):
+            rows_html.append(fmt_metric_row(lbl, val, smode, is_even=(idx % 2 == 1)))
+            
+        rows_str = "".join(rows_html)
         return (
-            f'<div style="background: #FFFFFF; border: 1.5px solid {border_hex}; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
-            f'<div style="background: {hdr_gradient}; padding: 11px 14px; border-bottom: 1.5px solid {border_hex}; display: flex; justify-content: space-between; align-items: center;">'
-            f'<div style="display: flex; align-items: center; gap: 8px;">'
-            f'<span style="font-size: 16px;">{icon}</span>'
-            f'<span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.2px;">{title}</span>'
+            f'<div class="metric-domain-card" style="border: 1.5px solid {border_col};">'
+            f'<div class="metric-domain-header" style="background: {hdr_bg}; border-bottom: 1.5px solid {border_col};">'
+            f'<div style="display: flex; align-items: center; gap: 10px;">'
+            f'<span style="font-size: 18px;">{icon}</span>'
+            f'<span style="font-size: 15px; font-weight: 800; color: {title_col}; letter-spacing: -0.3px;">{title}</span>'
             f'</div>'
-            f'<span style="font-size: 11px; font-weight: 700; color: #475569; background: #FFFFFF; border: 1px solid {border_hex}; padding: 2px 7px; border-radius: 9999px;">{badge_text}</span>'
+            f'<span style="font-size: 11.5px; font-weight: 700; color: {badge_fg}; background: #FFFFFF; border: 1px solid {border_col}; padding: 3px 9px; border-radius: 9999px;">{badge_lbl}</span>'
             f'</div>'
-            f'<table style="width: 100%; border-collapse: collapse;">'
-            f'<tbody>{tbody_content}</tbody>'
+            f'<table class="metric-table-spacious">'
+            f'<tbody>{rows_str}</tbody>'
             f'</table>'
             f'</div>'
         )
 
-    dom_card1 = render_domain_card("Valuation & Multiples", "🏛️", "7 Ratios", "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)", "#BFDBFE", card1_items)
-    dom_card2 = render_domain_card("Profitability & Returns", "📈", "7 Ratios", "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", "#A7F3D0", card2_items)
-    dom_card3 = render_domain_card("Solvency & Balance Sheet", "🛡️", "7 Ratios", "linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)", "#DDD6FE", card3_items)
-    dom_card4 = render_domain_card("Cash Flow & Governance", "💵", "6 Ratios", "linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%)", "#99F6E4", card4_items)
+    card_val = build_spacious_card("Valuation & Pricing Multiples", "🏛️", "9 Key Metrics", "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)", "#BFDBFE", "#1E3A8A", "#1D4ED8", col1_items)
+    card_ret = build_spacious_card("Profitability & Capital Returns", "📈", "9 Key Metrics", "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", "#A7F3D0", "#064E3B", "#047857", col2_items)
+    card_sol = build_spacious_card("Solvency, Cash Flow & Growth", "🛡️", "9 Key Metrics", "linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)", "#DDD6FE", "#4C1D95", "#6D28D9", col3_items)
 
     facts_full_html = (
         f'<div class="facts-header-card">'
-        f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; padding-bottom: 16px; border-bottom: 1.5px solid #F1F5F9;">'
-        f'<div style="display: flex; align-items: center; gap: 16px;">'
-        f'<div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(5,150,105,0.25);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; padding-bottom: 20px; border-bottom: 1.5px solid #F1F5F9;">'
+        f'<div style="display: flex; align-items: center; gap: 18px;">'
+        f'<div style="width: 58px; height: 58px; border-radius: 14px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; font-weight: 900; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(5,150,105,0.25); flex-shrink: 0;">'
         f'{logo_initials}'
         f'</div>'
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">'
-        f'<span style="font-size: 26px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px;">{target_company_name}</span>'
-        f'<span style="background: #F0FDF4; color: #047857; border: 1px solid #BBF7D0; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 12px;">NSE: {target_ticker} ●</span>'
-        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 600; font-size: 12px;">BSE: {bse_code}</span>'
-        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 12px;">🏛️ {target_sector}</span>'
+        f'<span style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.6px; line-height: 1.1;">{target_company_name}</span>'
+        f'<span style="background: #F0FDF4; color: #047857; border: 1.5px solid #BBF7D0; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 12.5px;">● NSE: {target_ticker}</span>'
+        f'<span style="background: #F8FAFC; color: #475569; border: 1.5px solid #E2E8F0; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 12.5px;">BSE: {bse_code}</span>'
+        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 12.5px;">🏛️ {target_sector}</span>'
         f'</div>'
-        f'<div style="margin-top: 6px; font-size: 13.5px; color: #64748B; display: flex; align-items: center; gap: 14px;">'
+        f'<div style="margin-top: 8px; font-size: 13.5px; color: #64748B; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">'
         f'<span>🌐 <a href="{website_url}" target="_blank" style="color: #2563EB; font-weight: 600; text-decoration: none;">{website_display} ↗</a></span>'
-        f'<span>• Nifty 500 Constituent</span>'
-        f'<span>• Ind AS Audit Compliant</span>'
+        f'<span>• Constituent of Nifty 500</span>'
+        f'<span>• Ind AS Audited Statutory Disclosures</span>'
         f'</div>'
         f'</div>'
         f'</div>'
-        f'<div style="text-align: right;">'
-        f'<div style="display: flex; align-items: baseline; justify-content: flex-end; gap: 8px;">'
-        f'<span style="font-size: 28px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace;">{cur_str}</span>'
-        f'<span style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}33; padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 800;">{delta_str}</span>'
+        f'<div style="text-align: right; min-width: 220px;">'
+        f'<div style="display: flex; align-items: baseline; justify-content: flex-end; gap: 10px;">'
+        f'<span style="font-size: 32px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1;">{cur_str}</span>'
+        f'<span style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}40; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 800;">{delta_str}</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 4px;">Real-Time Quote • {price_date}</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 6px;">Real-Time NSE/BSE Quote • {price_date}</div>'
+        f'<div style="margin-top: 10px; width: 220px; margin-left: auto;">'
+        f'<div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748B; font-weight: 700; margin-bottom: 4px;">'
+        f'<span>52W L: ₹ {l52_num:,.0f}</span>'
+        f'<span>52W H: ₹ {h52_num:,.0f}</span>'
         f'</div>'
-        f'</div>'
-        f'<div style="margin-top: 16px; display: grid; grid-template-columns: 2fr 1fr; gap: 18px;">'
-        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px;">'
-        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
-        f'🏢 Corporate Profile & Operations'
-        f'</div>'
-        f'<div style="font-size: 13.5px; line-height: 1.6; color: #334155;">{about_text}</div>'
-        f'</div>'
-        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px;">'
-        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
-        f'🔑 Institutional Grounding'
-        f'</div>'
-        f'<div style="font-size: 13px; line-height: 1.6; color: #334155;">'
-        f'Flagship constituent in the <strong>{target_sector}</strong> benchmark. Verified regulatory disclosures, institutional shareholding profile, and Ind AS audit compliance.'
+        f'<div style="background: #E2E8F0; border-radius: 9999px; height: 6px; position: relative;">'
+        f'<div style="background: #059669; width: {range_pct:.1f}%; height: 6px; border-radius: 9999px;"></div>'
+        f'<div style="position: absolute; left: {range_pct:.1f}%; top: -3px; width: 12px; height: 12px; border-radius: 50%; background: #047857; border: 2px solid #FFFFFF; transform: translateX(-50%); box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>'
         f'</div>'
         f'</div>'
         f'</div>'
         f'</div>'
-        f'<div class="domain-grid">'
-        f'{dom_card1}{dom_card2}{dom_card3}{dom_card4}'
+        f'<div style="margin-top: 22px; display: grid; grid-template-columns: 2.2fr 1fr; gap: 24px;">'
+        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 18px 22px;">'
+        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">'
+        f'<span>🏢</span> Corporate Operations & Business Model'
+        f'</div>'
+        f'<div style="font-size: 14px; line-height: 1.65; color: #334155;">{about_text}</div>'
+        f'</div>'
+        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 18px 22px; display: flex; flex-direction: column; justify-content: space-between;">'
+        f'<div>'
+        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">'
+        f'<span>🔑</span> Institutional Market Position'
+        f'</div>'
+        f'<div style="font-size: 13.5px; line-height: 1.6; color: #334155;">'
+        f'Established constituent of the <strong>{target_sector}</strong> benchmark on the National Stock Exchange of India (NSE). Operates under verified Ind AS statutory reporting and broad institutional coverage.'
+        f'</div>'
+        f'</div>'
+        f'<div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">'
+        f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">✔ Ind AS Audit Tracking</span>'
+        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">✔ Nifty 500 Constituent</span>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+        f'<div class="metrics-3col-grid">'
+        f'{card_val}{card_ret}{card_sol}'
         f'</div>'
     )
     st.html(facts_full_html)

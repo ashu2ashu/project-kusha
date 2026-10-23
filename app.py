@@ -296,7 +296,7 @@ st.caption("Institutional Equity Research & Forensic Intelligence Terminal • A
 
 # --- INTAKE CONSOLE ---
 with st.container(border=True):
-    st.markdown("#### Company Selection & Live Market Grounding")
+    st.markdown("#### Company Search")
     
     c_list = get_company_list()
     
@@ -304,27 +304,27 @@ with st.container(border=True):
     
     with col_sel1:
         selected_company_str = st.selectbox(
-            "Select Indian Listed Stock (Nifty 500 Universe)",
+            "Company",
             options=c_list,
             index=None,
-            placeholder="Search company name or symbol (e.g. Reliance, HDFC Bank, Infosys, Dixon)...",
-            help="Select any listed Indian company from the Nifty 500 to automatically fetch live market data."
+            placeholder="Search by company name or symbol (e.g. Reliance, HDFC Bank, Infosys, Dixon)...",
+            help="Select any listed Indian company from the Nifty 500 to pull live financial data."
         )
     
     matched_info = find_company_info(selected_company_str) if selected_company_str else None
     
     with col_sel2:
         if matched_info and matched_info["ticker"] == "CUSTOM":
-            target_company_name = st.text_input("Enter Company Name", placeholder="e.g. Amber Enterprises Ltd")
-            target_ticker = st.text_input("NSE/BSE Symbol (Optional)", placeholder="e.g. AMBER")
+            target_company_name = st.text_input("Company Name", placeholder="e.g. Amber Enterprises Ltd")
+            target_ticker = st.text_input("NSE/BSE Symbol", placeholder="e.g. AMBER")
         elif matched_info:
             target_company_name = matched_info["name"]
             target_ticker = matched_info["ticker"]
-            st.text_input("NSE Ticker Symbol", value=target_ticker, disabled=True)
+            st.text_input("NSE Ticker", value=target_ticker, disabled=True)
         else:
             target_company_name = None
             target_ticker = None
-            st.text_input("NSE Ticker Symbol", value="", placeholder="Awaiting company selection...", disabled=True)
+            st.text_input("NSE Ticker", value="", placeholder="Awaiting selection...", disabled=True)
             
     col_sec1, col_sec2 = st.columns([2, 2])
     with col_sec1:
@@ -345,24 +345,24 @@ with st.container(border=True):
         
         def_sector_idx = sector_list.index(matched_info["sector"]) if (matched_info and matched_info.get("sector") in sector_list) else 0
         target_sector = st.selectbox(
-            "Sector Industry Matrix",
+            "Sector",
             sector_list,
             index=def_sector_idx,
-            help="Applies sector-specific DSO, inventory, and margin thresholds."
+            help="Applies sector-specific thresholds for DSO, inventory, and operating margins."
         )
         
     with col_sec2:
         doc_type = st.segmented_control(
-            "Data Ingestion Source",
-            ["Live Online Grounding (NSE & Filings)", "Upload Annual Report (PDF)"],
-            default="Live Online Grounding (NSE & Filings)"
+            "Data Source",
+            ["Live Market & Filings", "Upload Annual Report (PDF)"],
+            default="Live Market & Filings"
         )
 
     # Optional PDF Upload
     uploaded_file = None
     if doc_type == "Upload Annual Report (PDF)":
         uploaded_file = st.file_uploader(
-            "Upload Financial Document (PDF)",
+            "Upload Annual Report (PDF)",
             type=["pdf"],
             help="Upload the annual report. 200–500 page Indian reports are fully ingested by Gemini 3.5 Flash."
         )
@@ -481,7 +481,7 @@ if live_data:
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])
 with btn_col1:
-    btn_label = f"Execute StockSage AI Evaluation for {target_company_name}" if target_company_name else "Select a Company to Execute AI Evaluation"
+    btn_label = f"Analyze {target_company_name}" if target_company_name else "Select a Company to Analyze"
     run_btn = st.button(
         btn_label,
         type="primary",

@@ -235,6 +235,151 @@ st.markdown("""
         margin-top: 16px;
         margin-bottom: 20px;
     }
+
+    /* Screener.in Exact Key Ratio Card & Split About Styling */
+    .screener-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 22px 24px;
+        margin-top: 14px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .screener-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: 16px;
+        margin-bottom: 18px;
+        border-bottom: 1.5px solid #F1F5F9;
+    }
+    .screener-title-area {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+    .screener-logo-box {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        background: #F8FAFC;
+        border: 1.5px solid #E2E8F0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
+        color: #059669;
+        font-family: 'Inter', sans-serif;
+    }
+    .screener-company-name {
+        font-size: 28px;
+        font-weight: 800;
+        color: #0F172A;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+    }
+    .screener-price-inline {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0F172A;
+        font-family: 'JetBrains Mono', monospace;
+        margin-left: 10px;
+    }
+    .screener-delta-pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-left: 8px;
+    }
+    .screener-links-bar {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-top: 6px;
+        font-size: 13.5px;
+        color: #64748B;
+        font-weight: 500;
+    }
+    .screener-links-bar a {
+        color: #2563EB;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .screener-links-bar a:hover {
+        text-decoration: underline;
+    }
+    .screener-grid-split {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+    }
+    .screener-table-container {
+        flex: 2.15;
+    }
+    .screener-about-container {
+        flex: 1.0;
+        padding-left: 20px;
+        border-left: 1px solid #F1F5F9;
+    }
+    .screener-ratio-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .screener-ratio-table tr {
+        border-bottom: 1px solid #F1F5F9;
+    }
+    .screener-ratio-table tr:hover {
+        background-color: #F8FAFC;
+    }
+    .screener-ratio-table td.r-name {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: #64748B;
+        padding: 9px 4px 9px 0;
+        text-align: left;
+        white-space: nowrap;
+        width: 17%;
+    }
+    .screener-ratio-table td.r-val {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0F172A;
+        font-family: 'JetBrains Mono', monospace;
+        padding: 9px 18px 9px 4px;
+        text-align: right;
+        white-space: nowrap;
+        width: 16%;
+    }
+    .screener-table-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+        padding-top: 8px;
+    }
+    .screener-footer-input {
+        background: #FFFFFF;
+        border: 1px solid #CBD5E1;
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-size: 13px;
+        color: #475569;
+        width: 200px;
+        outline: none;
+    }
+    .screener-footer-btn {
+        background: transparent;
+        border: none;
+        color: #2563EB;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -399,71 +544,97 @@ if not selected_company_str:
         f'</div></div>'
     )
 
-# --- SCREENER-STYLE LIVE COMPANY INTELLIGENCE & KEY RATIOS ---
+# --- SCREENER-STYLE LIVE COMPANY INTELLIGENCE & 27 KEY RATIOS ---
 if live_data:
-    with st.container(border=True):
-        cur_p = live_data.get("current_price")
-        cur_str = f"₹{cur_p:,.2f}" if isinstance(cur_p, (int, float)) else "N/A"
-        chg_pct = live_data.get("change_pct", 0)
-        chg_val = live_data.get("change_val", 0)
-        delta_color = "#059669" if chg_pct >= 0 else "#DC2626"
-        delta_sign = "+" if chg_pct >= 0 else ""
-        delta_str = f"{delta_sign}{chg_pct:.2f}% ({delta_sign}₹{chg_val:.2f})" if chg_pct is not None else ""
+    sm = live_data.get("screener_metrics", {})
+    cur_p = live_data.get("current_price", 0)
+    cur_str = f"₹ {cur_p:,.2f}" if isinstance(cur_p, (int, float)) else "N/A"
+    chg_pct = live_data.get("change_pct", 0)
+    chg_val = live_data.get("change_val", 0)
+    is_pos = chg_pct >= 0
+    delta_fg = "#047857" if is_pos else "#DC2626"
+    delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
+    delta_sign = "+" if is_pos else ""
+    delta_str = f"{delta_sign}{chg_pct:.2f}%"
+    
+    price_date = live_data.get("price_date", "close price")
+    website_url = live_data.get("website_url", "#")
+    website_display = live_data.get("website_display", "company.com")
+    about_text = live_data.get("about_summary", "")
+    
+    logo_initials = "".join([w[0] for w in target_company_name.split()[:2]]).upper() if target_company_name else "SS"
 
-        mcap_val = live_data.get("market_cap_cr")
-        mcap_str = f"₹{mcap_val:,.1f} Cr" if isinstance(mcap_val, (int, float)) else "N/A"
-        cap_category = "Large Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 20000 else ("Mid Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 5000 else "Small Cap")
+    # 9 rows × 3 columns of Screener metrics matching exact Screener.in presentation
+    rows_data = [
+        [("Market Cap", sm.get("market_cap", "N/A")), ("Current Price", sm.get("current_price", cur_str)), ("High / Low", sm.get("high_low", "N/A"))],
+        [("Stock P/E", sm.get("stock_pe", "N/A")), ("Book Value", sm.get("book_value", "N/A")), ("Dividend Yield", sm.get("dividend_yield", "N/A"))],
+        [("ROCE", sm.get("roce", "N/A")), ("ROE", sm.get("roe", "N/A")), ("Face Value", sm.get("face_value", "N/A"))],
+        [("Graham Number", sm.get("graham_number", "N/A")), ("Current ratio", sm.get("current_ratio", "N/A")), ("Debt to equity", sm.get("debt_to_equity", "N/A"))],
+        [("Market Cap to Sales", sm.get("market_cap_to_sales", "N/A")), ("Asset Turnover", sm.get("asset_turnover", "N/A")), ("Intrinsic Value", sm.get("intrinsic_value", "N/A"))],
+        [("Promoter holding", sm.get("promoter_holding", "N/A")), ("Int Coverage", sm.get("int_coverage", "N/A")), ("OPM", sm.get("opm", "N/A"))],
+        [("Debt", sm.get("debt", "N/A")), ("Sales growth 5Years", sm.get("sales_growth_5yr", "N/A")), ("ROIC", sm.get("roic", "N/A"))],
+        [("NPM last year", sm.get("npm_last_year", "N/A")), ("CMP / FCF", sm.get("cmp_to_fcf", "N/A")), ("Earnings yield", sm.get("earnings_yield", "N/A"))],
+        [("Free Cash Flow 5Yrs", sm.get("free_cash_flow_5yr", "N/A")), ("PEG Ratio", sm.get("peg_ratio", "N/A")), ("EVEBITDA", sm.get("evebitda", "N/A"))]
+    ]
 
-        # Screener.in Signature Company Headline Banner
-        st.html(
-            f'<div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid #0F172A; padding-bottom: 14px; margin-bottom: 18px;">'
-            f'<div>'
-            f'<div style="font-size: 32px; font-weight: 800; color: #0F172A; letter-spacing: -0.6px; line-height: 1.2;">{target_company_name}</div>'
-            f'<div style="color: #64748B; font-size: 14.5px; font-weight: 500; margin-top: 6px;">NSE: <strong style="color:#0F172A;">{target_ticker}</strong> • Sector: <strong style="color:#0F172A;">{target_sector}</strong> • <span style="background:#F1F5F9; color:#0F172A; padding:3px 10px; border-radius:4px; font-weight:700; font-size:12.5px; border:1px solid #E2E8F0;">{cap_category}</span></div>'
-            f'</div>'
-            f'<div style="text-align: right;">'
-            f'<div style="font-size: 34px; font-weight: 800; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{cur_str}</div>'
-            f'<div style="font-size: 15px; font-weight: 700; color: {delta_color}; margin-top: 4px;">{delta_str}</div>'
-            f'</div>'
-            f'</div>'
-        )
+    table_rows_html = []
+    for r in rows_data:
+        cells = ""
+        for name, val in r:
+            cells += f'<td class="r-name">{name}</td><td class="r-val">{val}</td>'
+        table_rows_html.append(f'<tr>{cells}</tr>')
 
-        # Screener Row 1: Core Valuation & Corridor Metrics (5 Columns)
-        r_col1, r_col2, r_col3, r_col4, r_col5 = st.columns(5)
-        
-        with r_col1:
-            st.metric(label="MARKET CAP", value=mcap_str, delta=cap_category, delta_color="off", border=True)
-        with r_col2:
-            st.metric(label="CURRENT PRICE", value=cur_str, delta=delta_str, border=True)
-        with r_col3:
-            h52 = live_data.get("high_52w", "N/A")
-            l52 = live_data.get("low_52w", "N/A")
-            st.metric(label="HIGH / LOW (52W)", value=f"₹{h52}" if h52 != "N/A" else "N/A", delta=f"Low: ₹{l52}" if l52 != "N/A" else None, delta_color="off", border=True)
-        with r_col4:
-            pe_v = live_data.get("pe_ratio")
-            pe_str = f"{pe_v}x" if pe_v and pe_v != "N/A" else "N/A"
-            fwd_v = live_data.get("forward_pe")
-            fwd_str = f"Fwd PE: {fwd_v}x" if fwd_v and fwd_v != "N/A" else "Fwd PE: N/A"
-            st.metric(label="STOCK P/E", value=pe_str, delta=fwd_str, delta_color="off", border=True)
-        with r_col5:
-            pb_v = live_data.get("price_to_book")
-            pb_str = f"{pb_v}x" if pb_v and pb_v != "N/A" else "N/A"
-            de_v = live_data.get("debt_to_equity")
-            de_str = f"Debt/Eq: {de_v}" if de_v and de_v != "N/A" else "D/E: Clean"
-            st.metric(label="BOOK MULTIPLE (P/B)", value=pb_str, delta=de_str, delta_color="off", border=True)
-
-        # Screener Row 2: Secondary Technicals & Balance Sheet Ratios (5 Columns)
-        s_col1, s_col2, s_col3, s_col4, s_col5 = st.columns(5)
-        with s_col1:
-            st.metric(label="DIVIDEND YIELD", value=str(live_data.get("dividend_yield", "N/A")), border=True)
-        with s_col2:
-            st.metric(label="50-DAY DMA", value=f"₹{live_data.get('dma_50', 'N/A')}", border=True)
-        with s_col3:
-            st.metric(label="200-DAY DMA", value=f"₹{live_data.get('dma_200', 'N/A')}", border=True)
-        with s_col4:
-            st.metric(label="DEBT TO EQUITY", value=str(live_data.get("debt_to_equity", "N/A")), border=True)
-        with s_col5:
-            st.metric(label="PREVIOUS CLOSE", value=f"₹{live_data.get('prev_close', 'N/A')}", border=True)
+    screener_full_html = (
+        f'<div class="screener-card">'
+        f'<div class="screener-header-flex">'
+        f'<div class="screener-title-area">'
+        f'<div class="screener-logo-box">{logo_initials}</div>'
+        f'<div>'
+        f'<div style="display: flex; align-items: baseline; flex-wrap: wrap;">'
+        f'<span class="screener-company-name">{target_company_name}</span>'
+        f'<span class="screener-price-inline">• {cur_str}</span>'
+        f'<span class="screener-delta-pill" style="color: {delta_fg}; background: {delta_bg};">{delta_str}</span>'
+        f'<span style="color: #64748B; font-size: 12px; margin-left: 8px;">{price_date}</span>'
+        f'</div>'
+        f'<div class="screener-links-bar">'
+        f'<span>🔗 <a href="{website_url}" target="_blank">{website_display}</a></span>'
+        f'<span>• ↗ BSE: {live_data.get("bse_code", target_ticker)}</span>'
+        f'<span>• ↗ NSE: {target_ticker}</span>'
+        f'<span>• <span style="background: #F1F5F9; color: #334155; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 12px;">{target_sector}</span></span>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+        f'<div style="display: flex; gap: 10px;">'
+        f'<button style="background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">📥 EXPORT TO EXCEL</button>'
+        f'<button style="background: #5B21B6; border: none; color: #FFFFFF; font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 6px; cursor: pointer;">+ FOLLOW ▾</button>'
+        f'</div>'
+        f'</div>'
+        f'<div class="screener-grid-split">'
+        f'<div class="screener-table-container">'
+        f'<table class="screener-ratio-table">'
+        f'<tbody>{"".join(table_rows_html)}</tbody>'
+        f'</table>'
+        f'<div class="screener-table-footer">'
+        f'<div style="display: flex; align-items: center; gap: 12px;">'
+        f'<span style="font-size: 13px; font-weight: 600; color: #64748B;">Add ratio to table</span>'
+        f'<input class="screener-footer-input" placeholder="eg. Promoter holding" />'
+        f'</div>'
+        f'<button class="screener-footer-btn">✏️ EDIT RATIOS</button>'
+        f'</div>'
+        f'</div>'
+        f'<div class="screener-about-container">'
+        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 8px;">ABOUT</div>'
+        f'<div style="font-size: 13px; line-height: 1.6; color: #334155; margin-bottom: 18px; max-height: 185px; overflow-y: auto; padding-right: 4px;">{about_text}</div>'
+        f'<div style="font-size: 12.5px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; margin-bottom: 6px;">KEY POINTS</div>'
+        f'<div style="font-size: 13px; line-height: 1.55; color: #334155;">'
+        f'<strong>Market Position:</strong> The company is an established flagship {target_sector} constituent listed on NSE/BSE with significant institutional coverage, scale distribution moats, and Ind AS audit compliance.'
+        f'</div>'
+        f'<div style="margin-top: 10px;"><a style="color: #059669; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer;">READ MORE ›</a></div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    )
+    st.html(screener_full_html)
 
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])

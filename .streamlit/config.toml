@@ -1,3 +1,5 @@
+# FinScan India / IDEX-7.5SC - Professional Institutional Theme
+
 [server]
 port = 8501
 headless = true
@@ -6,3 +8,47 @@ enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+base = "dark"
+primaryColor = "#38BDF8"             # Cyan / Sky blue for dark mode
+backgroundColor = "#0B0F19"          # Deep institutional obsidian / midnight
+secondaryBackgroundColor = "#131C2E" # Card slate / navy
+codeBackgroundColor = "#131C2E"
+textColor = "#F1F5F9"                # Clean crisp white/slate
+linkColor = "#38BDF8"
+borderColor = "#1E293B"
+codeTextColor = "#CBD5E1"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "8px"                   # Modern clean radius
+buttonRadius = "8px"
+
+# Typography - Clean, professional fonts
+font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+baseFontSize = 14
+baseFontWeight = 400
+codeFontSize = "13px"
+headingFontSizes = ["30px", "24px", "20px", "16px", "14px", "12px"]
+headingFontWeights = [800, 700, 600, 600, 500, 500]
+linkUnderline = false
+
+# Semantic colors for financial indicators
+greenColor = "#10B981"  # Positive/gains
+redColor = "#EF4444"    # Negative/losses
+yellowColor = "#F59E0B" # Warnings
+orangeColor = "#F97316" # Alerts
+blueColor = "#38BDF8"   # Primary brand / AI
+violetColor = "#818CF8" # Accent
+grayColor = "#64748B"   # Neutral slate
+
+# Sidebar
+[theme.sidebar]
+backgroundColor = "#090D16"
+secondaryBackgroundColor = "#0F172A"
+codeBackgroundColor = "#0F172A"
+textColor = "#E2E8F0"
+borderColor = "#1E293B"
+primaryColor = "#38BDF8"

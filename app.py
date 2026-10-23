@@ -1,16 +1,17 @@
 """
 app.py
-FinScan India — IDEX-7.5SC Hybrid Pro (Ashu Elite Edition)
-Institutional Fundamental & Forensic Research Platform for Indian Equities
+FinScan India | IDEX-7.5SC Hybrid Pro (Ashu Elite Edition)
+Institutional-Grade AI Financial & Forensic Research Platform
 """
 
 import streamlit as st
 import plotly.graph_objects as go
 import json
 import os
+import time
 from dotenv import load_dotenv
 
-# Load local environment variables if available
+# Load local environment variables dynamically
 load_dotenv(override=True)
 
 from prompt_template import IDEX_ANALYSIS_PROMPT
@@ -21,186 +22,202 @@ from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gem
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="IDEX-7.5SC Pro (Ashu Elite Edition) | Indian Equity Research",
-    page_icon="🛡️",
+    page_title="IDEX-7.5SC Institutional | Ashu Elite Edition",
+    page_icon=":material/query_stats:",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling for Institutional Look
+# Custom Institutional CSS for Bloomberg/Fintech Terminal Polish
 st.markdown("""
 <style>
-    .report-title {
-        font-size: 2.1rem;
-        font-weight: 800;
-        color: #0F172A;
+    /* Metric styling */
+    [data-testid="stMetricValue"] {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
         letter-spacing: -0.5px;
-        margin-bottom: 2px;
     }
-    .report-subtitle {
-        font-size: 1.0rem;
-        color: #475569;
-        margin-bottom: 20px;
-    }
-    .guardrail-clean {
-        background-color: #ECFDF5;
-        border: 2px solid #10B981;
-        border-radius: 10px;
-        padding: 16px 20px;
-        color: #065F46;
-        margin-bottom: 20px;
-    }
-    .guardrail-alert {
-        background-color: #FFFBEB;
-        border: 2px solid #F59E0B;
-        border-radius: 10px;
-        padding: 16px 20px;
-        color: #92400E;
-        margin-bottom: 20px;
-    }
-    .guardrail-red {
-        background-color: #FEF2F2;
-        border: 2px solid #EF4444;
-        border-radius: 10px;
-        padding: 16px 20px;
-        color: #991B1B;
-        margin-bottom: 20px;
-    }
-    .score-banner {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        color: white;
-        padding: 24px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .metric-value-huge {
-        font-size: 3.6rem;
-        font-weight: 800;
-        line-height: 1;
-        margin: 8px 0;
-        color: #38BDF8;
-    }
-    .badge-pill {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-right: 6px;
-        margin-bottom: 6px;
-        background-color: #E2E8F0;
-        color: #334155;
-    }
-    .receivable-card {
-        background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
+    
+    /* Terminal header bar */
+    .terminal-header {
+        background: linear-gradient(90deg, #0F172A 0%, #1E293B 100%);
+        border: 1px solid #334155;
         border-radius: 8px;
-        padding: 14px;
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Guardrail Cards */
+    .guardrail-clean-box {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.05) 100%);
+        border: 1.5px solid #10B981;
+        border-radius: 8px;
+        padding: 16px 20px;
+        color: #E2E8F0;
+        margin-bottom: 16px;
+    }
+    .guardrail-alert-box {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.05) 100%);
+        border: 1.5px solid #F59E0B;
+        border-radius: 8px;
+        padding: 16px 20px;
+        color: #E2E8F0;
+        margin-bottom: 16px;
+    }
+    .guardrail-red-box {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(185, 28, 28, 0.08) 100%);
+        border: 2px solid #EF4444;
+        border-radius: 8px;
+        padding: 16px 20px;
+        color: #FEE2E2;
+        margin-bottom: 16px;
+    }
+    
+    /* Score Glow Card */
+    .hero-score-card {
+        background: radial-gradient(circle at 50% 0%, #1E293B 0%, #0F172A 100%);
+        border: 1px solid #38BDF8;
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+        border-radius: 10px;
+        padding: 24px;
         text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR SETTINGS ---
-st.sidebar.image("https://img.icons8.com/color/96/shield.png", width=56)
-st.sidebar.markdown("### **IDEX-7.5SC Hybrid Pro**")
-st.sidebar.caption("Ashu Elite Edition — Locked with Promoter Integrity Guardrails")
+# --- SIDEBAR CONTROLS ---
+with st.sidebar:
+    st.markdown("### :material/shield: **IDEX-7.5SC Pro**")
+    st.caption("Ashu Elite Edition • Forensic Guardrails")
+    st.divider()
 
-# API Key handling
-env_key = os.getenv("GEMINI_API_KEY", "").strip()
-api_key_input = st.sidebar.text_input(
-    "Google Gemini API Key (Free)",
-    value=env_key,
-    type="password",
-    help="Loaded automatically from .env or enter manually."
-)
-
-active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
-
-if env_key:
-    st.sidebar.caption("🔒 Key auto-detected from .env")
-
-if st.sidebar.button("🔍 Test Key Connection", use_container_width=True):
-    with st.sidebar:
-        with st.spinner("Testing API key with Gemini..."):
-            is_valid, msg = verify_gemini_api_key(active_api_key)
-            if is_valid:
-                st.success(msg)
-            else:
-                st.error(msg)
-
-demo_mode = st.sidebar.checkbox(
-    "Run in Demo / Preview Mode",
-    value=False if active_api_key else True,
-    help="Preview complete institutional analysis on sample company without needing an API key."
-)
-
-if not active_api_key and not demo_mode:
-    st.sidebar.warning("⚠️ Enter your Gemini API Key or check 'Demo Mode' to evaluate.")
-
-st.sidebar.markdown("---")
-with st.sidebar.expander("🛠️ View / Edit IDEX Prompt Model", expanded=False):
-    custom_prompt = st.text_area(
-        "Active Prompt Template",
-        value=IDEX_ANALYSIS_PROMPT,
-        height=300,
-        help="Use {company_name} and {sector} as dynamic placeholders."
+    # API Configuration
+    env_key = os.getenv("GEMINI_API_KEY", "").strip()
+    api_key_input = st.text_input(
+        "Google Gemini API Key",
+        value=env_key,
+        type="password",
+        help="Free key with 15 RPM & 1M context from Google AI Studio."
     )
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("""
-**Framework Core Rules:**
-- **Core Score:** ≤ 100 Max across 8 Pillars
-- **Receivable Layer:** Embedded 4.0 pt subscore
-- **PIO Hard Override:** Auto-caps Governance ≤6/20, blocks bonuses, forces `GOV-RED 🔴`
-- **Bonuses:** Cumulative cap +10% (COOL++, Trajectory, Resilience)
-""")
+    active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
 
-# --- MAIN PAGE HEADER ---
-st.markdown('<div class="report-title">🛡️ IDEX-7.5SC Hybrid Pro (Ashu Elite Edition)</div>', unsafe_allow_html=True)
-st.markdown('<div class="report-subtitle">Forensic Equity Research & 8-Pillar Scoring Engine with Promoter Integrity Guardrails & Receivable Health Layer</div>', unsafe_allow_html=True)
+    if env_key:
+        st.caption(":material/lock: Auto-detected from `.env`")
 
-# --- INPUT SECTION ---
-input_col1, input_col2, input_col3 = st.columns([2.2, 1.8, 1.5])
+    col_btn1, col_btn2 = st.columns([1.2, 1])
+    with col_btn1:
+        if st.button(":material/bolt: Test Key", width="stretch"):
+            with st.spinner("Connecting..."):
+                is_valid, msg = verify_gemini_api_key(active_api_key)
+                if is_valid:
+                    st.success(msg)
+                else:
+                    st.error(msg)
+    with col_btn2:
+        demo_mode = st.toggle("Demo Mode", value=False if active_api_key else True)
 
-with input_col1:
-    company_name = st.text_input("Company Name", placeholder="e.g. Tata Consumer Products Ltd, Dixon Tech, Titan")
+    st.divider()
+    
+    # Prompt Engine Inspector
+    with st.expander(":material/code: Prompt Model Settings", expanded=False):
+        st.caption("Core Prompt Model (Locked):")
+        custom_prompt = st.text_area(
+            "Prompt Template",
+            value=IDEX_ANALYSIS_PROMPT,
+            height=280,
+            help="Dynamic placeholders: {company_name}, {sector}"
+        )
 
-with input_col2:
-    sector = st.selectbox(
-        "Sector Benchmark",
-        [
-            "FMCG / Retail",
-            "Consumer Durables / Retailer credit",
-            "Pharma / Formulations (trade)",
-            "Manufacturing / B2B",
-            "Capital Goods / Industrial",
-            "Construction / Infra (milestone billing)",
-            "IT Services / Consulting",
-            "SaaS / Subscription (B2B)",
-            "Hospitals / Healthcare (insurer payments)",
-            "Logistics / Transport",
-            "Chemicals / Oil & Gas",
-            "Banks / NBFC"
-        ]
+    st.divider()
+    st.caption("**:material/gavel: Forensic Mandates:**")
+    st.markdown("""
+    - **8 Pillars:** Core score ≤ 100
+    - **PIO Hard Trigger:** Auto-cap Governance ≤6/20, blocks bonuses, forces `GOV-RED 🔴`
+    - **Receivable Layer:** Embedded 4.0 pt subscore
+    - **Bonus Cap:** Cumulative +10% max
+    """)
+
+# --- TOP TERMINAL HEADER BAR ---
+st.markdown("""
+<div class="terminal-header">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; color: #38BDF8;">
+            FINSCAN <span style="color: #F8FAFC;">AI</span>
+        </span>
+        <span style="background-color: #1E293B; border: 1px solid #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: #94A3B8;">
+            IDEX-7.5SC HYBRID PRO
+        </span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px; font-size: 0.85rem; color: #94A3B8;">
+        <span>:material/memory: <b>Gemini 3.5 Flash</b></span>
+        <span>:material/account_balance: <b>Ind AS Standards</b></span>
+        <span style="color: #34D399;">● ENGINE ONLINE</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- INTAKE & EVALUATION FORM ---
+with st.container(border=True):
+    st.markdown("#### :material/manage_search: Target Company Ingestion")
+    
+    c1, c2, c3 = st.columns([2.5, 2, 2])
+    with c1:
+        company_name = st.text_input(
+            "Company Name / Ticker",
+            placeholder="e.g. Tata Consumer Products Ltd, Titan, Dixon Tech",
+            help="Enter the listed BSE/NSE firm name."
+        )
+    with c2:
+        sector = st.selectbox(
+            "Sector Benchmark Matrix",
+            [
+                "FMCG / Retail",
+                "Consumer Durables / Retailer credit",
+                "Pharma / Formulations (trade)",
+                "Manufacturing / B2B",
+                "Capital Goods / Industrial",
+                "Construction / Infra (milestone billing)",
+                "IT Services / Consulting",
+                "SaaS / Subscription (B2B)",
+                "Hospitals / Healthcare (insurer payments)",
+                "Logistics / Transport",
+                "Chemicals / Oil & Gas",
+                "Banks / NBFC"
+            ]
+        )
+    with c3:
+        doc_type = st.segmented_control(
+            "Document Type",
+            ["Annual Report", "Investor PPT", "Audited Financials"],
+            default="Annual Report"
+        )
+
+    # File Drag-and-Drop
+    uploaded_file = st.file_uploader(
+        "Upload Financial Filing (PDF)",
+        type=["pdf"],
+        help="Handles comprehensive 200–500 page Indian Annual Reports using Gemini 3.5 Flash multimodal ingestion."
     )
 
-with input_col3:
-    doc_type = st.selectbox("Document Type", ["Annual Report", "Investor Presentation", "Audited Financials"])
+    btn_col1, btn_col2 = st.columns([3, 1])
+    with btn_col1:
+        run_btn = st.button(
+            ":material/rocket_launch: Execute Institutional IDEX-7.5SC Analysis",
+            type="primary",
+            width="stretch"
+        )
+    with btn_col2:
+        if st.button(":material/visibility: Preview Sample", width="stretch"):
+            demo_mode = True
+            run_btn = True
 
-uploaded_file = st.file_uploader(
-    "Upload Financial Report (PDF)",
-    type=["pdf"],
-    help="Upload the annual report (PDF). 200–500 page Indian reports are fully ingested by Gemini Flash."
-)
-
-run_button = st.button("🚀 Execute IDEX-7.5SC Forensic Evaluation", type="primary", use_container_width=True)
-
-# Helper function to plot 8-Pillar Radar Chart
-def build_8pillar_radar(pillars):
-    names = [f"P{p['id']}: {p['name'][:18]}.." if len(p['name']) > 20 else f"P{p['id']}: {p['name']}" for p in pillars]
-    # Normalize score to percentage of max for fair radar visual
+# Helper to build Plotly 8-Pillar Radar Chart with Dark Financial Aesthetic
+def build_dark_radar_chart(pillars):
+    names = [f"P{p['id']}: {p['name']}" for p in pillars]
     pct_scores = [(p["score"] / p["max_score"]) * 100 for p in pillars]
     
     names_closed = names + [names[0]]
@@ -211,31 +228,52 @@ def build_8pillar_radar(pillars):
         r=pct_closed,
         theta=names_closed,
         fill='toself',
-        fillcolor='rgba(56, 189, 248, 0.22)',
-        line=dict(color='#0284C7', width=2.5),
+        fillcolor='rgba(56, 189, 248, 0.20)',
+        line=dict(color='#38BDF8', width=2.5),
+        marker=dict(size=6, color='#38BDF8'),
         name='% of Max Score'
     ))
 
     fig.update_layout(
         polar=dict(
+            bgcolor='rgba(15, 23, 42, 0.6)',
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
-                ticksuffix="%"
+                ticksuffix="%",
+                gridcolor='#334155',
+                linecolor='#334155',
+                tickfont=dict(color='#94A3B8', size=10)
+            ),
+            angularaxis=dict(
+                gridcolor='#334155',
+                linecolor='#334155',
+                tickfont=dict(color='#E2E8F0', size=11, family='Inter')
             )
         ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
         margin=dict(l=45, r=45, t=25, b=25),
-        height=360
+        height=370
     )
     return fig
 
-# --- EXECUTION ---
-if run_button:
+# --- EXECUTION ENGINE ---
+if run_btn:
     if not uploaded_file and not demo_mode:
-        st.error("Please upload an Annual Report PDF or check 'Run in Demo / Preview Mode' in the sidebar.")
+        st.error("Please upload an Annual Report PDF or click 'Preview Sample' / toggle Demo Mode in the sidebar.")
     else:
-        with st.spinner("Executing IDEX-7.5SC Hybrid Pro with Promoter Integrity Guardrails & Receivable Checks..."):
+        # Visual Progress Simulation
+        with st.status(":material/sync: Running IDEX-7.5SC Forensic Audit...", expanded=True) as status:
+            st.write(":material/description: Parsing and indexing Ind AS financial tables...")
+            time.sleep(0.3)
+            st.write(":material/policy: Auditing statutory auditor remarks & related-party schedules...")
+            time.sleep(0.3)
+            st.write(":material/account_balance: Testing Sector Receivable Health (DSO, Aging, Provision Coverage)...")
+            time.sleep(0.3)
+            st.write(":material/shield: Enforcing Promoter Integrity Override (PIO) & PPRM Guardrails...")
+            
             try:
                 if demo_mode:
                     result = get_demo_analysis(company_name, sector)
@@ -249,246 +287,280 @@ if run_button:
                         custom_prompt=custom_prompt
                     )
                 st.session_state["idex_result"] = result
-                st.success("✅ Evaluation complete! Institutional scorecard generated.")
+                status.update(label=":material/check_circle: IDEX-7.5SC Analysis Complete!", state="complete", expanded=False)
             except Exception as e:
-                st.error(f"Execution Error: {str(e)}")
-                with st.expander("🔍 View Technical Details of Error"):
+                status.update(label=":material/error: Evaluation Failed", state="error")
+                st.error(f"Analysis Error: {str(e)}")
+                with st.expander(":material/terminal: Technical Traceback"):
                     st.exception(e)
 
-# --- DISPLAY REPORT ---
+# --- RESULTS DASHBOARD ---
 if "idex_result" in st.session_state:
     res = st.session_state["idex_result"]
-    st.markdown("---")
+    st.write("")
 
-    # 1. MANDATORY GUARDRAIL TAG BANNER
+    # 1. MANDATORY GUARDRAIL TAG CALLOUT
     tag = res.get("guardrail_tag", "GOV-CLEAN 🟢")
     evidence_list = res.get("guardrail_evidence", [])
     
     if "GOV-RED" in tag or res.get("pio_triggered", False):
         st.markdown(f"""
-        <div class="guardrail-red">
-            <h3 style="margin:0 0 6px 0; color:#B91C1C;">🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO TRIGGERED)</h3>
-            <p style="margin:0 0 8px 0; font-weight:600;">{res.get('pio_reason', 'Promoter Integrity Override fired. Governance capped ≤ 6.0/20. All bonuses blocked. Automatic Red Flag zone.')}</p>
-            <ul>{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
+        <div class="guardrail-red-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 800; font-size: 1.15rem; color: #F87171;">
+                    🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO FIRED)
+                </span>
+                <span style="background-color: #7F1D1D; color: #FCA5A5; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
+                    CRITICAL FORENSIC RISK
+                </span>
+            </div>
+            <p style="margin: 0 0 10px 0; font-weight: 600;">{res.get('pio_reason', 'Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.')}</p>
+            <ul style="margin: 0; padding-left: 20px;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
         </div>
         """, unsafe_allow_html=True)
     elif "PROM-ALERT" in tag:
         st.markdown(f"""
-        <div class="guardrail-alert">
-            <h3 style="margin:0 0 6px 0; color:#B45309;">⚠️ MANDATORY GUARDRAIL TAG: {tag}</h3>
-            <p style="margin:0 0 8px 0;">Elevated promoter pledge or dilution risk detected under PPRM/Stake Trend rules.</p>
-            <ul>{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
+        <div class="guardrail-alert-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 800; font-size: 1.15rem; color: #FBBF24;">
+                    ⚠️ MANDATORY GUARDRAIL TAG: {tag}
+                </span>
+                <span style="background-color: #78350F; color: #FDE68A; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
+                    PROMOTER ALERT
+                </span>
+            </div>
+            <p style="margin: 0 0 10px 0;">Elevated promoter pledging or dilution observed under PPRM rules.</p>
+            <ul style="margin: 0; padding-left: 20px;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
-        <div class="guardrail-clean">
-            <h3 style="margin:0 0 6px 0; color:#047857;">🛡️ MANDATORY GUARDRAIL TAG: {tag}</h3>
-            <p style="margin:0 0 8px 0;">Clean governance track record, zero pledging, stable auditors, aligned promoter incentives.</p>
-            <ul>{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
+        <div class="guardrail-clean-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 800; font-size: 1.15rem; color: #34D399;">
+                    🛡️ MANDATORY GUARDRAIL TAG: {tag}
+                </span>
+                <span style="background-color: #064E3B; color: #A7F3D0; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
+                    INSTITUTIONAL GRADE
+                </span>
+            </div>
+            <p style="margin: 0 0 8px 0; color: #CBD5E1;">10Y+ clean auditor records, zero promoter share pledging, fully aligned minority shareholder governance.</p>
+            <ul style="margin: 0; padding-left: 20px; color: #94A3B8;">{''.join([f'<li>{e}</li>' for e in evidence_list])}</ul>
         </div>
         """, unsafe_allow_html=True)
 
-    # 2. TOP BANNER: SCORECARD & RADAR
-    score_col, radar_col = st.columns([1.3, 2])
-
-    with score_col:
-        st.markdown(f"""
-        <div class="score-banner">
-            <div style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1.2px; opacity: 0.85;">Final IDEX-7.5SC Score</div>
-            <div class="metric-value-huge">{res.get('final_score', 0):.1f}<span style="font-size: 1.6rem; opacity: 0.7;">/100</span></div>
-            <div style="font-size: 1.35rem; font-weight: 700; color: #F8FAFC;">{res.get('verdict', 'N/A')}</div>
-            <div style="font-size: 0.95rem; margin-top: 10px; color: #94A3B8;">
-                Core: <b>{res.get('core_score', 0):.1f}</b> | Penalties: <b>{res.get('total_penalties', 0):.1f}</b> | Bonus: <b>+{res.get('bonuses_breakdown', {}).get('total_bonus_applied', 0):.1f}%</b>
-            </div>
-            <div style="margin-top: 14px;">
-                <span style="font-size: 0.85rem; color: #E2E8F0;">Suggested Position Sizing:</span><br/>
-                <span style="font-size: 1.3rem; font-weight: 800; color: #34D399;">{res.get('position_sizing', '0%')}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.write("")
-        st.write("**Active Tags:**")
-        tag_html = "".join([f'<span class="badge-pill">{t}</span>' for t in res.get("tags_applied", [])])
-        st.markdown(tag_html, unsafe_allow_html=True)
-
-    with radar_col:
-        st.subheader("8-Pillar Quality Profile")
-        radar_fig = build_8pillar_radar(res.get("pillars", []))
-        st.plotly_chart(radar_fig, use_container_width=True)
-
-    # 3. INSERTED RECEIVABLE HEALTH LAYER
-    rec_metrics = res.get("receivable_health_metrics", {})
-    if rec_metrics:
-        st.markdown("### 📥 Sector-Sensitive Receivable Health Layer")
-        rcol1, rcol2, rcol3, rcol4, rcol5 = st.columns(5)
-        with rcol1:
-            st.metric("DSO (Days)", f"{rec_metrics.get('dso_days', 'N/A')} days", help="Days Sales Outstanding")
-            st.caption(f"Ideal: {rec_metrics.get('sector_ideal_dso', 'N/A')}")
-        with rcol2:
-            st.metric("Receivables / Sales", rec_metrics.get("receivables_to_sales_pct", "N/A"))
-        with rcol3:
-            st.metric(">90 Days Overdue", rec_metrics.get("pct_over_90_days", "N/A"), help="Delinquency threshold")
-        with rcol4:
-            st.metric("Top Debtor Conc.", rec_metrics.get("top_debtor_concentration_pct", "N/A"))
-        with rcol5:
-            st.metric("Provision Coverage", rec_metrics.get("provision_coverage_pct", "N/A"))
-
-        st.info(f"**Receivable Health Assessment:** {rec_metrics.get('receivable_verdict', 'Normal')}")
-
-    st.markdown("---")
-
-    # 4. TABBED DETAILED BREAKDOWNS
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Full 8-Pillar Scorecard",
-        "⚖️ Penalties & Bonuses",
-        "📈 Peer Matrix & Context",
-        "🎯 Final Call & Thesis",
-        "📁 Appendices (Forensic Pack & DCF)"
-    ])
-
-    with tab1:
-        st.subheader("Core 8-Pillar Evaluation (Max 100 Points)")
-        for p in res.get("pillars", []):
-            p_score = p.get("score", 0)
-            p_max = p.get("max_score", 1)
-            pct = (p_score / p_max) * 100
-            
-            with st.expander(f"**Pillar {p.get('id', '')}: {p.get('name')}** — **{p_score:.1f} / {p_max:.1f}** ({pct:.0f}%)", expanded=True):
-                st.write(p.get("justification", ""))
-                if "receivable_subscore" in p:
-                    st.markdown(f"**Receivable Subscore (Embedded):** `{p['receivable_subscore']}`")
-
-    with tab2:
-        col_pen, col_bon = st.columns(2)
-        with col_pen:
-            st.subheader("⚠️ Penalties Applied")
-            st.write(f"**Total Penalties:** `{res.get('total_penalties', 0):.1f} pts`")
-            pen_list = res.get("penalties_breakdown", [])
-            if pen_list:
-                for item in pen_list:
-                    st.markdown(f"- **{item.get('penalty_name')}:** `{item.get('points')} pts` — {item.get('reason')}")
-            else:
-                st.success("No statutory penalties triggered.")
-
-        with col_bon:
-            st.subheader("🌟 Bonuses Applied")
-            bb = res.get("bonuses_breakdown", {})
-            st.write(f"**Total Bonus Applied:** `+{bb.get('total_bonus_applied', 0):.1f}%` (Max Cap: +10%)")
-            st.markdown(f"- **COOL++ PRO Bonus:** `+{bb.get('cool_pro_bonus', 0):.1f}%`")
-            st.markdown(f"- **Trajectory Bonus:** `+{bb.get('trajectory_bonus', 0):.1f}%`")
-            st.markdown(f"- **Resilience Bonus:** `+{bb.get('resilience_bonus', 0):.1f}%`")
-
-    with tab3:
-        st.subheader("Peer Comparison Matrix")
-        peers = res.get("peer_matrix", [])
-        if peers:
-            st.table(peers)
-        
-        st.markdown("#### Strengths vs Weaknesses")
-        scol, wcol = st.columns(2)
-        with scol:
-            st.write("**Key Structural Strengths:**")
-            for s in res.get("strengths", []):
-                st.markdown(f"🟢 {s}")
-        with wcol:
-            st.write("**Key Weaknesses & Vulnerabilities:**")
-            for w in res.get("weaknesses", []):
-                st.markdown(f"🔴 {w}")
-
-    with tab4:
-        st.subheader("📌 Final Analyst Call")
-        st.success(f"**{res.get('final_call', 'N/A')}**")
-
-        st.markdown("#### ESG, Fragility & FX Notes")
-        st.write(res.get("fragility_esg_fx_notes", "None reported."))
-
-        st.markdown("#### Drift & Optionality Catalyst (12–24 Months)")
-        st.write(res.get("drift_optionality_update", "None reported."))
-
-    with tab5:
-        st.subheader("Appendix A — Forensic Evidence Pack")
-        st.caption("Exact quotes, regulatory disclosures, and load-bearing citations")
-        for item in res.get("appendix_a_forensic_evidence", []):
-            st.markdown(f"- {item}")
-
-        st.markdown("---")
-        st.subheader("Appendix B — Calculations & Stress Tests")
-        app_b = res.get("appendix_b_calculations", {})
-        for k, v in app_b.items():
-            st.markdown(f"**{k.replace('_', ' ').title()}:** {v}")
-
-    # 5. EXPORT OPTIONS
-    st.markdown("---")
-    down_col1, down_col2 = st.columns(2)
-
-    with down_col1:
-        st.download_button(
-            label="📥 Download Structured JSON Data",
-            data=json.dumps(res, indent=2),
-            file_name=f"{res.get('company_name', 'company')}_IDEX_7.5SC.json",
-            mime="application/json",
-            use_container_width=True
+    # 2. EXECUTIVE SCORE ROW (KPI CARDS)
+    kpi_col1, kpi_col2, kpi_col3, kpi_col4, kpi_col5 = st.columns(5)
+    
+    with kpi_col1:
+        st.metric(
+            label="FINAL SCORE",
+            value=f"{res.get('final_score', 0):.1f} / 100",
+            delta=res.get("verdict", "").split("—")[0].strip(),
+            border=True
+        )
+    with kpi_col2:
+        st.metric(
+            label="CORE SCORE",
+            value=f"{res.get('core_score', 0):.1f}",
+            delta_description="Pre-penalties (100 Max)",
+            border=True
+        )
+    with kpi_col3:
+        st.metric(
+            label="PENALTIES",
+            value=f"{res.get('total_penalties', 0):.1f} pts",
+            delta="-7.5% Cap",
+            delta_color="inverse",
+            border=True
+        )
+    with kpi_col4:
+        st.metric(
+            label="BONUS APPLIED",
+            value=f"+{res.get('bonuses_breakdown', {}).get('total_bonus_applied', 0):.1f}%",
+            delta="+10% Cap",
+            border=True
+        )
+    with kpi_col5:
+        st.metric(
+            label="POSITION SIZING",
+            value=res.get("position_sizing", "0%"),
+            delta_description="Portfolio Allocation",
+            border=True
         )
 
-    with down_col2:
-        # Build strict 17-section institutional markdown report
-        md_report = f"""# {res.get('cover_line', 'IDEX-7.5SC Hybrid Pro Evaluation')}
+    st.write("")
 
-## 1. Company & Sector
-- **Company:** {res.get('company_name')}
-- **Sector:** {res.get('sector')}
-- **Financial Period:** {res.get('financial_year')}
+    # 3. RADAR & RECEIVABLE HEALTH SPLIT
+    split_col1, split_col2 = st.columns([1.3, 1.7])
 
-## 2. Mandatory Guardrail Tag
-### {res.get('guardrail_tag')}
-{chr(10).join(['- ' + e for e in res.get('guardrail_evidence', [])])}
+    with split_col1:
+        with st.container(border=True):
+            st.markdown("##### :material/radar: 8-Pillar Quality Profile")
+            radar_fig = build_dark_radar_chart(res.get("pillars", []))
+            st.plotly_chart(radar_fig, width="stretch", alt="8-Pillar Radar Chart")
+            
+            # Active Tags Row
+            st.caption("Active Forensic Tags:")
+            tag_badges = " ".join([f":blue-badge[{t}]" for t in res.get("tags_applied", [])])
+            st.markdown(tag_badges)
 
-## 3. Full 8-Pillar Scorecard (Core Max = 100)
+    with split_col2:
+        with st.container(border=True):
+            st.markdown("##### :material/account_balance_wallet: Sector Receivable Health Layer")
+            st.caption("Forensic Cash Conversion & Liquidity Benchmarking")
+            
+            rec = res.get("receivable_health_metrics", {})
+            
+            r_row1, r_row2 = st.columns(2)
+            with r_row1:
+                st.metric("DSO (Days Sales Outstanding)", f"{rec.get('dso_days', 'N/A')} d", f"Sector Ideal: {rec.get('sector_ideal_dso', 'N/A')}", border=True)
+                st.metric("Receivables / Annual Sales", rec.get("receivables_to_sales_pct", "N/A"), border=True)
+            with r_row2:
+                st.metric(">90 Days Delinquency", rec.get("pct_over_90_days", "N/A"), help="Delinquency threshold", border=True)
+                st.metric("Provision Coverage", rec.get("provision_coverage_pct", "N/A"), border=True)
+            
+            st.info(f":material/info: **Assessment:** {rec.get('receivable_verdict', 'Normal')}", icon=":material/verified:")
+
+    # 4. TABBED IN-DEPTH FORENSIC ANALYSIS
+    st.write("")
+    tab_pillars, tab_math, tab_peers, tab_thesis, tab_appendices = st.tabs([
+        ":material/bar_chart: 8-Pillar Scorecard",
+        ":material/balance: Penalties & Bonuses",
+        ":material/group: Peer Comparison",
+        ":material/trending_up: Final Call & Thesis",
+        ":material/inventory_2: Forensic Evidence & Calculations"
+    ])
+
+    with tab_pillars:
+        st.markdown("#### :material/table_rows: Full 8-Pillar Evaluation Breakdown")
+        
+        # Grid of cards for each pillar
+        p_cols = st.columns(2)
+        for i, p in enumerate(res.get("pillars", [])):
+            col = p_cols[i % 2]
+            with col:
+                with st.container(border=True):
+                    p_score = p.get("score", 0)
+                    p_max = p.get("max_score", 1)
+                    pct = (p_score / p_max) * 100
+                    
+                    st.markdown(f"**Pillar {p.get('id')}: {p.get('name')}**")
+                    st.progress(pct / 100, text=f"**{p_score:.1f} / {p_max:.1f} pts** ({pct:.0f}%)")
+                    st.caption(p.get("justification", ""))
+                    if "receivable_subscore" in p:
+                        st.markdown(f":blue-badge[Receivable Subscore: {p['receivable_subscore']}]")
+
+    with tab_math:
+        m_col1, m_col2 = st.columns(2)
+        with m_col1:
+            with st.container(border=True):
+                st.markdown("##### :material/warning: Deducted Penalties")
+                penalties = res.get("penalties_breakdown", [])
+                if penalties:
+                    for pen in penalties:
+                        st.markdown(f"- :red[**{pen.get('penalty_name')}**] (`{pen.get('points')} pts`): {pen.get('reason')}")
+                else:
+                    st.success("No statutory forensic penalties applied.", icon=":material/check_circle:")
+        
+        with m_col2:
+            with st.container(border=True):
+                st.markdown("##### :material/star: Applied Bonuses (Max +10%)")
+                bb = res.get("bonuses_breakdown", {})
+                st.markdown(f"- **COOL++ PRO Bonus:** `+{bb.get('cool_pro_bonus', 0):.1f}%`")
+                st.markdown(f"- **Trajectory Bonus:** `+{bb.get('trajectory_bonus', 0):.1f}%`")
+                st.markdown(f"- **Resilience Bonus:** `+{bb.get('resilience_bonus', 0):.1f}%`")
+                st.divider()
+                st.metric("Total Bonus Impact", f"+{bb.get('total_bonus_applied', 0):.1f}%")
+
+    with tab_peers:
+        with st.container(border=True):
+            st.markdown("##### :material/compare: Peer Relative Matrix")
+            peers = res.get("peer_matrix", [])
+            if peers:
+                st.dataframe(peers, width="stretch", alt="Peer Matrix Table")
+            
+            p_str_col1, p_str_col2 = st.columns(2)
+            with p_str_col1:
+                st.markdown("**Key Structural Strengths:**")
+                for s in res.get("strengths", []):
+                    st.markdown(f":green[✔] {s}")
+            with p_str_col2:
+                st.markdown("**Structural Weaknesses & Fragilities:**")
+                for w in res.get("weaknesses", []):
+                    st.markdown(f":red[✖] {w}")
+
+    with tab_thesis:
+        with st.container(border=True):
+            st.markdown("##### :material/verified: Final Analyst Recommendation")
+            st.markdown(f"### {res.get('final_call', 'N/A')}")
+            
+            st.divider()
+            t_col1, t_col2 = st.columns(2)
+            with t_col1:
+                st.markdown("**ESG, Fragility & Foreign Exchange Notes:**")
+                st.caption(res.get("fragility_esg_fx_notes", "No material vulnerabilities observed."))
+            with t_col2:
+                st.markdown("**12–24 Month Catalyst & Drift Watch:**")
+                st.caption(res.get("drift_optionality_update", "Monitor upcoming capital deployment."))
+
+    with tab_appendices:
+        with st.container(border=True):
+            st.markdown("##### :material/menu_book: Appendix A — Forensic Evidence Pack")
+            st.caption("Exact quotes, regulatory disclosures, and load-bearing audit excerpts:")
+            for e in res.get("appendix_a_forensic_evidence", []):
+                st.markdown(f"- `{e}`")
+            
+            st.divider()
+            st.markdown("##### :material/calculate: Appendix B — Calculations & Stress Tests")
+            calcs = res.get("appendix_b_calculations", {})
+            for k, v in calcs.items():
+                st.markdown(f"**{k.replace('_', ' ').title()}:** {v}")
+
+    # 5. EXPORT TOOLBAR
+    st.write("")
+    st.divider()
+    exp_col1, exp_col2, exp_col3 = st.columns([1, 1, 2])
+    
+    with exp_col1:
+        st.download_button(
+            label=":material/data_object: Export Structured JSON",
+            data=json.dumps(res, indent=2),
+            file_name=f"{res.get('company_name', 'Company')}_IDEX75SC.json",
+            mime="application/json",
+            width="stretch"
+        )
+    with exp_col2:
+        # Generate formatted markdown research memo
+        md_text = f"""# {res.get('cover_line', 'IDEX-7.5SC Institutional Research')}
+
+## Metadata
+- **Target Company:** {res.get('company_name')}
+- **Sector Benchmark:** {res.get('sector')}
+- **Reporting Period:** {res.get('financial_year')}
+- **Final Rating:** {res.get('verdict')} (Score: {res.get('final_score')}/100)
+- **Position Sizing:** {res.get('position_sizing')}
+
+## Mandatory Guardrail Tag
+**{res.get('guardrail_tag')}**
+{chr(10).join(['- ' + ev for ev in res.get('guardrail_evidence', [])])}
+
+## Core 8-Pillar Scorecard
 {chr(10).join([f"- **Pillar {p.get('id')}: {p.get('name')}**: {p.get('score')}/{p.get('max_score')} ({p.get('justification')})" for p in res.get('pillars', [])])}
 
-**Core Score:** {res.get('core_score')}/100
+## Sector-Sensitive Receivable Layer
+- DSO: {rec.get('dso_days')} days (Ideal: {rec.get('sector_ideal_dso')})
+- Overdue >90 Days: {rec.get('pct_over_90_days')}
+- Receivables / Sales: {rec.get('receivables_to_sales_pct')}
+- Verdict: {rec.get('receivable_verdict')}
 
-## 4. Adjusted Score & Penalties
-- Total Penalties: {res.get('total_penalties')}
-- Adjusted Pre-Bonus Score: {res.get('adjusted_pre_bonus_score')}
-
-## 5. Bonuses Applied
-- COOL++ PRO: +{res.get('bonuses_breakdown', {}).get('cool_pro_bonus')}%
-- Trajectory: +{res.get('bonuses_breakdown', {}).get('trajectory_bonus')}%
-- Resilience: +{res.get('bonuses_breakdown', {}).get('resilience_bonus')}%
-- Total Bonus Applied: +{res.get('bonuses_breakdown', {}).get('total_bonus_applied')}%
-
-## 6. Final Score & Verdict
-- **Final Score:** {res.get('final_score')} / 100
-- **Verdict:** {res.get('verdict')}
-- **Position Sizing Suggestion:** {res.get('position_sizing')}
-
-## 7. Active Tags
-{', '.join(res.get('tags_applied', []))}
-
-## 8. Receivable Health & Sector Benchmark Layer
-- DSO: {rec_metrics.get('dso_days')} days (Sector Ideal: {rec_metrics.get('sector_ideal_dso')})
-- Receivables / Sales: {rec_metrics.get('receivables_to_sales_pct')}
-- % >90 Days Overdue: {rec_metrics.get('pct_over_90_days')}
-- Top Debtor Concentration: {rec_metrics.get('top_debtor_concentration_pct')}
-- Provision Coverage: {rec_metrics.get('provision_coverage_pct')}
-- Verdict: {rec_metrics.get('receivable_verdict')}
-
-## 9. Final Call
+## Final Call
 **{res.get('final_call')}**
-
-## 10. Appendix A — Forensic Evidence Pack
-{chr(10).join(['- ' + e for e in res.get('appendix_a_forensic_evidence', [])])}
-
-## 11. Appendix B — Calculations
-{chr(10).join([f"- **{k.title()}**: {v}" for k, v in app_b.items()])}
 """
         st.download_button(
-            label="📄 Download Full Institutional Research Report (.md)",
-            data=md_report,
-            file_name=f"{res.get('company_name', 'company')}_IDEX_7.5SC_Report.md",
+            label=":material/description: Export Research Memo (.md)",
+            data=md_text,
+            file_name=f"{res.get('company_name', 'Company')}_Institutional_Memo.md",
             mime="text/markdown",
-            use_container_width=True
+            width="stretch"
         )

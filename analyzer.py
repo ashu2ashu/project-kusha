@@ -10,33 +10,51 @@ import tempfile
 from typing import Dict, Any, Optional
 from prompt_template import IDEX_SYSTEM_INSTRUCTION, IDEX_ANALYSIS_PROMPT
 
+# Models ordered by current availability & performance
+SUPPORTED_MODELS = [
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest"
+]
+
 def verify_gemini_api_key(api_key: str) -> tuple[bool, str]:
     """Tests if the provided Gemini API key is valid by making a quick ping."""
     key = api_key.strip().strip("'").strip('"').strip() if api_key else ""
     if not key:
         return False, "API key field is empty. Please paste your key."
-    if not key.startswith("AIzaSy"):
-        return False, "Google Gemini API keys start with 'AIzaSy'. Please make sure you copied the full key from Google AI Studio (without extra characters or quotes)."
+    
     try:
         from google import genai
         client = genai.Client(api_key=key)
-        resp = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents="ping",
-        )
-        if resp and resp.text:
-            return True, "✅ Your Gemini API key is valid and connected successfully!"
+        
+        # Try available models in order
+        last_error = None
+        for model_name in SUPPORTED_MODELS:
+            try:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents="ping",
+                )
+                if resp and resp.text:
+                    return True, f"✅ API Key is 100% valid & connected to Google Gemini ({model_name})!"
+            except Exception as me:
+                last_error = me
+                continue
+
+        if last_error:
+            raise last_error
+
         return False, "Received empty response from Gemini."
     except Exception as e:
         err = str(e)
         if "API_KEY_INVALID" in err or "400" in err:
             return False, "❌ Invalid API Key. Please re-copy the key from https://aistudio.google.com"
         if "PERMISSION_DENIED" in err or "403" in err:
-            return False, "❌ Permission Denied: Generative Language API is not enabled on this key. Please create a new key directly at https://aistudio.google.com"
+            return False, "❌ Permission Denied: Generative Language API is not enabled for this project."
         if "RESOURCE_EXHAUSTED" in err or "429" in err:
             return False, "⚠️ Rate limit reached (15 requests/min). Please wait 30 seconds and try again."
         return False, f"Verification failed: {err}"
-
 
 def get_demo_analysis(company_name: str, sector: str) -> Dict[str, Any]:
     """Returns a realistic, high-grade institutional IDEX-7.5SC analysis."""
@@ -185,7 +203,7 @@ def analyze_document_with_gemini(
     """
     clean_key = api_key.strip().strip("'").strip('"').strip() if api_key else ""
     if not clean_key:
-        raise ValueError("Gemini API Key is missing. Please provide your free Google AI Studio key.")
+        raise ValueError("Gemini API Key is missing. Please provide your Google AI Studio key.")
 
     try:
         from google import genai
@@ -210,15 +228,29 @@ def analyze_document_with_gemini(
             sector=sector or "Diversified"
         )
 
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=[uploaded_file, formatted_prompt],
-            config=types.GenerateContentConfig(
-                system_instruction=IDEX_SYSTEM_INSTRUCTION,
-                response_mime_type="application/json",
-                temperature=0.15,  # Low temperature for strict, forensic accuracy
-            )
-        )
+        response = None
+        last_error = None
+        for model_name in SUPPORTED_MODELS:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[uploaded_file, formatted_prompt],
+                    config=types.GenerateContentConfig(
+                        system_instruction=IDEX_SYSTEM_INSTRUCTION,
+                        response_mime_type="application/json",
+                        temperature=0.15,
+                    )
+                )
+                if response and response.text:
+                    break
+            except Exception as me:
+                last_error = me
+                continue
+
+        if not response or not response.text:
+            if last_error:
+                raise last_error
+            raise RuntimeError("Received empty response from Gemini model.")
 
         result_text = response.text.strip()
         if result_text.startswith("```json"):
@@ -232,7 +264,7 @@ def analyze_document_with_gemini(
         return parsed_json
 
     except json.JSONDecodeError as jde:
-        raise ValueError(f"Failed to parse LLM response into JSON: {str(jde)}\nResponse was: {response.text[:500]}")
+        raise ValueError(f"Failed to parse LLM response into JSON: {str(jde)}\nResponse was: {response.text[:500] if response else 'None'}")
     except Exception as e:
         raise RuntimeError(f"Error during Gemini analysis: {str(e)}")
     finally:

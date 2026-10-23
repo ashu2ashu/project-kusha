@@ -22,7 +22,7 @@ importlib.reload(analyzer)
 importlib.reload(nifty_universe)
 
 from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key
-from nifty_universe import get_company_list, find_company_info, fetch_live_market_data
+from nifty_universe import get_company_list, find_company_info, fetch_live_market_data, get_sector_list
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -473,20 +473,7 @@ with st.container(border=True):
             
     col_sec1, col_sec2 = st.columns([2, 2])
     with col_sec1:
-        sector_list = [
-            "FMCG / Retail",
-            "Consumer Durables / Retailer credit",
-            "Pharma / Formulations (trade)",
-            "Manufacturing / B2B",
-            "Capital Goods / Industrial",
-            "Construction / Infra (milestone billing)",
-            "IT Services / Consulting",
-            "SaaS / Subscription (B2B)",
-            "Hospitals / Healthcare (insurer payments)",
-            "Logistics / Transport",
-            "Chemicals / Oil & Gas",
-            "Banks / NBFC"
-        ]
+        sector_list = get_sector_list()
         
         def_sector_idx = sector_list.index(matched_info["sector"]) if (matched_info and matched_info.get("sector") in sector_list) else 0
         target_sector = st.selectbox(

@@ -12,34 +12,124 @@ from datetime import datetime
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "nifty500.csv")
 
-INDUSTRY_MAPPING = {
-    "Automobile and Auto Components": "Manufacturing / B2B",
-    "Capital Goods": "Capital Goods / Industrial",
-    "Chemicals": "Chemicals / Oil & Gas",
-    "Construction": "Construction / Infra (milestone billing)",
-    "Construction Materials": "Manufacturing / B2B",
-    "Consumer Durables": "Consumer Durables / Retailer credit",
-    "Consumer Services": "FMCG / Retail",
-    "Diversified": "Manufacturing / B2B",
-    "Fast Moving Consumer Goods": "FMCG / Retail",
-    "Financial Services": "Banks / NBFC",
-    "Healthcare": "Pharma / Formulations (trade)",
-    "Information Technology": "IT Services / Consulting",
-    "Media Entertainment & Publication": "SaaS / Subscription (B2B)",
-    "Metals & Mining": "Manufacturing / B2B",
-    "Oil Gas & Consumable Fuels": "Chemicals / Oil & Gas",
-    "Power": "Capital Goods / Industrial",
-    "Realty": "Construction / Infra (milestone billing)",
-    "Services": "Logistics / Transport",
-    "Telecommunication": "Logistics / Transport",
-    "Textiles": "Manufacturing / B2B"
-}
+SECTOR_UNIVERSE = [
+    "Banks (Commercial & Retail)",
+    "Insurance (Life & General)",
+    "NBFC & Housing Finance",
+    "Capital Markets & Wealth Management",
+    "IT Services & Consulting",
+    "FMCG / Packaged Goods",
+    "Consumer Durables & Electronics",
+    "Consumer Services & Retail",
+    "Automobiles & Auto Components",
+    "Pharma & Formulations",
+    "Hospitals & Healthcare",
+    "Chemicals & Specialty Materials",
+    "Oil, Gas & Energy Fuels",
+    "Power & Renewable Energy",
+    "Metals & Mining",
+    "Capital Goods & Engineering",
+    "Cement & Building Materials",
+    "Infrastructure & Construction (EPC)",
+    "Real Estate & Developers",
+    "Logistics, Shipping & Aviation",
+    "Telecommunications",
+    "Media & Digital Entertainment",
+    "Textiles & Apparel",
+    "Other / Diversified"
+]
+
+def classify_company_sector(symbol: str, company_name: str, industry: str) -> str:
+    """Accurately classifies companies across all Nifty 500 sectors without misclassifying Insurance as Banks."""
+    name_upper = company_name.upper()
+    sym_upper = symbol.upper()
+    
+    # 1. Financial Services Granular Mapping
+    if industry == "Financial Services":
+        # Insurance (Life & General)
+        if sym_upper in [
+            "HDFCLIFE", "SBILIFE", "ICICIPRULI", "ICICIGI", "STARHEALTH", 
+            "LICI", "GICRE", "NIACL", "MFSL", "CANHLIFE"
+        ] or (("INSURANCE" in name_upper or "ASSURANCE" in name_upper) and not any(w in name_upper for w in ["HOUSING", "FINANCE COMPANY INDIA", "FINANCE LTD", "FINANCIERS"])):
+            return "Insurance (Life & General)"
+            
+        # Commercial & Retail Banks
+        if any(w in name_upper for w in [" BANK", "BANK OF", "BANK LTD", "CENTRAL BANK", "INDIAN BANK", "CANARA BANK", "UNION BANK", "UCO BANK", "PUNJAB NATIONAL"]) or sym_upper in [
+            "HDFCBANK", "ICICIBANK", "SBIN", "KOTAKBANK", "AXISBANK", "INDUSINDBK", 
+            "FEDERALBNK", "IDFCFIRSTB", "BANDHANBNK", "AUBANK", "BANKBARODA", "PNB", 
+            "CANBK", "UNIONBANK", "IOB", "INDIANB", "CENTRALBK", "UCOBANK", "MAHABANK", 
+            "YESBANK", "CUB", "KARURVYSYA", "J&KBANK", "RBLBANK"
+        ]:
+            return "Banks (Commercial & Retail)"
+            
+        # Capital Markets, Wealth Management, Depositories & Fintech
+        if sym_upper in [
+            "BSE", "MCX", "CDSL", "CAMS", "KFINTECH", "ANGELONE", "HDFCAMC", 
+            "NAM-INDIA", "UTIAMC", "360ONE", "ANANDRATHI", "NUVAMA", "MOTILALOFS", 
+            "CRISIL", "IEX", "PAYTM", "POLICYBZR", "GROWW", "PINELABS", "ABSLAMC", "ICICIAMC"
+        ] or any(w in name_upper for w in ["AMC", "ASSET MANAGEMENT", "WEALTH", "DEPOSITORY", "EXCHANGE", "VENTURES", "CAMTECH", "FINTECH"]):
+            return "Capital Markets & Wealth Management"
+            
+        # NBFC & Housing Finance
+        return "NBFC & Housing Finance"
+
+    # 2. Healthcare (Separating Hospitals from Pharma)
+    if industry == "Healthcare":
+        if any(w in name_upper for w in ["HOSPITAL", "HEALTHCARE", "GLOBAL HEALTH", "DIAGNOSTICS", "PATHLABS", "METROPOLIS", "MEDANTA", "MAX HEALTH", "NARAYANA", "RAINBOW", "ASTER", "KIMS"]):
+            return "Hospitals & Healthcare"
+        return "Pharma & Formulations"
+
+    # 3. Consumer & Retail
+    if industry == "Fast Moving Consumer Goods":
+        return "FMCG / Packaged Goods"
+    if industry == "Consumer Durables":
+        return "Consumer Durables & Electronics"
+    if industry == "Consumer Services":
+        return "Consumer Services & Retail"
+
+    # 4. Tech & Telecom
+    if industry == "Information Technology":
+        return "IT Services & Consulting"
+    if industry == "Telecommunication":
+        return "Telecommunications"
+    if industry == "Media Entertainment & Publication":
+        return "Media & Digital Entertainment"
+
+    # 5. Heavy Industry, Energy & Materials
+    if industry == "Automobile and Auto Components":
+        return "Automobiles & Auto Components"
+    if industry == "Chemicals":
+        return "Chemicals & Specialty Materials"
+    if industry == "Capital Goods":
+        return "Capital Goods & Engineering"
+    if industry == "Construction Materials":
+        return "Cement & Building Materials"
+    if industry == "Construction":
+        return "Infrastructure & Construction (EPC)"
+    if industry == "Realty":
+        return "Real Estate & Developers"
+    if industry == "Oil Gas & Consumable Fuels":
+        return "Oil, Gas & Energy Fuels"
+    if industry == "Power":
+        return "Power & Renewable Energy"
+    if industry == "Metals & Mining":
+        return "Metals & Mining"
+    if industry == "Services":
+        return "Logistics, Shipping & Aviation"
+    if industry == "Textiles":
+        return "Textiles & Apparel"
+
+    return "Other / Diversified"
+
+def get_sector_list() -> List[str]:
+    """Returns the comprehensive institutional sector universe for Indian listed equities."""
+    return SECTOR_UNIVERSE
 
 _cached_nifty_list = None
 _cached_lookup = {}
 
 def load_nifty500() -> List[Dict[str, str]]:
-    """Loads and caches the complete Nifty 500 universe."""
+    """Loads and caches the complete Nifty 500 universe with precise sector classification."""
     global _cached_nifty_list, _cached_lookup
     if _cached_nifty_list is not None:
         return _cached_nifty_list
@@ -54,7 +144,7 @@ def load_nifty500() -> List[Dict[str, str]]:
                 name = str(row.get("Company Name", "")).strip()
                 symbol = str(row.get("Symbol", "")).strip()
                 industry = str(row.get("Industry", "")).strip()
-                sector = INDUSTRY_MAPPING.get(industry, "Manufacturing / B2B")
+                sector = classify_company_sector(symbol, name, industry)
                 
                 item = {
                     "name": name,

@@ -196,10 +196,104 @@ with st.container(border=True):
             help="Upload the annual report. 200–500 page Indian reports are fully ingested by Gemini 3.5 Flash."
         )
 
-# Fetch Live Online Market Data
+# Fetch Live Online Market Data (Cached for snappy performance)
+@st.cache_data(ttl=180, show_spinner=False)
+def get_cached_live_data(ticker_sym: str):
+    return fetch_live_market_data(ticker_sym)
+
 live_data = None
 if target_ticker and target_ticker != "CUSTOM":
-    live_data = fetch_live_market_data(target_ticker)
+    live_data = get_cached_live_data(target_ticker)
+
+# --- LIVE MARKET INTELLIGENCE & KEY METRICS SECTION ---
+if live_data:
+    with st.container(border=True):
+        head_col1, head_col2 = st.columns([3, 1])
+        with head_col1:
+            st.markdown(f"#### Live Market Intelligence • {target_company_name} (`{target_ticker}.NS`)")
+        with head_col2:
+            st.caption("Real-Time NSE / BSE Grounding")
+        
+        # Primary KPI Row: Market Cap, Current Price, P/E Ratio, P/B Ratio, 52W Range
+        m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
+        
+        # 1. Current Price
+        cur_p = live_data.get("current_price")
+        cur_str = f"₹{cur_p:,.2f}" if isinstance(cur_p, (int, float)) else "N/A"
+        chg_pct = live_data.get("change_pct")
+        chg_val = live_data.get("change_val")
+        delta_str = f"{chg_pct:+.2f}% (₹{chg_val:+.2f})" if chg_pct is not None and chg_val is not None else None
+        with m_col1:
+            st.metric(
+                label="CURRENT PRICE",
+                value=cur_str,
+                delta=delta_str,
+                border=True
+            )
+            
+        # 2. Market Cap
+        mcap_val = live_data.get("market_cap_cr")
+        mcap_str = f"₹{mcap_val:,.1f} Cr" if isinstance(mcap_val, (int, float)) else "N/A"
+        cap_category = "Large Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 20000 else ("Mid Cap" if isinstance(mcap_val, (int, float)) and mcap_val >= 5000 else "Small Cap")
+        with m_col2:
+            st.metric(
+                label="MARKET CAP",
+                value=mcap_str,
+                delta=cap_category,
+                delta_color="off",
+                border=True
+            )
+            
+        # 3. P/E Ratio (TTM & Forward)
+        pe_v = live_data.get("pe_ratio")
+        pe_str = f"{pe_v}x" if pe_v and pe_v != "N/A" else "N/A"
+        fwd_v = live_data.get("forward_pe")
+        fwd_str = f"Forward: {fwd_v}x" if fwd_v and fwd_v != "N/A" else "Forward: N/A"
+        with m_col3:
+            st.metric(
+                label="P/E RATIO (TTM)",
+                value=pe_str,
+                delta=fwd_str,
+                delta_color="off",
+                border=True
+            )
+            
+        # 4. Price to Book (P/B) & Debt/Equity
+        pb_v = live_data.get("price_to_book")
+        pb_str = f"{pb_v}x" if pb_v and pb_v != "N/A" else "N/A"
+        de_v = live_data.get("debt_to_equity")
+        de_str = f"Debt/Eq: {de_v}" if de_v and de_v != "N/A" else "Debt/Eq: Clean"
+        with m_col4:
+            st.metric(
+                label="PRICE TO BOOK (P/B)",
+                value=pb_str,
+                delta=de_str,
+                delta_color="off",
+                border=True
+            )
+            
+        # 5. 52-Week Range
+        h52 = live_data.get("high_52w", "N/A")
+        l52 = live_data.get("low_52w", "N/A")
+        with m_col5:
+            st.metric(
+                label="52-WEEK HIGH",
+                value=f"₹{h52}" if h52 != "N/A" else "N/A",
+                delta=f"52W Low: ₹{l52}" if l52 != "N/A" else None,
+                delta_color="off",
+                border=True
+            )
+
+        # Secondary Technicals & Fundamentals Bar
+        sub_col1, sub_col2, sub_col3, sub_col4 = st.columns(4)
+        with sub_col1:
+            st.caption(f"**50-Day Moving Avg:** ₹{live_data.get('dma_50', 'N/A')}")
+        with sub_col2:
+            st.caption(f"**200-Day Moving Avg:** ₹{live_data.get('dma_200', 'N/A')}")
+        with sub_col3:
+            st.caption(f"**Dividend Yield:** {live_data.get('dividend_yield', 'N/A')}")
+        with sub_col4:
+            st.caption(f"**Previous Close:** ₹{live_data.get('prev_close', 'N/A')}")
 
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])

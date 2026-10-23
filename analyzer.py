@@ -61,7 +61,8 @@ def get_demo_analysis(company_name: str, sector: str, live_data: Optional[Dict[s
     c_sec = sector.strip() if sector and sector.strip() else "FMCG / Retail"
 
     mcap_str = f"₹{live_data['market_cap_cr']:,} Cr" if live_data and isinstance(live_data.get('market_cap_cr'), (int, float)) else "₹94,145 Cr"
-    pe_str = f"{live_data.get('pe_ratio', '57.6')}x" if live_data else "57.6x"
+    raw_pe = live_data.get('pe_ratio') if live_data else None
+    pe_str = f"{raw_pe}x" if raw_pe and raw_pe != "N/A" else "57.6x"
 
     return {
         "cover_line": f"Evaluate {c_name} in {c_sec} using IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) — Updated with Promoter Integrity Guardrails",

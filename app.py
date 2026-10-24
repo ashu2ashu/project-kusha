@@ -1903,72 +1903,119 @@ if "idex_result" in st.session_state:
 
     st.write("")
 
-    # 2. EXECUTIVE INVESTMENT THESIS & RECOMMENDATION (PROMINENT TOP PLACEMENT)
+    # 2. EXECUTIVE INVESTMENT THESIS & RECOMMENDATION (SHORT & TO THE POINT)
     final_call_str = res.get("final_call", "N/A")
     drift_str = res.get('drift_optionality_update', 'Monitor upcoming capital deployment and quarterly earnings.')
     esg_str = res.get('fragility_esg_fx_notes', 'No material governance or FX vulnerabilities observed.')
-    
+    position_sizing = res.get("position_sizing", "Risk-Weighted")
+
+    if "—" in final_call_str:
+        parts = final_call_str.split("—", 1)
+        call_badge = parts[0].strip()
+        call_summary = parts[1].strip()
+    elif ":" in final_call_str:
+        parts = final_call_str.split(":", 1)
+        call_badge = parts[0].strip()
+        call_summary = parts[1].strip()
+    else:
+        call_badge = "POSITION CALL"
+        call_summary = final_call_str
+
+    b_upper = call_badge.upper()
+    if any(k in b_upper for k in ["BUY", "ACCUMULATE", "OVERWEIGHT", "LONG"]):
+        badge_bg = "#059669"
+        badge_border = "#047857"
+    elif any(k in b_upper for k in ["HOLD", "NEUTRAL", "WAIT", "MONITOR"]):
+        badge_bg = "#D97706"
+        badge_border = "#B45309"
+    else:
+        badge_bg = "#DC2626"
+        badge_border = "#B91C1C"
+
     str_list = res.get("strengths", [])
-    str_html_items = "".join([
-        f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;">'
-        f'<span style="color: #059669; font-weight: 800; font-size: 15px; line-height: 1.2;">✔</span>'
-        f'<span style="color: #064E3B;">{s}</span>'
-        f'</div>'
-        for s in str_list
-    ])
-    
     wk_list = res.get("weaknesses", [])
-    wk_html_items = "".join([
-        f'<div style="font-size: 13.5px; line-height: 1.55; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;">'
-        f'<span style="color: #DC2626; font-weight: 800; font-size: 15px; line-height: 1.2;">✖</span>'
-        f'<span style="color: #7F1D1D;">{w}</span>'
-        f'</div>'
-        for w in wk_list
-    ])
+
+    p1_moat = str_list[0] if len(str_list) > 0 else "Established market positioning and franchise value."
+    p2_fin = str_list[1] if len(str_list) > 1 else "Robust cash flow and balance sheet structure."
+    p3_catalyst = drift_str
+    p4_risk = wk_list[0] if len(wk_list) > 0 else "Broader macro and sector valuation sensitivity."
 
     thesis_banner_html = (
-        f'<div style="background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%); border: 2px solid #059669; border-radius: 12px; padding: 22px 26px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(5,150,105,0.06);">'
+        f'<div style="background: #FFFFFF; border: 2px solid #059669; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(5,150,105,0.05);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">'
-        f'<div style="display: flex; align-items: center; gap: 10px;">'
-        f'<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.5px; text-transform: uppercase;">🎯 INSTITUTIONAL POSITION CALL</span>'
-        f'<span style="font-size: 12.5px; color: #64748B; font-weight: 600;">12–24 Month Investment Horizon</span>'
+        f'<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">'
+        f'<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase;">🎯 INSTITUTIONAL POSITION CALL</span>'
+        f'<span style="background: {badge_bg}; color: #FFFFFF; border: 1.5px solid {badge_border}; font-size: 12px; font-weight: 900; padding: 3px 12px; border-radius: 9999px; font-family: monospace; letter-spacing: 0.4px;">{call_badge}</span>'
         f'</div>'
-        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">IDEX-7.5SC Certified</span>'
-        f'</div>'
-        f'<div style="font-size: 21px; font-weight: 900; color: #0F172A; line-height: 1.35; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1.5px solid #E2E8F0;">'
-        f'{final_call_str}'
-        f'</div>'
-        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">'
-        f'<div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 10px; padding: 16px 18px;">'
-        f'<div style="font-size: 13px; font-weight: 800; color: #047857; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.4px;">'
-        f'<span>🟢</span> Key Moats & Structural Strengths'
-        f'</div>'
-        f'{str_html_items}'
-        f'</div>'
-        f'<div style="background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 10px; padding: 16px 18px;">'
-        f'<div style="font-size: 13px; font-weight: 800; color: #DC2626; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.4px;">'
-        f'<span>🔴</span> Structural Fragilities & Cautions'
-        f'</div>'
-        f'{wk_html_items}'
+        f'<div style="display: flex; align-items: center; gap: 8px;">'
+        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">⏱️ 12–24M Horizon</span>'
+        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">⚖️ Sizing: {position_sizing}</span>'
         f'</div>'
         f'</div>'
-        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px;">'
-        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 18px;">'
-        f'<div style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
-        f'<span>⏱️</span> 12–24M Catalyst & Forensic Drift Watch'
+        f'<div style="font-size: 16px; font-weight: 800; color: #0F172A; line-height: 1.45; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1.5px solid #F1F5F9;">'
+        f'{call_summary}'
         f'</div>'
-        f'<div style="font-size: 13.5px; line-height: 1.55; color: #1E293B;">{drift_str}</div>'
+        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">'
+        f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px 14px;">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>🟢</span> Core Competitive Moat</div>'
+        f'<div style="font-size: 13px; line-height: 1.45; color: #064E3B; font-weight: 600;">{p1_moat}</div>'
         f'</div>'
-        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 18px;">'
-        f'<div style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
-        f'<span>🌍</span> ESG, Governance & FX Sensitivity'
+        f'<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 14px;">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #1D4ED8; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>🛡️</span> Balance Sheet & Solvency</div>'
+        f'<div style="font-size: 13px; line-height: 1.45; color: #1E3A8A; font-weight: 600;">{p2_fin}</div>'
         f'</div>'
-        f'<div style="font-size: 13.5px; line-height: 1.55; color: #1E293B;">{esg_str}</div>'
+        f'<div style="background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 8px; padding: 12px 14px;">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #7E22CE; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>🚀</span> 12–24M Key Catalyst</div>'
+        f'<div style="font-size: 13px; line-height: 1.45; color: #581C87; font-weight: 600;">{p3_catalyst}</div>'
+        f'</div>'
+        f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 12px 14px;">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #DC2626; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;"><span>⚠️</span> Primary Risk to Track</div>'
+        f'<div style="font-size: 13px; line-height: 1.45; color: #7F1D1D; font-weight: 600;">{p4_risk}</div>'
         f'</div>'
         f'</div>'
         f'</div>'
     )
     st.html(thesis_banner_html)
+
+    # Detailed notes in collapsed expander for users wanting deeper raw filing reads
+    str_html_items = "".join([
+        f'<div style="font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;">'
+        f'<span style="color: #059669; font-weight: 800;">✔</span>'
+        f'<span style="color: #064E3B;">{s}</span>'
+        f'</div>'
+        for s in str_list
+    ])
+    wk_html_items = "".join([
+        f'<div style="font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;">'
+        f'<span style="color: #DC2626; font-weight: 800;">✖</span>'
+        f'<span style="color: #7F1D1D;">{w}</span>'
+        f'</div>'
+        for w in wk_list
+    ])
+
+    with st.expander("📑 Detailed Moats, Fragilities & ESG Notes", expanded=False):
+        st.html(
+            f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;">'
+            f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px;">'
+            f'<div style="font-size: 12px; font-weight: 800; color: #047857; margin-bottom: 8px; text-transform: uppercase;">🟢 All Identified Moats</div>'
+            f'{str_html_items}'
+            f'</div>'
+            f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 14px 16px;">'
+            f'<div style="font-size: 12px; font-weight: 800; color: #DC2626; margin-bottom: 8px; text-transform: uppercase;">🔴 All Structural Fragilities</div>'
+            f'{wk_html_items}'
+            f'</div>'
+            f'</div>'
+            f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">'
+            f'<div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 14px;">'
+            f'<div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px;">⏱️ 12–24M Forensic Drift Watch</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #1E293B;">{drift_str}</div>'
+            f'</div>'
+            f'<div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 14px;">'
+            f'<div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px;">🌍 ESG & Governance Notes</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #1E293B;">{esg_str}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
     # 3. EXECUTIVE DOSSIER SECTION NAVIGATOR
     st.markdown("<div style='margin-top: 14px; margin-bottom: 6px;'></div>", unsafe_allow_html=True)

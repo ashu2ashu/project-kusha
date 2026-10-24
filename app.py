@@ -20,8 +20,20 @@ from prompt_template import IDEX_ANALYSIS_PROMPT
 import importlib
 import analyzer
 import nifty_universe
+import financial_trends
 importlib.reload(analyzer)
 importlib.reload(nifty_universe)
+importlib.reload(financial_trends)
+
+from financial_trends import (
+    fetch_financial_statements,
+    build_revenue_profit_chart,
+    build_cashflow_health_chart,
+    build_balance_sheet_chart,
+    render_growth_cagr_scorecard_html,
+    render_financial_table_html,
+    generate_forensic_cagr_insights
+)
 
 from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key
 from nifty_universe import (
@@ -535,6 +547,10 @@ def get_cached_marquee_stocks():
 def get_cached_ticker_history(ticker_sym: str, period: str = "1y"):
     return fetch_ticker_historical_data(ticker_sym, period=period)
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_cached_financial_statements(ticker_sym: str):
+    return fetch_financial_statements(ticker_sym)
+
 def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "Area", show_dma: bool = True):
     if df.empty or len(df) < 2:
         return None
@@ -1030,6 +1046,113 @@ if live_data:
 
     # --- 27 KEY FUNDAMENTAL SCREENER RATIOS (3-COLUMN SPACIOUS MATRIX) ---
     st.html(f'<div class="metrics-3col-grid" style="margin-top: 22px;">{card_val}{card_ret}{card_sol}</div>')
+
+    # --- MULTI-YEAR HISTORICAL FINANCIAL STATEMENTS & FORENSIC CAGR ENGINE ---
+    fin_res = get_cached_financial_statements(target_ticker)
+    if fin_res and "years" in fin_res and not fin_res.get("error"):
+        st.markdown("<div style='margin-top: 26px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
+        fin_h1, fin_h2 = st.columns([2.3, 1.7])
+        with fin_h1:
+            st.markdown(
+                f'<div style="font-size: 17px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+                f'<span>📈</span> {target_company_name} ({target_ticker}) Multi-Year Statements & Forensic CAGR'
+                f'</div>'
+                f'<div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">'
+                f'Audited annual statements (Last 4–5 Years) in ₹ Crores, compound growth rates, and forensic cash flow conversion.'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        with fin_h2:
+            stmt_mode = st.segmented_control(
+                "Statement View",
+                options=["📊 Visual Trends", "📜 Profit & Loss", "⚡ Quarterly", "🏛️ Balance Sheet", "💵 Cash Flows"],
+                default="📊 Visual Trends",
+                key=f"stmt_mode_{target_ticker}",
+                label_visibility="collapsed"
+            )
+
+        # 4-Card Screener Compounded Growth & Quality Matrix
+        st.html(render_growth_cagr_scorecard_html(fin_res["cagr"]))
+
+        # Visual Chart or Tabular Statement Explorer
+        if stmt_mode == "📊 Visual Trends":
+            chart_t1, chart_t2 = st.columns([1.5, 2.5])
+            with chart_t1:
+                trend_chart_type = st.segmented_control(
+                    "Trend Chart",
+                    options=["📈 Revenue & Margins", "💵 Cash Flow Reality", "🏛️ Balance Sheet Leverage"],
+                    default="📈 Revenue & Margins",
+                    key=f"trend_type_{target_ticker}",
+                    label_visibility="collapsed"
+                )
+            if trend_chart_type == "📈 Revenue & Margins":
+                rev_fig = build_revenue_profit_chart(fin_res, target_company_name)
+                if rev_fig:
+                    st.plotly_chart(rev_fig, width="stretch")
+            elif trend_chart_type == "💵 Cash Flow Reality":
+                cf_fig = build_cashflow_health_chart(fin_res, target_company_name)
+                if cf_fig:
+                    st.plotly_chart(cf_fig, width="stretch")
+            elif trend_chart_type == "🏛️ Balance Sheet Leverage":
+                bs_fig = build_balance_sheet_chart(fin_res, target_company_name)
+                if bs_fig:
+                    st.plotly_chart(bs_fig, width="stretch")
+        elif stmt_mode == "📜 Profit & Loss":
+            st.html(render_financial_table_html(fin_res["pnl"], fin_res["years"], "Annual Profit & Loss Statement"))
+        elif stmt_mode == "⚡ Quarterly":
+            if fin_res.get("quarterly") and fin_res.get("q_years"):
+                st.html(render_financial_table_html(fin_res["quarterly"], fin_res["q_years"], "Quarterly Financial Performance"))
+            else:
+                st.info("Quarterly statements currently synchronizing for this company.")
+        elif stmt_mode == "🏛️ Balance Sheet":
+            st.html(render_financial_table_html(fin_res["bs"], fin_res["bs_years"], "Annual Balance Sheet"))
+        elif stmt_mode == "💵 Cash Flows":
+            st.html(render_financial_table_html(fin_res["cf"], fin_res["cf_years"], "Annual Cash Flow Statement"))
+
+        # Forensic Trend Takeaways & Accrual Audit
+        cagr_insights = generate_forensic_cagr_insights(fin_res, target_company_name)
+        if cagr_insights:
+            insight_boxes = []
+            for ins in cagr_insights:
+                itype = ins.get("type", "neutral")
+                if itype == "positive":
+                    iborder = "#10B981"
+                    ibg = "#F0FDF4"
+                    ititle_color = "#064E3B"
+                    ibody_color = "#166534"
+                    icon = "✔"
+                elif itype == "caution":
+                    iborder = "#EF4444"
+                    ibg = "#FEF2F2"
+                    ititle_color = "#991B1B"
+                    ibody_color = "#7F1D1D"
+                    icon = "⚠"
+                else:
+                    iborder = "#3B82F6"
+                    ibg = "#EFF6FF"
+                    ititle_color = "#1E40AF"
+                    ibody_color = "#1E3A8A"
+                    icon = "ℹ"
+
+                insight_boxes.append(
+                    f'<div style="background: {ibg}; border-left: 3.5px solid {iborder}; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 8px;">'
+                    f'<div style="font-size: 13px; font-weight: 800; color: {ititle_color}; display: flex; align-items: center; gap: 6px;">'
+                    f'<span>{icon}</span> {ins.get("title")}'
+                    f'</div>'
+                    f'<div style="font-size: 12.5px; line-height: 1.5; color: {ibody_color}; margin-top: 3px;">'
+                    f'{ins.get("body")}'
+                    f'</div>'
+                    f'</div>'
+                )
+
+            st.html(
+                f'<div style="margin-top: 14px; margin-bottom: 22px;">'
+                f'<div style="font-size: 13.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">'
+                f'<span>🔍</span> Forensic Trajectory Takeaways & Accrual Audit'
+                f'</div>'
+                f'{"".join(insight_boxes)}'
+                f'</div>'
+            )
 
 # Action Buttons
 btn_col1, btn_col2 = st.columns([3, 1])

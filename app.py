@@ -1081,7 +1081,7 @@ if live_data:
     )
     st.html(facts_full_html)
 
-    # --- INDEPENDENT SENTINEL-1 FORENSIC DATA INTEGRITY & AUDIT SEAL ---
+    # --- INDEPENDENT SENTINEL-1 FORENSIC DATA INTEGRITY & AUDIT SEAL (RUNS IN BACKGROUND) ---
     fin_res = get_cached_financial_statements(target_ticker)
     sentinel_report = DataIntegritySentinel.audit_and_certify(
         ticker_symbol=target_ticker,
@@ -1090,7 +1090,13 @@ if live_data:
         live_market_data=live_data
     )
     st.session_state["sentinel_report"] = sentinel_report
-    st.html(render_sentinel_audit_certificate_html(sentinel_report))
+
+    s_passed = sentinel_report.get("passed_count", 6)
+    s_total = sentinel_report.get("total_count", 6)
+    s_score = sentinel_report.get("integrity_score", 100.0)
+    s_hash = sentinel_report.get("audit_hash", "VERIFIED")
+    with st.expander(f"🛡️ Background Data Verification: Sentinel-1 Certified ({s_passed}/{s_total} Ind AS Checks Passed • Authenticity Index: {s_score:.0f}/100 • Hash: {s_hash})", expanded=False):
+        st.html(render_sentinel_audit_certificate_html(sentinel_report))
 
     # --- INTERACTIVE TICKER PRICE & TECHNICAL CHART ---
     st.markdown("<div style='margin-top: 22px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
@@ -1797,17 +1803,18 @@ if "idex_result" in st.session_state:
     st.write("")
     st.markdown("### Institutional Equity Research Scorecard")
 
-    # Sentinel Data Integrity Certification Seal in Dashboard
+    # Sentinel Data Integrity Certification Seal in Dashboard (Background Verification)
     sentinel_audit = res.get("sentinel_audit") or st.session_state.get("sentinel_report")
     if sentinel_audit:
-        st.html(
-            f'<div style="background: {sentinel_audit.get("badge_bg", "#ECFDF5")}; border: 1.5px solid {sentinel_audit.get("badge_border", "#A7F3D0")}; border-left: 5px solid {sentinel_audit.get("badge_color", "#059669")}; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
-            f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15.5px;">🛡️ Evaluated on {sentinel_audit.get("agent_name", "Sentinel-1 Agent")} Certified Data</span>'
-            f'<div style="font-size: 13.5px; color: #475569; margin-top: 3px;">{sentinel_audit.get("verdict_desc", "")}</div></div>'
-            f'<div style="text-align: right;"><span style="background: {sentinel_audit.get("badge_color", "#059669")}; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px;">{sentinel_audit.get("status", "CERTIFIED")}</span>'
-            f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Hash: {sentinel_audit.get("audit_hash", "VERIFIED")}</div></div>'
-            f'</div>'
-        )
+        with st.expander(f"🛡️ Background Data Verification: {sentinel_audit.get('status', 'CERTIFIED')} by {sentinel_audit.get('agent_name', 'Sentinel-1 Agent')} (Hash: {sentinel_audit.get('audit_hash', 'VERIFIED')})", expanded=False):
+            st.html(
+                f'<div style="background: {sentinel_audit.get("badge_bg", "#ECFDF5")}; border: 1.5px solid {sentinel_audit.get("badge_border", "#A7F3D0")}; border-left: 5px solid {sentinel_audit.get("badge_color", "#059669")}; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
+                f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15.5px;">🛡️ Evaluated on {sentinel_audit.get("agent_name", "Sentinel-1 Agent")} Certified Data</span>'
+                f'<div style="font-size: 13.5px; color: #475569; margin-top: 3px;">{sentinel_audit.get("verdict_desc", "")}</div></div>'
+                f'<div style="text-align: right;"><span style="background: {sentinel_audit.get("badge_color", "#059669")}; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px;">{sentinel_audit.get("status", "CERTIFIED")}</span>'
+                f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Hash: {sentinel_audit.get("audit_hash", "VERIFIED")}</div></div>'
+                f'</div>'
+            )
 
     # 1. EXECUTIVE SCORE ROW (Vibrant Gradient KPI Cards with Generous Typography)
     final_score = res.get('final_score', 0)

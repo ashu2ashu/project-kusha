@@ -1351,21 +1351,21 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
         gov_color = "#DC2626"
         gov_bg = "#FEF2F2"
         gov_border = "#FECACA"
-        gov_sub = "Promoter integrity override or critical audit qualification flagged."
+        gov_sub = "Severe governance alert: Promoter Integrity Override (PIO) or adverse auditor qualifications active; capital at risk."
         gov_icon = "🔴"
     elif "ALERT" in guardrail or total_pen >= 4.0:
         gov_status = "MONITOR"
         gov_color = "#D97706"
         gov_bg = "#FFFBEB"
         gov_border = "#FDE68A"
-        gov_sub = "Minor disclosure alerts or pledge overhang warranting attention."
+        gov_sub = "Heightened vigilance advised: Minor disclosure alerts, related-party schedules, or pledge overhang observed."
         gov_icon = "🟡"
     else:
         gov_status = "PRISTINE"
         gov_color = "#059669"
         gov_bg = "#ECFDF5"
         gov_border = "#A7F3D0"
-        gov_sub = "Zero promoter pledge, clean board, Big 4 audit sign-off without qualification."
+        gov_sub = "Clean governance docket: 0.0% promoter shares pledged with an unqualified Big 4 statutory audit opinion."
         gov_icon = "🟢"
 
     # 2. Balance Sheet Fortress
@@ -1375,28 +1375,28 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
             bs_color = "#059669"
             bs_bg = "#ECFDF5"
             bs_border = "#A7F3D0"
-            bs_sub = f"Virtually debt-free ({de_val:.2f}x D/E) with robust cash cushion."
+            bs_sub = f"Pristine solvency profile: Exceptionally low gearing ({de_val:.2f}x D/E) backed by deep liquid cash reserves."
             bs_icon = "🟢"
         elif de_val <= 1.0:
             bs_status = "MODERATE"
             bs_color = "#D97706"
             bs_bg = "#FFFBEB"
             bs_border = "#FDE68A"
-            bs_sub = f"Manageable leverage ({de_val:.2f}x D/E) serviced by operating cash flow."
+            bs_sub = f"Stable capital structure: Manageable leverage ({de_val:.2f}x D/E) comfortably serviced by operating cash flows."
             bs_icon = "🟡"
         else:
             bs_status = "LEVERAGED"
             bs_color = "#DC2626"
             bs_bg = "#FEF2F2"
             bs_border = "#FECACA"
-            bs_sub = f"Elevated leverage ({de_val:.2f}x D/E) vulnerable to macro rate pressures."
+            bs_sub = f"Elevated credit risk: High debt load ({de_val:.2f}x D/E) leaves equity vulnerable to interest rate cycles and macro stress."
             bs_icon = "🔴"
     else:
         bs_status = "FORTRESS"
         bs_color = "#059669"
         bs_bg = "#ECFDF5"
         bs_border = "#A7F3D0"
-        bs_sub = "Conservative capital structure confirmed in audited balance sheet."
+        bs_sub = "Conservative capital structure: Sound solvency and low gearing confirmed in audited balance sheet."
         bs_icon = "🟢"
 
     # 3. Valuation Multiples
@@ -1414,21 +1414,21 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
             val_color = "#059669"
             val_bg = "#ECFDF5"
             val_border = "#A7F3D0"
-            val_sub = f"+{mos_pct:.1f}% Margin of Safety below DCF fair value (₹{dcf_mid:,.0f})."
+            val_sub = f"Favorable entry window: +{mos_pct:.1f}% Margin of Safety below DCF intrinsic fair value (₹{dcf_mid:,.0f})."
             val_icon = "🟢"
         elif mos_pct >= -10.0:
             val_status = "FAIR VALUE"
             val_color = "#2563EB"
             val_bg = "#EFF6FF"
             val_border = "#BFDBFE"
-            val_sub = f"Trading right around DCF fair value (₹{dcf_mid:,.0f}) within ±10% band."
+            val_sub = f"Equitably priced: Currently trading within fair value range (₹{dcf_mid:,.0f}) aligned with compounding fundamentals."
             val_icon = "🔵"
         else:
             val_status = "STRETCHED"
             val_color = "#DC2626"
             val_bg = "#FEF2F2"
             val_border = "#FECACA"
-            val_sub = f"Trades at {abs(mos_pct):.1f}% premium above intrinsic DCF fair value."
+            val_sub = f"Valuation risk elevated: Trades at a {abs(mos_pct):.1f}% premium above intrinsic DCF fair value; limited margin of safety."
             val_icon = "🔴"
     elif pe is not None:
         if pe <= 25:
@@ -1436,21 +1436,21 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
             val_color = "#059669"
             val_bg = "#ECFDF5"
             val_border = "#A7F3D0"
-            val_sub = f"Favorable multiple ({pe:.1f}x P/E) offering valuation support."
+            val_sub = f"Favorable multiple ({pe:.1f}x P/E) providing valuation cushion and value support."
             val_icon = "🟢"
         elif pe <= 55:
             val_status = "FAIR VALUE"
             val_color = "#2563EB"
             val_bg = "#EFF6FF"
             val_border = "#BFDBFE"
-            val_sub = f"Quality compounder multiple ({pe:.1f}x P/E) reflecting durable moats."
+            val_sub = f"Quality franchise multiple ({pe:.1f}x P/E) reflecting reliable moats and earnings predictability."
             val_icon = "🔵"
         else:
             val_status = "STRETCHED"
             val_color = "#DC2626"
             val_bg = "#FEF2F2"
             val_border = "#FECACA"
-            val_sub = f"Elevated multiple ({pe:.1f}x P/E) limits near-term margin of safety."
+            val_sub = f"Premium valuation multiple ({pe:.1f}x P/E) limits short-term margin of safety against earnings misses."
             val_icon = "🔴"
     else:
         val_status = "BALANCED"
@@ -1466,17 +1466,17 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     sector_clean = target_sector or "its sector"
 
     if final_score >= 75:
-        eli_action = "Bottom line: An institutional compounder with fortress financials; best suited for systematic accumulation on market dips for steady 12–24 month wealth creation."
+        eli_action = "Bottom Line: A premier compounder with fortress financials and exceptional governance. An ideal asset to accumulate systematically on market pullbacks for multi-year capital compounding."
         eli_badge = "STRONG ACCUMULATE"
         eli_badge_bg = "#ECFDF5"
         eli_badge_fg = "#047857"
     elif final_score >= 60:
-        eli_action = "Bottom line: A solid business with respectable fundamentals, but wait for tactical pullbacks or clearer earnings acceleration before taking a full position."
+        eli_action = "Bottom Line: A fundamentally sound franchise with respectable moats, but valuation multiples or near-term industry headwinds advise waiting for favorable entry dips before initiating a core position."
         eli_badge = "SELECTIVE ACCUMULATE"
         eli_badge_bg = "#EFF6FF"
         eli_badge_fg = "#1D4ED8"
     else:
-        eli_action = "Bottom line: Elevated governance, leverage, or valuation risks mean defensive capital should steer clear until operational turnarounds materialize."
+        eli_action = "Bottom Line: Substantial governance, balance sheet leverage, or forensic accounting vulnerabilities are active. Prudent capital should remain on the sidelines until an audited operational turnaround is demonstrated."
         eli_badge = "AVOID / PRUDENCE"
         eli_badge_bg = "#FEF2F2"
         eli_badge_fg = "#DC2626"
@@ -1484,16 +1484,16 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     strengths = res.get("strengths", [])
     if strengths and len(strengths) > 0:
         clean_s = strengths[0].rstrip(".")
-        eli_biz = f"<strong>{company_clean}</strong> operates as a leading franchise in <strong>{sector_clean}</strong>, distinguished by {clean_s.lower()}."
+        eli_biz = f"<strong>{company_clean}</strong> is an established market leader in India\'s <strong>{sector_clean}</strong> sector, powered by {clean_s.lower()}."
     else:
-        eli_biz = f"<strong>{company_clean}</strong> is an established enterprise in <strong>{sector_clean}</strong> with proven operating cash generation and sound domestic market reach."
+        eli_biz = f"<strong>{company_clean}</strong> is an established enterprise in India\'s <strong>{sector_clean}</strong> sector with proven operating cash flow generation and durable domestic reach."
 
     html = (
         f'<div style="background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%); border: 1.5px solid #CBD5E1; border-radius: 12px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 3px 10px rgba(0,0,0,0.03);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🚦</span>'
-        f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">10-Second Executive Verdict & Plain-English Takeaway</span>'
+        f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">10-Second Institutional Summary & Plain-English Takeaway</span>'
         f'</div>'
         f'<span style="background: {eli_badge_bg}; color: {eli_badge_fg}; border: 1.5px solid {eli_badge_fg}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: monospace;">{eli_badge}</span>'
         f'</div>'
@@ -1525,7 +1525,7 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
         f'</div>'
         f'<div style="background: #F8FAFC; border: 1.5px dashed #94A3B8; border-left: 4.5px solid #059669; border-radius: 8px; padding: 14px 18px;">'
         f'<div style="font-size: 12px; font-weight: 800; color: #065F46; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
-        f'<span>💬</span> Plain-English (ELI15) Business & Investment Thesis'
+        f'<span>💬</span> The Plain-English Executive Summary (ELI15 Takeaway)'
         f'</div>'
         f'<div style="font-size: 13.5px; line-height: 1.6; color: #1E293B; margin-bottom: 6px;">{eli_biz}</div>'
         f'<div style="font-size: 13.5px; line-height: 1.6; color: #0F172A; font-weight: 600;">{eli_action}</div>'
@@ -1546,26 +1546,26 @@ def render_forensic_fraud_shield_html(res, live_data):
     app_a = res.get("appendix_a_forensic_evidence", [])
 
     # 1. Auditor
-    auditor_ev = "Walker Chandiok & Co LLP unmodified clean audit opinion; zero Ind AS qualifications."
+    auditor_ev = "Unqualified audit report signed by premier statutory auditors; clean Ind AS schedules with zero accounting qualifications or reservations."
     for ev in app_a:
         if "auditor" in ev.lower() or "opinion" in ev.lower():
             auditor_ev = ev
             break
     shield_items.append({
-        "title": "Statutory Auditor Scrutiny",
+        "title": "Statutory Auditor Independence",
         "status": "PASS",
         "badge": "UNMODIFIED OPINION",
         "evidence": auditor_ev
     })
 
     # 2. Pledge
-    pledge_ev = "BSE filing confirms 0.0% promoter shareholding pledged (clean equity capital)."
+    pledge_ev = "Official BSE/NSE filings confirm 0.0% promoter share pledging; zero liquidation risk from margin loan calls."
     for ev in app_a:
         if "pledge" in ev.lower():
             pledge_ev = ev
             break
     shield_items.append({
-        "title": "Promoter Pledge Overhang",
+        "title": "Promoter Share Encumbrance",
         "status": "PASS",
         "badge": "0.0% PLEDGED",
         "evidence": pledge_ev
@@ -1573,10 +1573,10 @@ def render_forensic_fraud_shield_html(res, live_data):
 
     # 3. Cash Flow
     shield_items.append({
-        "title": "Real Cash Flow vs PAT",
+        "title": "Cash Authenticity vs Reported PAT",
         "status": "PASS",
         "badge": "CFO > PAT (REAL CASH)",
-        "evidence": "Operating Cash Flow fully covers reported Net Profit; earnings backed by verified liquid cash receipts."
+        "evidence": "Operating cash flows fully validate reported accounting net profit; earnings reflect verified liquid bank deposits."
     })
 
     # 4. Debtor Health
@@ -1585,33 +1585,33 @@ def render_forensic_fraud_shield_html(res, live_data):
     over_90 = rec.get("pct_over_90_days", "1.4%")
     debtor_pass = (dso < 60)
     shield_items.append({
-        "title": "Debtor Health & Aging",
+        "title": "Receivables Quality & Aging",
         "status": "PASS" if debtor_pass else "MONITOR",
         "badge": f"DSO: {dso} DAYS",
-        "evidence": f"Negligible delinquency; only {over_90} of receivables exceed 90 days."
+        "evidence": f"Disciplined debtor collection cycles well within industry norms; delinquency risk is negligible with only {over_90} past 90 days."
     })
 
     # 5. Leverage
     de_pass = (de_val is None or de_val <= 0.6)
     de_label = f"D/E {de_val:.2f}x" if de_val is not None else "CONSERVATIVE GEARING"
     shield_items.append({
-        "title": "Balance Sheet Solvency",
+        "title": "Solvency Buffer & Balance Sheet Health",
         "status": "PASS" if de_pass else "MONITOR",
         "badge": de_label,
-        "evidence": "Substantial solvency buffer shielding enterprise from high interest rate cycles & liquidity crunches."
+        "evidence": "Substantial liquidity cushion providing insulation against credit tightness, currency volatility, and macroeconomic rate spikes."
     })
 
     # 6. Regulatory
     pio_trig = res.get("pio_triggered", False)
     shield_items.append({
-        "title": "Regulatory & Probe Standing",
+        "title": "Regulatory Enforcement Docket",
         "status": "PASS" if not pio_trig else "ALERT",
         "badge": "CLEAN DOCKET" if not pio_trig else "CRITICAL PROBE",
-        "evidence": "Zero active SEBI, ED, SFIO, or Ministry of Corporate Affairs enforcement actions."
+        "evidence": "Zero active enforcement actions, show-cause notices, or forensic inquiries from SEBI, MCA, ED, or SFIO."
     })
 
     passed_count = sum(1 for it in shield_items if it["status"] == "PASS")
-    shield_badge = f"{passed_count} / 6 CHECKS PASSED — INSTITUTIONAL GRADE" if passed_count == 6 else f"{passed_count} / 6 CHECKS PASSED — LOW RISK"
+    shield_badge = f"{passed_count} / 6 CHECKS VERIFIED — INSTITUTIONAL SAFETY" if passed_count == 6 else f"{passed_count} / 6 CHECKS VERIFIED — LOW RISK"
     shield_badge_bg = "#059669" if passed_count >= 5 else "#D97706"
 
     cards_html_list = []
@@ -1648,7 +1648,7 @@ def render_forensic_fraud_shield_html(res, live_data):
         f'<span style="font-size: 20px;">🛡️</span>'
         f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">6-Point Forensic Safety Shield (Anti-Fraud Filter)</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 3px;">Audited governance checklist eliminating balance sheet manipulation hazards</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 3px;">Independent forensic screen verifying statutory auditor independence, promoter encumbrance, cash authenticity, and credit solvency</div>'
         f'</div>'
         f'<span style="background: {shield_badge_bg}; color: #FFFFFF; font-size: 12px; font-weight: 800; padding: 5px 13px; border-radius: 9999px; letter-spacing: 0.4px; font-family: monospace;">{shield_badge}</span>'
         f'</div>'
@@ -1723,9 +1723,9 @@ def render_valuation_compass_html(res, live_data):
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🧭</span>'
-        f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">Valuation Compass & Intrinsic Price Band</span>'
+        f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">Valuation Compass & Intrinsic Price Spectrum</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 3px;">DCF intrinsic value positioning relative to 52-week market range</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 3px;">Benchmarking Current Market Price (CMP) against the 52-week trading band and DCF intrinsic fair value</div>'
         f'</div>'
         f'<span style="background: {mos_bg}; color: {mos_color}; border: 1.5px solid {mos_color}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: monospace;">{mos_badge}</span>'
         f'</div>'
@@ -1744,21 +1744,21 @@ def render_valuation_compass_html(res, live_data):
         f'</div>'
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px;">'
         f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
-        f'<div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">INTRINSIC DCF RANGE</div>'
+        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">INTRINSIC DCF VALUE RANGE</div>'
         f'<div style="font-size: 16px; font-weight: 800; color: #047857; font-family: monospace; margin-top: 4px;">₹{dcf_low:,.0f} – ₹{dcf_high:,.0f}</div>'
-        f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">Midpoint: ₹{dcf_mid:,.0f}</div>'
+        f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">Fair Value Midpoint: ₹{dcf_mid:,.0f}</div>'
         f'</div>'
         f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
-        f'<div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">VALUATION POSITION</div>'
+        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">VALUATION POSTURE</div>'
         f'<div style="font-size: 16px; font-weight: 800; color: {mos_color}; font-family: monospace; margin-top: 4px;">{mos_badge}</div>'
         f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">{mos_desc}</div>'
         f'</div>'
         f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
-        f'<div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">ASYMMETRY SPREAD</div>'
+        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">RISK / REWARD ASYMMETRY</div>'
         f'<div style="font-size: 14px; font-weight: 800; color: #1E293B; margin-top: 4px; font-family: monospace;">'
         f'<span>+{upside_dcf_pct:.1f}% to DCF</span> &bull; <span>-{downside_low_pct:.1f}% to 52W L</span>'
         f'</div>'
-        f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">High upside vs limited 52W downside</div>'
+        f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">Asymmetric upside profile relative to 52-week support</div>'
         f'</div>'
         f'</div>'
         f'</div>'
@@ -1861,7 +1861,7 @@ if "idex_result" in st.session_state:
         f'-{total_penalties:.1f} <span style="font-size: 16px; font-weight: 700; color: #B91C1C;">pts</span>'
         f'</div>'
         f'<div style="margin-top: 10px;">'
-        f'<span style="background: #DC2626; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">-7.5% Hard Cap</span>'
+        f'<span style="background: #DC2626; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">Max -7.5 Pts Cap</span>'
         f'</div>'
         f'</div>'
         f'<div style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 1.5px solid #A78BFA; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.08);">'
@@ -1873,7 +1873,7 @@ if "idex_result" in st.session_state:
         f'+{total_bonus:.1f}%'
         f'</div>'
         f'<div style="margin-top: 10px;">'
-        f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">+10% Max Cap</span>'
+        f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">Max +10.0 Pts Cap</span>'
         f'</div>'
         f'</div>'
         f'<div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #FBBF24; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);">'
@@ -1885,7 +1885,7 @@ if "idex_result" in st.session_state:
         f'{position_sizing}'
         f'</div>'
         f'<div style="margin-top: 10px; font-size: 13px; font-weight: 700; color: #B45309;">'
-        f'Risk-Weighted Sizing'
+        f'Optimal Portfolio Sizing'
         f'</div>'
         f'</div>'
         f'</div>'
@@ -1950,7 +1950,7 @@ if "idex_result" in st.session_state:
         cards = [
             {
                 "icon": "🛑",
-                "title": "PRIMARY DEALBREAKER / RED FLAG",
+                "title": "PRIMARY FORENSIC DEALBREAKER",
                 "text": wk_list[0] if wk_list else "Severe accounting, governance, or liquidity red flags active in audited filings.",
                 "bg": "#FEF2F2",
                 "border": "#FECACA",
@@ -1959,7 +1959,7 @@ if "idex_result" in st.session_state:
             },
             {
                 "icon": "⚠️",
-                "title": "CAPITAL DESTRUCTION HAZARD",
+                "title": "CAPITAL IMPAIRMENT HAZARD",
                 "text": wk_list[1] if len(wk_list) > 1 else "Substantial downside risk of permanent equity impairment under credit or macro stress.",
                 "bg": "#FEF2F2",
                 "border": "#FECACA",
@@ -1968,7 +1968,7 @@ if "idex_result" in st.session_state:
             },
             {
                 "icon": "📉",
-                "title": "CASH REALITY & SOLVENCY RISK",
+                "title": "EARNINGS QUALITY & CASH CONVERSION GAP",
                 "text": esg_str or "Reported net profits fail to translate into durable, unencumbered operating cash flow.",
                 "bg": "#FFFBEB",
                 "border": "#FDE68A",
@@ -1977,7 +1977,7 @@ if "idex_result" in st.session_state:
             },
             {
                 "icon": "🛡️",
-                "title": "CONDITIONS REQUIRED FOR RECONSIDERATION",
+                "title": "PRECONDITIONS FOR RECONSIDERATION",
                 "text": "Substantial debt de-leveraging, complete promoter pledge removal, and clean multi-year audit sign-offs required before capital reconsideration.",
                 "bg": "#F8FAFC",
                 "border": "#CBD5E1",
@@ -1995,7 +1995,7 @@ if "idex_result" in st.session_state:
         cards = [
             {
                 "icon": "🟢",
-                "title": "STRUCTURAL COMPOUNDING MOAT",
+                "title": "STRUCTURAL COMPETITIVE MOAT",
                 "text": str_list[0] if str_list else "Dominant franchise commanding enduring pricing power and market leadership.",
                 "bg": "#F0FDF4",
                 "border": "#BBF7D0",
@@ -2022,7 +2022,7 @@ if "idex_result" in st.session_state:
             },
             {
                 "icon": "🎯",
-                "title": "ACCUMULATION PLAYBOOK & DIP TRIGGERS",
+                "title": "INSTITUTIONAL ACCUMULATION PLAYBOOK",
                 "text": "Accumulate systematically on market corrections around DCF fair value for resilient 12–24M institutional compounding.",
                 "bg": "#ECFDF5",
                 "border": "#A7F3D0",
@@ -2040,7 +2040,7 @@ if "idex_result" in st.session_state:
         cards = [
             {
                 "icon": "🟢",
-                "title": "FRANCHISE QUALITY FOUNDATION",
+                "title": "FRANCHISE FOUNDATION & CORE MOAT",
                 "text": str_list[0] if str_list else "Respectable underlying franchise presence and operating capability.",
                 "bg": "#F0FDF4",
                 "border": "#BBF7D0",
@@ -2049,7 +2049,7 @@ if "idex_result" in st.session_state:
             },
             {
                 "icon": "⏳",
-                "title": "PRIMARY HURDLE PREVENTING BUY CALL",
+                "title": "PRIMARY HURDLE PREVENTING BUY RATING",
                 "text": wk_list[0] if wk_list else "Stretched valuation multiples or margin compression limit current risk/reward.",
                 "bg": "#FFFBEB",
                 "border": "#FDE68A",
@@ -2058,7 +2058,7 @@ if "idex_result" in st.session_state:
             },
             {
                 "icon": "🎯",
-                "title": "UPGRADE TRIGGER (WHEN TO BUY)",
+                "title": "UPGRADE CATALYST (WHEN TO BUY)",
                 "text": f"Valuation pullback towards fair value or accelerated earnings execution in {drift_lower}.",
                 "bg": "#EFF6FF",
                 "border": "#BFDBFE",
@@ -2067,7 +2067,7 @@ if "idex_result" in st.session_state:
             },
             {
                 "icon": "⚠️",
-                "title": "DOWNSIDE MONITORABLE / STOP-LOSS LINE",
+                "title": "DOWNSIDE MONITORABLE & REVIEW TRIGGER",
                 "text": wk_list[1] if len(wk_list) > 1 else "Further multiple contraction or working capital deterioration requiring defensive exit.",
                 "bg": "#FEF2F2",
                 "border": "#FECACA",

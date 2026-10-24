@@ -21,9 +21,16 @@ import importlib
 import analyzer
 import nifty_universe
 import financial_trends
+import data_integrity_agent
 importlib.reload(analyzer)
 importlib.reload(nifty_universe)
 importlib.reload(financial_trends)
+importlib.reload(data_integrity_agent)
+
+from data_integrity_agent import (
+    DataIntegritySentinel,
+    render_sentinel_audit_certificate_html
+)
 
 from financial_trends import (
     fetch_financial_statements,
@@ -60,32 +67,33 @@ if os.path.exists(LOGO_PATH):
 # Screener.in Inspired Green & White Institutional CSS
 st.markdown("""
 <style>
-    /* Global Screener-grade Typography */
+    /* Global Screener-grade Typography with High Readability */
     html, body, [class*="css"] {
-        font-size: 15px;
+        font-size: 16.5px !important;
+        line-height: 1.6 !important;
     }
     
     /* Screener-Style Main Headings */
     h1, .stHeadingContainer h1 {
-        font-size: 32px !important;
+        font-size: 35px !important;
         font-weight: 800 !important;
         letter-spacing: -0.6px !important;
         color: #0F172A !important;
     }
     h2, .stHeadingContainer h2 {
-        font-size: 24px !important;
+        font-size: 27px !important;
         font-weight: 700 !important;
         letter-spacing: -0.4px !important;
         color: #0F172A !important;
     }
     h3, .stHeadingContainer h3 {
-        font-size: 20px !important;
+        font-size: 23px !important;
         font-weight: 700 !important;
         color: #0F172A !important;
     }
     h4, .stHeadingContainer h4 {
-        font-size: 17px !important;
-        font-weight: 600 !important;
+        font-size: 19px !important;
+        font-weight: 700 !important;
         color: #0F172A !important;
     }
 
@@ -98,9 +106,9 @@ st.markdown("""
         margin-bottom: 24px !important;
     }
     button[data-baseweb="tab"] {
-        font-size: 16.5px !important;
+        font-size: 18px !important;
         font-weight: 600 !important;
-        padding: 12px 24px !important;
+        padding: 14px 28px !important;
         border-radius: 6px 6px 0 0 !important;
         color: #64748B !important;
         background: transparent !important;
@@ -129,10 +137,10 @@ st.markdown("""
     /* Screener-Style Key Ratio Metric Cards: Big, Crisp & Legible */
     [data-testid="stMetric"] {
         background-color: #FFFFFF;
-        padding: 16px 20px !important;
-        border-radius: 8px !important;
-        border: 1px solid #E2E8F0 !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+        padding: 18px 22px !important;
+        border-radius: 10px !important;
+        border: 1.5px solid #E2E8F0 !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
         transition: border-color 0.15s ease !important;
     }
     [data-testid="stMetric"]:hover {
@@ -140,31 +148,31 @@ st.markdown("""
     }
     [data-testid="stMetricValue"] {
         font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace !important;
-        font-size: 28px !important;
-        font-weight: 700 !important;
+        font-size: 32px !important;
+        font-weight: 800 !important;
         letter-spacing: -0.6px !important;
         color: #0F172A !important;
         line-height: 1.25 !important;
     }
     [data-testid="stMetricLabel"] {
-        font-size: 13px !important;
-        font-weight: 600 !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
         color: #64748B !important;
         letter-spacing: 0.5px !important;
         text-transform: uppercase !important;
     }
     [data-testid="stMetricDelta"] {
-        font-size: 14px !important;
-        font-weight: 600 !important;
+        font-size: 15.5px !important;
+        font-weight: 700 !important;
     }
 
     /* Screener-Style Institutional Emerald Primary Button */
     button[kind="primary"] {
         background-color: #059669 !important;
         color: #FFFFFF !important;
-        font-size: 16px !important;
-        font-weight: 700 !important;
-        padding: 14px 28px !important;
+        font-size: 17.5px !important;
+        font-weight: 800 !important;
+        padding: 16px 32px !important;
         border-radius: 8px !important;
         border: 1px solid #047857 !important;
         letter-spacing: -0.2px !important;
@@ -328,18 +336,18 @@ st.markdown("""
         background-color: #F0FDF4 !important;
     }
     .metric-table-spacious td.m-label {
-        padding: 12px 18px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #475569;
+        padding: 14px 20px;
+        font-size: 15.5px;
+        font-weight: 700;
+        color: #334155;
         text-align: left;
         white-space: nowrap;
     }
     .metric-table-spacious td.m-value {
-        padding: 12px 18px;
-        font-size: 14.5px;
+        padding: 14px 20px;
+        font-size: 16.5px;
         font-family: 'JetBrains Mono', monospace;
-        font-weight: 700;
+        font-weight: 800;
         color: #0F172A;
         text-align: right;
         white-space: nowrap;
@@ -439,6 +447,60 @@ st.html("""
   </div>
 </div>
 """)
+
+# --- FIRST-TIME VISITOR GUIDED ROADMAP & FORENSIC CHEAT SHEET ---
+is_first_time = not bool(st.session_state.get("selected_company_choice"))
+with st.expander("🧭 **New to StockSage? Click to view the 3-Minute Quick Guide & Forensic Framework**", expanded=is_first_time):
+    st.html("""
+    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #86EFAC; border-radius: 12px; padding: 22px 26px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+      <div style="font-size: 20px; font-weight: 800; color: #065F46; display: flex; align-items: center; gap: 10px;">
+        <span>🧭</span> How StockSage Evaluates Indian Equities (Guided Framework)
+      </div>
+      <div style="font-size: 15px; color: #334155; margin-top: 6px; line-height: 1.6;">
+        Welcome! StockSage is built for both retail investors and seasoned institutional analysts. We evaluate Indian listed stocks using a rigorous 4-step structural pattern to protect you from accounting traps and identify authentic compounders.
+      </div>
+
+      <!-- 4-Step Structural Architecture Grid -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 18px;">
+        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #059669; border-radius: 10px; padding: 16px 18px;">
+          <div style="font-size: 12.5px; font-weight: 800; color: #059669; text-transform: uppercase;">STEP 1 • SELECTION</div>
+          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">Search Any Stock</div>
+          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Pick from 501 Nifty 500 stocks or click a Marquee Giant chip to load live audited data.</div>
+        </div>
+        
+        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #2563EB; border-radius: 10px; padding: 16px 18px;">
+          <div style="font-size: 12.5px; font-weight: 800; color: #2563EB; text-transform: uppercase;">STEP 2 • VERIFICATION</div>
+          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">Sentinel-1 Audit</div>
+          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Autonomous agent cross-checks balance sheet equations, cash math & accrual authenticity.</div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #D97706; border-radius: 10px; padding: 16px 18px;">
+          <div style="font-size: 12.5px; font-weight: 800; color: #D97706; text-transform: uppercase;">STEP 3 • DEEP DIVE</div>
+          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">4-Year Trends & CAGR</div>
+          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Examine multi-year P&L, Balance Sheet, and Free Cash Flow charts in ₹ Crores.</div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #7C3AED; border-radius: 10px; padding: 16px 18px;">
+          <div style="font-size: 12.5px; font-weight: 800; color: #7C3AED; text-transform: uppercase;">STEP 4 • SCORING</div>
+          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">8-Pillar AI Dossier</div>
+          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Final 0–100 score, risk penalties, Big 4 auditor notes, and position sizing recommendation.</div>
+        </div>
+      </div>
+
+      <!-- Key Metrics Made Simple (Beginner Cheat Sheet) -->
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1.5px dashed #CBD5E1;">
+        <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+          📖 Key Forensic Concepts (Explained in Plain English)
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; font-size: 14.5px; color: #334155; line-height: 1.55;">
+          <div>• <strong style="color: #065F46;">CFO / PAT Conversion:</strong> Compares actual cash banked from operations (CFO) against reported net profit (PAT). Over 95% is institutional grade; below 50% warns that profits may be artificial or tied up in unpaid invoices.</div>
+          <div>• <strong style="color: #1E40AF;">Debt to Equity (D/E):</strong> Measures how much loan money the company relies on. Below 0.2 means practically debt-free; above 1.0 indicates high financial distress risk.</div>
+          <div>• <strong style="color: #B45309;">Compounded Sales & Profit CAGR:</strong> Annualized growth rate of revenue and profits over 3–5 years to separate short-term spikes from durable long-term expansion.</div>
+          <div>• <strong style="color: #5B21B6;">IDEX Composite Score (0–100):</strong> ≥85 = High-Conviction Compounder, 70–84 = Quality Tracker, <50 = High Forensic or Governance Red Flags.</div>
+        </div>
+      </div>
+    </div>
+    """)
 
 # --- INTAKE CONSOLE ---
 with st.container(border=True):
@@ -783,13 +845,13 @@ if live_data:
     def fmt_metric_row(label: str, value: str, style_mode: str = "normal", is_even: bool = False) -> str:
         row_bg = ' style="background-color: #F8FAFC;"' if is_even else ''
         if style_mode == "emerald":
-            val_span = f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 13.5px;">{value}</span>'
+            val_span = f'<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 15px;">{value}</span>'
         elif style_mode == "teal":
-            val_span = f'<span style="background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 13.5px;">{value}</span>'
+            val_span = f'<span style="background: #F0FDFA; color: #0F766E; border: 1.5px solid #99F6E4; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 15px;">{value}</span>'
         elif style_mode == "bold":
-            val_span = f'<span style="font-weight: 800; color: #0F172A; font-size: 14.5px;">{value}</span>'
+            val_span = f'<span style="font-weight: 900; color: #0F172A; font-size: 16.5px;">{value}</span>'
         else:
-            val_span = f'<span style="font-weight: 700; color: #1E293B; font-size: 14px;">{value}</span>'
+            val_span = f'<span style="font-weight: 700; color: #1E293B; font-size: 15.5px;">{value}</span>'
             
         return (
             f'<tr{row_bg}>'
@@ -1019,6 +1081,17 @@ if live_data:
     )
     st.html(facts_full_html)
 
+    # --- INDEPENDENT SENTINEL-1 FORENSIC DATA INTEGRITY & AUDIT SEAL ---
+    fin_res = get_cached_financial_statements(target_ticker)
+    sentinel_report = DataIntegritySentinel.audit_and_certify(
+        ticker_symbol=target_ticker,
+        company_name=target_company_name,
+        financial_statements=fin_res,
+        live_market_data=live_data
+    )
+    st.session_state["sentinel_report"] = sentinel_report
+    st.html(render_sentinel_audit_certificate_html(sentinel_report))
+
     # --- INTERACTIVE TICKER PRICE & TECHNICAL CHART ---
     st.markdown("<div style='margin-top: 22px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
     tc_1, tc_2, tc_3 = st.columns([2.5, 1.3, 1])
@@ -1240,8 +1313,9 @@ if run_btn:
         st.write("Enforcing Promoter Integrity Override (PIO) & PPRM Guardrails...")
         
         try:
+            sentinel_rep = st.session_state.get("sentinel_report", None)
             if demo_mode:
-                result = get_demo_analysis(target_company_name, target_sector, live_data)
+                result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep)
             else:
                 pdf_bytes = uploaded_file.read() if uploaded_file else None
                 result = analyze_document_with_gemini(
@@ -1250,7 +1324,8 @@ if run_btn:
                     api_key=active_api_key,
                     pdf_bytes=pdf_bytes,
                     live_data=live_data,
-                    custom_prompt=custom_prompt
+                    custom_prompt=custom_prompt,
+                    sentinel_report=sentinel_rep
                 )
             st.session_state["idex_result"] = result
             status.update(label=f"Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
@@ -1266,7 +1341,19 @@ if "idex_result" in st.session_state:
     st.write("")
     st.markdown("### Institutional Equity Research Scorecard")
 
-    # 1. EXECUTIVE SCORE ROW (Vibrant Gradient KPI Cards)
+    # Sentinel Data Integrity Certification Seal in Dashboard
+    sentinel_audit = res.get("sentinel_audit") or st.session_state.get("sentinel_report")
+    if sentinel_audit:
+        st.html(
+            f'<div style="background: {sentinel_audit.get("badge_bg", "#ECFDF5")}; border: 1.5px solid {sentinel_audit.get("badge_border", "#A7F3D0")}; border-left: 5px solid {sentinel_audit.get("badge_color", "#059669")}; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
+            f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15.5px;">🛡️ Evaluated on {sentinel_audit.get("agent_name", "Sentinel-1 Agent")} Certified Data</span>'
+            f'<div style="font-size: 13.5px; color: #475569; margin-top: 3px;">{sentinel_audit.get("verdict_desc", "")}</div></div>'
+            f'<div style="text-align: right;"><span style="background: {sentinel_audit.get("badge_color", "#059669")}; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px;">{sentinel_audit.get("status", "CERTIFIED")}</span>'
+            f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Hash: {sentinel_audit.get("audit_hash", "VERIFIED")}</div></div>'
+            f'</div>'
+        )
+
+    # 1. EXECUTIVE SCORE ROW (Vibrant Gradient KPI Cards with Generous Typography)
     final_score = res.get('final_score', 0)
     verdict = res.get("verdict", "").split("—")[0].strip()
     core_score = res.get('core_score', 0)
@@ -1275,64 +1362,64 @@ if "idex_result" in st.session_state:
     position_sizing = res.get("position_sizing", "0%")
 
     kpi_cards_html = (
-        f'<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px;">'
-        f'<div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #10B981; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.08);">'
+        f'<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">'
+        f'<div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #10B981; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #065F46; text-transform: uppercase;">FINAL IDEX SCORE</span>'
-        f'<span style="font-size: 18px;">🏆</span>'
+        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #065F46; text-transform: uppercase;">FINAL IDEX SCORE</span>'
+        f'<span style="font-size: 20px;">🏆</span>'
         f'</div>'
-        f'<div style="font-size: 28px; font-weight: 900; color: #064E3B; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'{final_score:.1f} <span style="font-size: 14px; font-weight: 600; color: #047857;">/ 100</span>'
+        f'<div style="font-size: 32px; font-weight: 900; color: #064E3B; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'{final_score:.1f} <span style="font-size: 16px; font-weight: 700; color: #047857;">/ 100</span>'
         f'</div>'
         f'<div style="margin-top: 10px;">'
-        f'<span style="background: #059669; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 9999px; letter-spacing: 0.3px; display: inline-block;">{verdict}</span>'
+        f'<span style="background: #059669; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; letter-spacing: 0.3px; display: inline-block;">{verdict}</span>'
         f'</div>'
         f'</div>'
-        f'<div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #60A5FA; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(59, 130, 246, 0.08);">'
+        f'<div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #60A5FA; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.08);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #1E40AF; text-transform: uppercase;">CORE QUALITY</span>'
-        f'<span style="font-size: 18px;">💎</span>'
+        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #1E40AF; text-transform: uppercase;">CORE QUALITY</span>'
+        f'<span style="font-size: 20px;">💎</span>'
         f'</div>'
-        f'<div style="font-size: 28px; font-weight: 900; color: #1E3A8A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'{core_score:.1f} <span style="font-size: 14px; font-weight: 600; color: #2563EB;">/ 100</span>'
+        f'<div style="font-size: 32px; font-weight: 900; color: #1E3A8A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'{core_score:.1f} <span style="font-size: 16px; font-weight: 700; color: #2563EB;">/ 100</span>'
         f'</div>'
-        f'<div style="margin-top: 10px; font-size: 12px; font-weight: 600; color: #1D4ED8;">'
+        f'<div style="margin-top: 10px; font-size: 13px; font-weight: 700; color: #1D4ED8;">'
         f'Pre-penalties baseline'
         f'</div>'
         f'</div>'
-        f'<div style="background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%); border: 1.5px solid #F87171; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.08);">'
+        f'<div style="background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%); border: 1.5px solid #F87171; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.08);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #991B1B; text-transform: uppercase;">RISK PENALTIES</span>'
-        f'<span style="font-size: 18px;">🛡️</span>'
+        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #991B1B; text-transform: uppercase;">RISK PENALTIES</span>'
+        f'<span style="font-size: 20px;">🛡️</span>'
         f'</div>'
-        f'<div style="font-size: 28px; font-weight: 900; color: #7F1D1D; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'-{total_penalties:.1f} <span style="font-size: 14px; font-weight: 600; color: #B91C1C;">pts</span>'
+        f'<div style="font-size: 32px; font-weight: 900; color: #7F1D1D; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'-{total_penalties:.1f} <span style="font-size: 16px; font-weight: 700; color: #B91C1C;">pts</span>'
         f'</div>'
         f'<div style="margin-top: 10px;">'
-        f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">-7.5% Hard Cap</span>'
+        f'<span style="background: #DC2626; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">-7.5% Hard Cap</span>'
         f'</div>'
         f'</div>'
-        f'<div style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 1.5px solid #A78BFA; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(139, 92, 246, 0.08);">'
+        f'<div style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 1.5px solid #A78BFA; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.08);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #5B21B6; text-transform: uppercase;">GROWTH BONUSES</span>'
-        f'<span style="font-size: 18px;">🚀</span>'
+        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #5B21B6; text-transform: uppercase;">GROWTH BONUSES</span>'
+        f'<span style="font-size: 20px;">🚀</span>'
         f'</div>'
-        f'<div style="font-size: 28px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'<div style="font-size: 32px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
         f'+{total_bonus:.1f}%'
         f'</div>'
         f'<div style="margin-top: 10px;">'
-        f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+10% Max Cap</span>'
+        f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">+10% Max Cap</span>'
         f'</div>'
         f'</div>'
-        f'<div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #FBBF24; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 5px rgba(245, 158, 11, 0.08);">'
+        f'<div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #FBBF24; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.8px; color: #92400E; text-transform: uppercase;">PORTFOLIO WEIGHT</span>'
-        f'<span style="font-size: 18px;">⚖️</span>'
+        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #92400E; text-transform: uppercase;">PORTFOLIO WEIGHT</span>'
+        f'<span style="font-size: 20px;">⚖️</span>'
         f'</div>'
-        f'<div style="font-size: 26px; font-weight: 900; color: #78350F; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
+        f'<div style="font-size: 30px; font-weight: 900; color: #78350F; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
         f'{position_sizing}'
         f'</div>'
-        f'<div style="margin-top: 10px; font-size: 12px; font-weight: 600; color: #B45309;">'
+        f'<div style="margin-top: 10px; font-size: 13px; font-weight: 700; color: #B45309;">'
         f'Risk-Weighted Sizing'
         f'</div>'
         f'</div>'

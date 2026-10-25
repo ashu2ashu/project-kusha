@@ -238,7 +238,8 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
     
     for attempt in range(2):
         try:
-            ns_ticker = f"{ticker_symbol.upper()}.NS"
+            clean_sym = ticker_symbol.upper().strip()
+            ns_ticker = clean_sym if clean_sym.endswith((".NS", ".BO")) else f"{clean_sym}.NS"
             stock = yf.Ticker(ns_ticker)
             fi = stock.fast_info
             cur_price = fi.get("lastPrice") or fi.get("regularMarketPreviousClose")
@@ -340,10 +341,14 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
             graham_num = None
             
         # Debt to Equity - DO NOT FABRICATE
+        # Note: Yahoo Finance provides debtToEquity as a percentage (e.g. 1.55% for 0.02x, 155.0% for 1.55x)
         de_raw = inf.get("debtToEquity")
-        if de_raw is not None:
-            raw_f = float(de_raw)
-            de_val = round(raw_f / 100 if raw_f > 10 else raw_f, 2)
+        tot_debt_check = inf.get("totalDebt")
+        tot_eq_check = inf.get("totalStockholderEquity")
+        if tot_debt_check is not None and tot_eq_check is not None and float(tot_eq_check) > 0:
+            de_val = round(float(tot_debt_check) / float(tot_eq_check), 2)
+        elif de_raw is not None:
+            de_val = round(float(de_raw) / 100.0, 2)
         else:
             de_val = None
             
@@ -469,6 +474,7 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
             "change_val": change_val,
             "change_pct": change_pct,
             "market_cap_cr": mcap_cr,
+            "market_cap_num": float(mcap) if mcap is not None and mcap > 0 else None,
             "pe_ratio": pe_val if pe_val is not None else "N/A",
             "forward_pe": fwd_pe if fwd_pe is not None else "N/A",
             "price_to_book": pb_val if pb_val is not None else "N/A",
@@ -480,6 +486,11 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
             "debt_to_equity": de_val,
             "roe": f"{roe_pct:.1f}%" if roe_pct is not None else "N/A",
             "profit_margin": f"{npm_pct:.1f}%" if npm_pct is not None else "N/A",
+            "sales_cr": round(tot_rev / 1e7, 1) if tot_rev > 0 else None,
+            "npm_ann": npm_pct,
+            "ev_ebitda": evebitda_val,
+            "peg": peg_val,
+            "fcf_cr": round(float(fcf_raw) / 1e7, 1) if fcf_raw and float(fcf_raw) > 0 else None,
             "analyst_rating": "Tracked",
             "business_summary": about_summary,
             "website_url": website or "",
@@ -488,8 +499,10 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
             "bse_code": bse_code,
             "price_date": price_date,
             "screener_metrics": screener_metrics,
+            "provider": "Yahoo Finance",
             "data_provider": "Yahoo Finance (unverified third-party dataset / delayed)",
             "is_delayed": True,
+            "retrieved_at": fetch_time.isoformat(),
             "fetched_at": fetch_time.isoformat(),
             "source_disclaimer": "Third-party data via Yahoo Finance API. Not official exchange data or audited regulatory filings."
         }
@@ -619,7 +632,8 @@ def fetch_marquee_stocks_data() -> List[Dict[str, Any]]:
 
 def fetch_ticker_historical_data(ticker_symbol: str, period: str = "1y") -> pd.DataFrame:
     """Fetch historical OHLCV data for an individual stock or index."""
-    sym = ticker_symbol if ticker_symbol.startswith("^") else f"{ticker_symbol}.NS"
+    clean_sym = ticker_symbol.strip()
+    sym = clean_sym if clean_sym.startswith("^") or clean_sym.upper().endswith((".NS", ".BO")) else f"{clean_sym}.NS"
     try:
         import warnings
         with warnings.catch_warnings():

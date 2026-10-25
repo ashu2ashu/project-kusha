@@ -272,13 +272,17 @@ class TestSupportedModelsConfiguration(unittest.TestCase):
 
     def test_supported_models_list(self):
         """Verify that supported models list contains verified Gemini models."""
-        self.assertIn("gemini-2.5-flash", SUPPORTED_MODELS)
-        self.assertIn("gemini-2.0-flash", SUPPORTED_MODELS)
-        self.assertIn("gemini-1.5-flash", SUPPORTED_MODELS)
-        self.assertEqual(DEFAULT_MODEL, "gemini-2.5-flash")
-        # Confirm obsolete models are removed
-        self.assertNotIn("gemini-3.5-flash", SUPPORTED_MODELS)
-        self.assertNotIn("gemini-3.8-flash", SUPPORTED_MODELS)
+        self.assertIn("gemini-3.5-flash", SUPPORTED_MODELS)
+        self.assertIn("gemini-3.5-flash-lite", SUPPORTED_MODELS)
+        self.assertIn("gemini-3-flash-preview", SUPPORTED_MODELS)
+        self.assertIn("gemini-flash-lite-latest", SUPPORTED_MODELS)
+        self.assertIn("gemini-3.8-flash", SUPPORTED_MODELS)
+        self.assertIn("gemini-flash-latest", SUPPORTED_MODELS)
+        self.assertEqual(DEFAULT_MODEL, "gemini-3.5-flash")
+        # Confirm deprecated models are removed
+        self.assertNotIn("gemini-2.5-flash", SUPPORTED_MODELS)
+        self.assertNotIn("gemini-2.0-flash", SUPPORTED_MODELS)
+        self.assertNotIn("gemini-1.5-flash", SUPPORTED_MODELS)
 
 
 if __name__ == "__main__":

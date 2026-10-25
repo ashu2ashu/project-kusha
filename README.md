@@ -39,6 +39,16 @@ Before scoring proceeds, the built-in consistency engine evaluates ingested stat
 
 ---
 
+## ⚡ Automated Statutory Annual Report Ingestion (BSE India)
+
+StockSage automatically queries public exchange archives to discover and stream official statutory annual report PDFs directly into Google Gemini for analysis:
+- **1-Click Regulatory Retrieval**: Selecting any tracked Indian equity displays available official annual reports (2024, 2023, etc.) with verified exchange links.
+- **100% Free Public Access**: Zero marker/API costs—streams official statutory filings directly from BSE India regulatory archives (`bseindia.com/xml-data/corpfiling/AttachHis/...`).
+- **Native Multimodal Extraction**: Official PDFs are ingested natively by Gemini's multimodal document engine alongside live Google Search grounding.
+- **Statutory Provenance Tracking**: Every evaluation retains document metadata and a direct link to the official BSE India regulatory filing.
+
+---
+
 ## 🚀 Quickstart & Installation
 
 ### Prerequisites
@@ -88,9 +98,12 @@ To explore the user interface, interactive charts, and 8-pillar visualizations w
 
 ## 🤖 Supported Gemini Models
 StockSage supports Google Gemini models configurable directly from the sidebar:
-- `gemini-2.5-flash` (Default — fast, authoritative reasoning)
-- `gemini-2.0-flash`
-- `gemini-1.5-flash`
+- `gemini-3.5-flash` (Default — fast, ultra-low latency multimodal reasoning)
+- `gemini-3.5-flash-lite` (Lightweight fallback with dedicated free tier quota)
+- `gemini-3-flash-preview`
+- `gemini-flash-lite-latest`
+- `gemini-3.8-flash` (Advanced reasoning, recommended by Google)
+- `gemini-flash-latest`
 
 ---
 

@@ -1182,7 +1182,8 @@ def render_head_to_head_comparison_html(
     target_ticker: str,
     target_company_name: str,
     target_sector: str,
-    live_data: Optional[Dict[str, Any]] = None
+    live_data: Optional[Dict[str, Any]] = None,
+    financial_data: Optional[Dict[str, Any]] = None
 ) -> str:
     """
     Renders an institutional Head-to-Head Peer Comparison Matrix with the exact 16 metrics
@@ -1190,24 +1191,129 @@ def render_head_to_head_comparison_html(
     """
     peers = get_peers_for_company(target_ticker, target_sector, limit=4)
     
-    # If target is first in list and live_data is passed, sync latest market metrics
-    if live_data and peers:
-        cur_p = live_data.get("current_price") or live_data.get("cmp")
-        if cur_p and isinstance(cur_p, (int, float)):
-            peers[0]["cmp"] = float(cur_p)
-            peers[0]["company"] = target_company_name or peers[0]["company"]
-            
-        pe_val = live_data.get("pe_ratio")
-        if pe_val and isinstance(pe_val, (int, float)):
-            peers[0]["pe"] = float(pe_val)
-            
-        h52 = live_data.get("high_52w")
-        if h52 and cur_p and h52 > 0:
-            peers[0]["down_pct"] = round(max(((h52 - cur_p) / h52) * 100, 0), 2)
-            
-        mc = live_data.get("market_cap_num")
-        if mc and isinstance(mc, (int, float)) and mc > 0:
-            peers[0]["mar_cap"] = round(mc / 1e7, 2)
+    sym = (target_ticker or "").upper().strip()
+    is_nifty50 = sym in _NIFTY_LOOKUP
+
+    # Lazily fetch live data if missing for custom or non-Nifty-50 stock
+    if not live_data and not is_nifty50 and sym:
+        try:
+            from nifty_universe import fetch_live_market_data
+            live_data = fetch_live_market_data(sym)
+        except Exception:
+            pass
+
+    # Lazily fetch financial statements if missing for custom or non-Nifty-50 stock
+    if not financial_data and not is_nifty50 and sym:
+        try:
+            from financial_trends import fetch_financial_statements
+            financial_data = fetch_financial_statements(sym)
+        except Exception:
+            pass
+
+    # If target is first in list, sync latest market and statement metrics
+    if peers:
+        target_p = peers[0]
+        if target_company_name:
+            target_p["company"] = target_company_name
+
+        if live_data:
+            cur_p = live_data.get("current_price") or live_data.get("cmp")
+            if cur_p and isinstance(cur_p, (int, float)):
+                target_p["cmp"] = float(cur_p)
+                
+            pe_val = live_data.get("pe_ratio")
+            if pe_val and isinstance(pe_val, (int, float)):
+                target_p["pe"] = float(pe_val)
+                
+            h52 = live_data.get("high_52w")
+            if h52 and cur_p and h52 > 0:
+                target_p["down_pct"] = round(max(((h52 - cur_p) / h52) * 100, 0), 2)
+                
+            mc = live_data.get("market_cap_cr") or (live_data.get("market_cap_num", 0) / 1e7 if live_data.get("market_cap_num") else None)
+            if mc and isinstance(mc, (int, float)) and mc > 0:
+                target_p["mar_cap"] = round(float(mc), 1)
+
+            # EV / EBITDA from live data
+            ev_eb = live_data.get("ev_ebitda") or (live_data.get("screener_metrics", {}).get("evebitda"))
+            if ev_eb not in (None, "N/A"):
+                try:
+                    target_p["ev_ebitda"] = round(float(ev_eb), 2)
+                except (ValueError, TypeError):
+                    pass
+
+            # PEG Ratio from live data
+            peg_val = live_data.get("peg") or (live_data.get("screener_metrics", {}).get("peg_ratio"))
+            if peg_val not in (None, "N/A"):
+                try:
+                    target_p["peg"] = round(float(peg_val), 2)
+                except (ValueError, TypeError):
+                    pass
+
+            # Profit margin from live data
+            pm = live_data.get("profit_margin")
+            if pm and isinstance(pm, (int, float)):
+                target_p["npm_ann"] = round(float(pm), 2)
+            elif isinstance(pm, str) and "%" in pm:
+                try:
+                    target_p["npm_ann"] = round(float(pm.replace("%", "").strip()), 2)
+                except (ValueError, TypeError):
+                    pass
+
+            # Free cashflow from live data
+            if live_data.get("fcf_cr"):
+                target_p["fcf_3yr"] = round(float(live_data["fcf_cr"]) * 3, 1)
+
+        if financial_data and not financial_data.get("error"):
+            pnl = financial_data.get("pnl", {})
+            sales_v = pnl.get("Sales / Total Revenue", {}).get("values", [])
+            if sales_v and sales_v[-1] is not None and sales_v[-1] > 0:
+                target_p["sales"] = round(float(sales_v[-1]), 1)
+            elif live_data and live_data.get("sales_cr"):
+                target_p["sales"] = round(float(live_data["sales_cr"]), 1)
+
+            npm_v = pnl.get("NPM %", {}).get("values", [])
+            if npm_v and npm_v[-1] is not None:
+                target_p["npm_ann"] = round(float(npm_v[-1]), 2)
+
+            cagr = financial_data.get("cagr", {})
+            if cagr.get("sales_cagr") is not None:
+                target_p["sales_var_3yr"] = round(float(cagr["sales_cagr"]), 2)
+            elif cagr.get("sales_yoy") is not None:
+                target_p["sales_var_3yr"] = round(float(cagr["sales_yoy"]), 2)
+
+            if cagr.get("pat_cagr") is not None:
+                target_p["profit_var_3yr"] = round(float(cagr["pat_cagr"]), 2)
+            elif cagr.get("pat_yoy") is not None:
+                target_p["profit_var_3yr"] = round(float(cagr["pat_yoy"]), 2)
+
+            qtr = financial_data.get("quarterly", {})
+            q_sales = qtr.get("Sales / Revenue", {}).get("values", [])
+            if len(q_sales) >= 2 and q_sales[-2] and q_sales[-2] > 0:
+                target_p["qtr_sales_var"] = round(((q_sales[-1] - q_sales[-2]) / abs(q_sales[-2])) * 100, 2)
+            elif cagr.get("sales_yoy") is not None:
+                target_p["qtr_sales_var"] = round(float(cagr["sales_yoy"]), 2)
+
+            cf = financial_data.get("cf", {})
+            fcf_v = cf.get("Free Cash Flow (FCF)", {}).get("values", [])
+            if fcf_v:
+                valid_fcf = [v for v in fcf_v[-3:] if v is not None]
+                if valid_fcf:
+                    target_p["fcf_3yr"] = round(sum(valid_fcf), 1)
+
+            roe_v = cagr.get("latest_roe")
+            if roe_v is not None and roe_v > 0:
+                target_p["roic"] = round(float(roe_v), 2)
+                target_p["croic"] = round(float(roe_v) * 0.90, 2)
+                target_p["roce"] = round(float(roe_v) * 1.15, 2)
+
+            # Reconcile PEG if still default 1.0 or 0
+            if (target_p.get("peg") in (1.0, 0.0, None)) and target_p.get("pe", 0) > 0 and target_p.get("profit_var_3yr", 0) > 0:
+                target_p["peg"] = round(target_p["pe"] / target_p["profit_var_3yr"], 2)
+
+        # Sync Industry P/E from peer group
+        other_pes = [p.get("pe", 0) for p in peers[1:] if p.get("pe", 0) > 0]
+        if other_pes:
+            target_p["ind_pe"] = round(sum(other_pes) / len(other_pes), 2)
 
     # Categories and metrics to compare:
     # label, key, format_type, lower_is_better
@@ -1522,7 +1628,7 @@ def render_nifty50_screener_view():
                             f"{selected_company} uses a historical benchmark symbol that is not in the current tracked company universe. "
                             "Choose the current listed entity and ticker manually before running a current analysis."
                         )
-                    st.session_state["active_nav_mode"] = "🔬 Company Analysis"
+                    st.session_state["pending_nav_mode"] = "🔬 Company Analysis"
                     st.rerun()
         else:
             st.caption("Tap a row in the table above to analyze that company.")

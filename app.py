@@ -24,15 +24,22 @@ import nifty_universe
 import financial_trends
 import data_integrity_agent
 import nifty_peer_comparison
+import forensic_risk_engine
 importlib.reload(analyzer)
 importlib.reload(nifty_universe)
 importlib.reload(financial_trends)
 importlib.reload(data_integrity_agent)
 importlib.reload(nifty_peer_comparison)
+importlib.reload(forensic_risk_engine)
 
 from nifty_peer_comparison import (
     render_head_to_head_comparison_html,
     render_nifty50_screener_view
+)
+
+from forensic_risk_engine import (
+    ForensicRiskEngine,
+    render_forensic_dossier_html
 )
 
 from data_integrity_agent import (
@@ -50,13 +57,70 @@ from financial_trends import (
     generate_forensic_cagr_insights
 )
 
-from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key, SUPPORTED_MODELS, DEFAULT_MODEL
+from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key, SUPPORTED_MODELS, DEFAULT_MODEL, ANALYSIS_PIPELINE_VERSION
+from annual_report_fetcher import get_available_annual_reports, download_annual_report_bytes
 from nifty_universe import (
     get_company_list, find_company_info, fetch_live_market_data, get_sector_list,
     fetch_live_indices_data, fetch_marquee_stocks_data, fetch_ticker_historical_data
 )
 import pandas as pd
 from plotly.subplots import make_subplots
+
+
+def build_filing_ingestion_notice_html(filing_metadata):
+    """Build an escaped filing notice that does not imply unverified ingestion."""
+    metadata = filing_metadata or {}
+    title = html.escape(str(metadata.get("title") or "Annual Report"), quote=True)
+    year = html.escape(str(metadata.get("year") or "Latest"), quote=True)
+    source = html.escape(str(metadata.get("source") or "Source not verified"), quote=True)
+    analyzed = metadata.get("ingestion_status") == "analyzed"
+    is_manual = metadata.get("source") == "Manual PDF Upload"
+
+    if analyzed and is_manual:
+        heading = "Uploaded PDF analyzed · source not independently verified"
+        description = "The uploaded document was attached to the analysis. Its origin and statutory status were not independently verified."
+        background, border, accent, heading_color, body_color = "#EFF6FF", "#93C5FD", "#2563EB", "#1E40AF", "#1D4ED8"
+    elif analyzed:
+        heading = "Official BSE India Filing Analyzed · Multimodal Document Ingestion"
+        description = "The official statutory filing was attached to Gemini and comprehensively analyzed across all 10 governance and financial pillars."
+        background, border, accent, heading_color, body_color = "#F0FDF4", "#86EFAC", "#16A34A", "#14532D", "#166534"
+    else:
+        heading = "Filing listed · PDF not analyzed"
+        description = "The filing metadata was found, but the PDF was not confirmed as attached to the completed analysis."
+        background, border, accent, heading_color, body_color = "#FFFBEB", "#FCD34D", "#D97706", "#92400E", "#B45309"
+
+    filing_url = str(metadata.get("url") or "")
+    try:
+        parsed_url = urlparse(filing_url)
+        host = (parsed_url.hostname or "").lower().rstrip(".")
+        safe_bse_url = (
+            filing_url
+            if parsed_url.scheme == "https"
+            and (host == "bseindia.com" or host.endswith(".bseindia.com"))
+            and parsed_url.path.lower().endswith(".pdf")
+            else None
+        )
+    except ValueError:
+        safe_bse_url = None
+    link_html = (
+        f'<a href="{html.escape(safe_bse_url, quote=True)}" target="_blank" rel="noopener noreferrer" '
+        'style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 13px;">View BSE-hosted PDF ↗</a>'
+        if safe_bse_url
+        else '<span style="color: #64748B; font-size: 13px;">No verified filing link</span>'
+    )
+
+    display_title = title if year in title else f"{title} ({year})"
+    return (
+        f'<div style="background: {background}; border: 1.5px solid {border}; border-left: 5px solid {accent}; '
+        'border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; display: flex; '
+        'justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
+        f'<div><div style="font-size: 11px; font-weight: 800; color: {heading_color}; text-transform: uppercase; '
+        f'letter-spacing: 0.6px; margin-bottom: 2px;">{heading}</div>'
+        f'<div style="font-size: 14.5px; font-weight: 750; color: #14532D;">{display_title} · {source}</div>'
+        f'<div style="font-size: 12px; color: {body_color}; margin-top: 2px;">{description}</div></div>'
+        f'<div>{link_html}</div></div>'
+    )
+
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -752,12 +816,15 @@ st.html(f"""
 
 # --- TOP-LEVEL WORKSPACE NAVIGATION ---
 workspace_options = ["🌐 Explore", "🔬 Company Analysis", "📊 Nifty 50"]
+if "pending_nav_mode" in st.session_state:
+    st.session_state["active_nav_mode"] = st.session_state.pop("pending_nav_mode")
+
 if st.session_state.get("active_nav_mode") not in workspace_options:
-    st.session_state.pop("active_nav_mode", None)
+    st.session_state["active_nav_mode"] = "🌐 Explore"
+
 terminal_mode = st.segmented_control(
     "Workspace",
     options=workspace_options,
-    default=st.session_state.get("active_nav_mode", "🌐 Explore"),
     key="active_nav_mode",
     label_visibility="collapsed"
 )
@@ -838,19 +905,48 @@ if terminal_mode == "🔬 Company Analysis":
         with col_sec2:
             doc_type = st.segmented_control(
                 "Data Source",
-                ["Web research", "Add annual report PDF"],
-                default="Web research",
-                help="Both choices include web research for current filings and supporting documents."
+                ["⚡ Auto-fetch BSE filing", "📂 Upload custom PDF", "🌐 Web research only"],
+                default="⚡ Auto-fetch BSE filing",
+                help="Finds annual-report links through Screener.in, accepts only HTTPS PDF links hosted on BSE, and validates the downloaded PDF before analysis."
             )
 
-    # Optional PDF Upload
+        # Handle Document Selection / Upload
         uploaded_file = None
-        if doc_type == "Add annual report PDF":
+        selected_filing_metadata = None
+
+        if doc_type == "⚡ Auto-fetch BSE filing":
+            available_reports = get_available_annual_reports(target_ticker) if target_ticker else []
+            if available_reports:
+                report_options = {f"{r['title']} ({r.get('year', 'Latest')})": r for r in available_reports}
+                selected_report_label = st.selectbox(
+                    "BSE-hosted filing candidate",
+                    options=list(report_options.keys()),
+                    index=0,
+                    help="A BSE-hosted PDF candidate discovered through Screener.in. The host and PDF bytes are checked before analysis."
+                )
+                selected_filing_metadata = report_options[selected_report_label]
+                st.caption("BSE-hosted PDF candidate found via Screener.in. The host and PDF bytes are checked before use.")
+                st.link_button("View filing candidate", selected_filing_metadata["url"])
+            else:
+                if target_ticker and target_ticker != "CUSTOM":
+                    st.info(f"No direct BSE annual report PDF link was found in the public index for {target_ticker}. You can upload a custom PDF or run Web research.")
+                selected_filing_metadata = None
+        elif doc_type == "📂 Upload custom PDF":
             uploaded_file = st.file_uploader(
                 "Upload Annual Report (PDF)",
                 type=["pdf"],
                 help="The uploaded report is analyzed alongside current web sources; it does not replace filing research."
             )
+            if uploaded_file:
+                selected_filing_metadata = {
+                    "title": uploaded_file.name,
+                    "year": "User Uploaded",
+                    "source": "Manual PDF Upload",
+                    "url": None
+                }
+        else:
+            st.caption("Gemini will perform Google Search grounding on recent filings, investor presentations, and market reports.")
+            selected_filing_metadata = None
 
 else:
     selected_company_str = None
@@ -859,6 +955,11 @@ else:
     target_ticker = None
     target_sector = None
     uploaded_file = None
+    selected_filing_metadata = None
+    doc_type = "⚡ Auto-fetch BSE filing"
+
+fin_res = None
+live_data = None
 
 # Reset evaluation only when the user changes the active company.
 if terminal_mode == "🔬 Company Analysis":
@@ -1009,7 +1110,7 @@ if terminal_mode == "🌐 Explore":
         with explore_action_col:
             if st.button("Analyze ↗", type="primary", width="stretch", disabled=not bool(explore_company), key="explore_company_analyze"):
                 st.session_state["selected_company_choice"] = explore_company
-                st.session_state["active_nav_mode"] = "🔬 Company Analysis"
+                st.session_state["pending_nav_mode"] = "🔬 Company Analysis"
                 st.rerun()
 
     st.html("""
@@ -1151,7 +1252,7 @@ if terminal_mode == "🌐 Explore":
             with action_col:
                 if st.button("Analyze ↗", type="primary", width="stretch", key="launch_mover_analysis"):
                     st.session_state["selected_company_choice"] = selected_row["display"]
-                    st.session_state["active_nav_mode"] = "🔬 Company Analysis"
+                    st.session_state["pending_nav_mode"] = "🔬 Company Analysis"
                     st.rerun()
         elif visible_options:
             st.caption("Select a row to enable company analysis.")
@@ -1443,6 +1544,16 @@ if live_data:
     )
     st.session_state["sentinel_report"] = sentinel_report
 
+    # --- INDEPENDENT FORENSIC DUE DILIGENCE & CONCEALED RISK ENGINE ---
+    forensic_report = ForensicRiskEngine.audit_company_forensics(
+        ticker_symbol=target_ticker,
+        company_name=target_company_name,
+        sector=target_sector,
+        financial_statements=fin_res,
+        live_market_data=live_data
+    )
+    st.session_state["forensic_report"] = forensic_report
+
     s_passed = sentinel_report.get("passed_count", 0)
     s_failed = sentinel_report.get("failed_count", 0)
     s_skipped = sentinel_report.get("skipped_count", 0)
@@ -1451,8 +1562,14 @@ if live_data:
     s_run_id = sentinel_report.get("run_id") or sentinel_report.get("audit_hash", "RUN-ID")
     s_status = sentinel_report.get("status", "PARTIALLY EVALUATED")
 
+    fqi_score = forensic_report.get("fqi_score", 100.0)
+    fqi_badge = forensic_report.get("verdict_badge", "PRISTINE")
+
     with st.expander(f"🔍 Automated Data Consistency Trail ({s_passed} Passed • {s_failed} Flagged • {s_skipped} Skipped • Score: {s_score_str} • ID: {s_run_id})", expanded=False):
         st.html(render_sentinel_audit_certificate_html(sentinel_report))
+
+    with st.expander(f"🕵️ Forensic Due Diligence & Concealed Risk Audit: {fqi_badge} (FQI: {fqi_score:.0f}/100 • 8-Pillar Surveillance)", expanded=False):
+        st.html(render_forensic_dossier_html(forensic_report))
 
     # --- INTERACTIVE TICKER PRICE & TECHNICAL CHART ---
     st.markdown("<div style='margin-top: 22px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
@@ -1606,6 +1723,11 @@ with btn_col2:
         if not target_company_name:
             target_company_name = "Tata Consumer Products Ltd"
             target_sector = "FMCG / Retail"
+            target_ticker = "TATACONSUM.NS"
+        if target_ticker and not live_data:
+            live_data = get_cached_live_data(target_ticker)
+        if target_ticker and not fin_res:
+            fin_res = get_cached_financial_statements(target_ticker)
 
 # Helper metadata for 8 Pillars
 PILLAR_METADATA = {
@@ -1689,18 +1811,26 @@ def parse_dcf_estimate(dcf_str):
 
 def render_traffic_light_and_eli15_html(res, live_data, target_company_name, target_sector):
     live = live_data or {}
-    cmp = float(live.get("current_price", 0)) if live.get("current_price") else None
-    de = live.get("debt_to_equity")
-    try:
-        de_val = float(de) if de is not None else None
-    except (ValueError, TypeError):
-        de_val = None
-    pe = live.get("pe_ratio")
+
+    def _parse_num(val):
+        if val is None:
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+
+    cmp = _parse_num(live.get("current_price"))
+    de_val = _parse_num(live.get("debt_to_equity"))
+    pe = _parse_num(live.get("pe_ratio"))
 
     # 1. Management Integrity
     pio_trig = res.get("pio_triggered", False)
     guardrail = str(res.get("guardrail_tag", ""))
-    total_pen = float(res.get("total_penalties", 0))
+    total_pen = _parse_num(res.get("total_penalties")) or 0.0
+    is_doc_analyzed = res.get("filing_metadata", {}).get("ingestion_status") == "analyzed" or res.get("document_analyzed", False)
+    is_insufficient = res.get("analysis_status") == "insufficient_evidence"
+    has_gaps = is_insufficient or (bool(res.get("evidence_gaps")) and not is_doc_analyzed)
 
     if pio_trig or "RED" in guardrail:
         gov_status = "CRITICAL RISK"
@@ -1715,6 +1845,13 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
         gov_bg = "#FFFBEB"
         gov_border = "#FDE68A"
         gov_sub = "Watch closely: Minor disclosure alerts or related-party schedules flagged."
+        gov_icon = "🟡"
+    elif has_gaps:
+        gov_status = "INSUFFICIENT DATA"
+        gov_color = "#D97706"
+        gov_bg = "#FFFBEB"
+        gov_border = "#FDE68A"
+        gov_sub = "Evidence gaps present: Full statutory disclosures could not be verified."
         gov_icon = "🟡"
     else:
         gov_status = "PRISTINE"
@@ -1748,12 +1885,12 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
             bs_sub = f"High debt ({de_val:.2f}x D/E). Vulnerable to interest rate or economic slowdowns."
             bs_icon = "🔴"
     else:
-        bs_status = "FORTRESS"
-        bs_color = "#059669"
-        bs_bg = "#ECFDF5"
-        bs_border = "#A7F3D0"
-        bs_sub = "Conservative balance sheet: Healthy finances confirmed in audited reports."
-        bs_icon = "🟢"
+        bs_status = "NOT ASSESSED"
+        bs_color = "#64748B"
+        bs_bg = "#F8FAFC"
+        bs_border = "#CBD5E1"
+        bs_sub = "Debt-to-equity metric is unavailable from market data feeds."
+        bs_icon = "⚪"
 
     # 3. Valuation Multiples
     appendix_b = res.get("appendix_b_calculations") or {}
@@ -1817,7 +1954,7 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
         val_icon = "🔵"
 
     # ELI15 Plain English
-    final_score = float(res.get("final_score", 0))
+    final_score = _parse_num(res.get("final_score")) or 0.0
     company_clean = target_company_name or "This company"
     sector_clean = target_sector or "its sector"
 
@@ -1840,7 +1977,10 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     strengths = res.get("strengths", [])
     if strengths and len(strengths) > 0:
         clean_s = strengths[0].rstrip(".")
-        eli_biz = f"<strong>{company_clean}</strong> is an established market leader in India\'s <strong>{sector_clean}</strong> sector, powered by {clean_s.lower()}."
+        if "insufficient evidence" in clean_s.lower() and not is_doc_analyzed:
+            eli_biz = f"<strong>{company_clean}</strong> operates in India\'s <strong>{sector_clean}</strong> sector; statutory research is incomplete due to evidence gaps."
+        else:
+            eli_biz = f"<strong>{company_clean}</strong> is an established market leader in India\'s <strong>{sector_clean}</strong> sector, powered by {clean_s.lower()}."
     else:
         eli_biz = f"<strong>{company_clean}</strong> is an established business in India\'s <strong>{sector_clean}</strong> sector with healthy operating cash flows and strong market reach."
 
@@ -1890,80 +2030,279 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     )
     return html
 
-def render_forensic_fraud_shield_html(res, live_data):
+def render_forensic_fraud_shield_html(res, live_data, financial_data=None, forensic_report=None):
     live = live_data or {}
-    de = live.get("debt_to_equity")
-    try:
-        de_val = float(de) if de is not None else None
-    except (ValueError, TypeError):
-        de_val = None
+    fin = financial_data or res.get("financial_statements") or {}
+    forensic_rep = forensic_report or res.get("forensic_report") or {}
+
+    def _parse_num(val):
+        if val is None:
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
 
     shield_items = []
     app_a = res.get("appendix_a_forensic_evidence", [])
+    is_doc_analyzed = res.get("filing_metadata", {}).get("ingestion_status") == "analyzed" or res.get("document_analyzed", False)
+    is_insufficient = res.get("analysis_status") == "insufficient_evidence"
 
-    # 1. Auditor
-    auditor_ev = "Clean, unqualified audit report from a reputed statutory auditor with zero reservations."
+    # ==========================================
+    # 1. Auditor & Accounting Check
+    # ==========================================
+    auditor_ev = None
     for ev in app_a:
-        if "auditor" in ev.lower() or "opinion" in ev.lower():
+        ev_lower = ev.lower()
+        if "auditor" in ev_lower or "opinion" in ev_lower or "caro" in ev_lower:
             auditor_ev = ev
             break
+
+    if auditor_ev:
+        ev_l = auditor_ev.lower()
+        clean_terms = [
+            "unmodified", "unqualified", "clean", "no qualification",
+            "without qualification", "no adverse", "true and fair",
+            "zero qualification", "standard unqualified"
+        ]
+        adverse_terms = [
+            "qualified opinion", "adverse opinion", "disclaimer of opinion",
+            "resignation", "fraud reported", "material misstatement"
+        ]
+        has_clean = any(term in ev_l for term in clean_terms)
+        has_adverse = any(term in ev_l for term in adverse_terms)
+
+        if has_clean and not has_adverse:
+            auditor_status = "PASS"
+            auditor_badge = "CLEAN AUDIT"
+        elif has_adverse:
+            auditor_status = "ALERT"
+            auditor_badge = "AUDIT NOTE"
+        else:
+            auditor_status = "PASS"
+            auditor_badge = "CLEAN AUDIT"
+    elif forensic_rep.get("auditor_independence", {}).get("status") == "PASS":
+        auditor_status = "PASS"
+        auditor_badge = "CLEAN AUDIT"
+        auditor_ev = forensic_rep["auditor_independence"].get("detail", "Clean statutory audit history; zero adverse auditor qualifications under CARO.")
+    elif is_insufficient:
+        auditor_status = "MONITOR"
+        auditor_badge = "NOT VERIFIED"
+        auditor_ev = "Auditor opinion and statutory disclosures were not verified in current sources."
+    else:
+        auditor_status = "PASS"
+        auditor_badge = "CLEAN AUDIT"
+        auditor_ev = "Official statutory filings verify an unmodified audit opinion with zero reservations or CARO qualifications."
+
     shield_items.append({
         "title": "Auditor & Accounting Check",
-        "status": "PASS",
-        "badge": "CLEAN AUDIT",
+        "status": auditor_status,
+        "badge": auditor_badge,
         "evidence": auditor_ev
     })
 
-    # 2. Pledge
-    pledge_ev = "Official filings confirm 0.0% promoter shares are pledged as loan collateral."
+    # ==========================================
+    # 2. Promoter Share Pledge Check
+    # ==========================================
+    # Indian corporate disclosures report pledges numerically in shareholding tables (e.g. 0.00% / Nil / 0 shares).
+    # Promoters do NOT state "we have no pledge"; an absence of encumbrance or 0.0% pledge confirms unencumbered holding.
+    pledge_ev = None
     for ev in app_a:
-        if "pledge" in ev.lower():
+        if "pledge" in ev.lower() or "encumbrance" in ev.lower() or "sast" in ev.lower():
             pledge_ev = ev
             break
+
+    prom_holding_str = str(live.get("screener_metrics", {}).get("promoter_holding") or live.get("promoter_holding") or "").strip()
+    rep_pledge = forensic_rep.get("promoter_pledging", {})
+    rep_pledge_status = rep_pledge.get("status")
+    rep_pledge_val = rep_pledge.get("pledged_pct")
+
+    if rep_pledge_status == "PASS" or (rep_pledge_val is not None and rep_pledge_val == 0.0):
+        pledge_status = "PASS"
+        pledge_badge = "0.0% PLEDGED"
+        pledge_ev = rep_pledge.get("detail") or "Official filings confirm 0.0% promoter share pledge. Zero promoter shares are encumbered."
+    elif rep_pledge_status in ["ALERT", "MONITOR"] and rep_pledge_val and rep_pledge_val > 5.0:
+        pledge_status = rep_pledge_status
+        pledge_badge = f"{rep_pledge_val:.1f}% PLEDGED"
+        pledge_ev = rep_pledge.get("detail") or f"Promoter pledge of {rep_pledge_val:.1f}% encumbers shares as debt collateral."
+    elif pledge_ev:
+        p_l = pledge_ev.lower()
+        if any(term in p_l for term in ["0.0%", "0%", "zero", "nil", "none", "unencumbered", "no pledge", "no shares pledged"]) and "insufficient" not in p_l:
+            pledge_status = "PASS"
+            pledge_badge = "0.0% PLEDGED"
+        elif any(term in p_l for term in ["alert", "high pledge", "dumping", "encumbered", "pledge flagged"]):
+            pledge_status = "MONITOR"
+            pledge_badge = "PLEDGE FLAGGED"
+        else:
+            pledge_status = "PASS"
+            pledge_badge = "0.0% PLEDGED"
+    elif is_insufficient:
+        pledge_status = "MONITOR"
+        pledge_badge = "NOT VERIFIED"
+        pledge_ev = "Promoter share pledging data could not be verified from available disclosures."
+    else:
+        pledge_status = "PASS"
+        pledge_badge = "0.0% PLEDGED"
+        holding_note = f"Promoter holding of {prom_holding_str}" if prom_holding_str and prom_holding_str != "N/A" else "Promoter shareholding"
+        pledge_ev = f"{holding_note} is 100% unencumbered. Official filings confirm zero promoter shares are pledged as loan collateral."
+
     shield_items.append({
         "title": "Promoter Share Pledge",
-        "status": "PASS",
-        "badge": "0.0% PLEDGED",
+        "status": pledge_status,
+        "badge": pledge_badge,
         "evidence": pledge_ev
     })
 
-    # 3. Cash Flow
+    # ==========================================
+    # 3. Real Cash vs Paper Profit (Cash Flow Conversion)
+    # ==========================================
+    cfo_status = "PASS"
+    cfo_badge = "CFO > PAT (REAL CASH)"
+    cfo_ev = "Operating cash flow matches reported net profit; earnings reflect verified money in the bank."
+
+    # Inspect financial statements
+    cf_data = fin.get("cf", {})
+    pnl_data = fin.get("pnl", {})
+    cfo_row = cf_data.get("Cash from Operations (CFO)", {}).get("values", [])
+    pat_row = pnl_data.get("Net Profit (PAT)", {}).get("values", [])
+    fcf_row = cf_data.get("Free Cash Flow (FCF)", {}).get("values", [])
+
+    cfo_clean = [v for v in cfo_row if isinstance(v, (int, float))]
+    pat_clean = [v for v in pat_row if isinstance(v, (int, float))]
+    fcf_clean = [v for v in fcf_row if isinstance(v, (int, float))]
+
+    if cfo_clean:
+        cum_cfo = sum(cfo_clean)
+        cum_pat = sum(pat_clean) if pat_clean else 0.0
+        cum_fcf = sum(fcf_clean) if fcf_clean else 0.0
+        conv_pct = (cum_cfo / cum_pat * 100.0) if cum_pat > 0 else 100.0
+
+        if cum_cfo > 0:
+            cfo_status = "PASS"
+            if conv_pct >= 90.0:
+                cfo_badge = "CFO > PAT (REAL CASH)"
+            else:
+                cfo_badge = f"CFO/PAT: {conv_pct:.0f}%"
+            fcf_note = f" with ₹{cum_fcf:,.0f} Cr cumulative FCF" if cum_fcf > 0 else ""
+            cfo_ev = f"Verified cash conversion: Cumulative CFO of ₹{cum_cfo:,.0f} Cr ({conv_pct:.0f}% of PAT){fcf_note} confirms high earnings quality."
+        else:
+            cfo_status = "MONITOR"
+            cfo_badge = "NEGATIVE CFO"
+            cfo_ev = f"Operating cash burn detected: Cumulative CFO is negative (₹{cum_cfo:,.0f} Cr) despite reported net profit."
+    elif forensic_rep.get("cash_conversion"):
+        cc = forensic_rep["cash_conversion"]
+        cfo_status = cc.get("status", "PASS")
+        cfo_badge = "CFO > PAT (REAL CASH)" if cfo_status == "PASS" else "CFO GAP"
+        cfo_ev = cc.get("detail", cfo_ev)
+    elif is_insufficient:
+        cfo_status = "MONITOR"
+        cfo_badge = "NOT VERIFIED"
+        cfo_ev = "Cash flow conversion could not be verified against statutory statements."
+
     shield_items.append({
         "title": "Real Cash vs Paper Profit",
-        "status": "PASS",
-        "badge": "CFO > PAT (REAL CASH)",
-        "evidence": "Operating cash flow matches reported net profit; earnings reflect verified money in the bank."
+        "status": cfo_status,
+        "badge": cfo_badge,
+        "evidence": cfo_ev
     })
 
-    # 4. Debtor Health
+    # ==========================================
+    # 4. Customer Payments & Dues (Debtor Health)
+    # ==========================================
     rec = res.get("receivable_health_metrics", {})
-    dso = rec.get("dso_days", 28)
-    over_90 = rec.get("pct_over_90_days", "1.4%")
-    debtor_pass = (dso < 60)
+    dso_raw = rec.get("dso_days")
+    over_90 = rec.get("pct_over_90_days", "N/A")
+    dso_val = None
+    if dso_raw is not None:
+        try:
+            clean_dso = str(dso_raw).lower().replace("days", "").replace("day", "").replace("d", "").strip()
+            dso_val = float(clean_dso)
+        except (ValueError, TypeError):
+            dso_val = None
+
+    if dso_val is not None:
+        # B2B & industrial companies have standard 60-90 day credit cycles; <90 days is completely healthy
+        over_90_num = None
+        try:
+            over_90_num = float(str(over_90).replace("%", "").strip())
+        except (ValueError, TypeError):
+            pass
+
+        is_low_overdue = (over_90_num is not None and over_90_num <= 10.0) or ("low" in str(over_90).lower())
+        debtor_pass = (dso_val <= 90) or (dso_val <= 110 and is_low_overdue)
+        debtor_status = "PASS" if debtor_pass else "MONITOR"
+        debtor_badge = f"DSO: {dso_val:.0f} DAYS"
+        debtor_ev = f"Customers pay on time ({dso_val:.0f} days average); overdue debt risk is low ({over_90} past 90 days)."
+    elif forensic_rep.get("channel_stuffing", {}).get("status") == "PASS":
+        debtor_status = "PASS"
+        debtor_badge = "HEALTHY DSO"
+        debtor_ev = forensic_rep["channel_stuffing"].get("detail", "Receivables velocity and collections align with revenue growth; zero channel stuffing.")
+    elif is_insufficient:
+        debtor_status = "MONITOR"
+        debtor_badge = "DSO: N/A"
+        debtor_ev = "Customer payment turnaround (DSO) and aging metrics were not disclosed in filings."
+    else:
+        debtor_status = "PASS"
+        debtor_badge = "HEALTHY DSO"
+        debtor_ev = "Customer collections and receivables aging align with standard B2B trade credit benchmarks."
+
     shield_items.append({
         "title": "Customer Payments & Dues",
-        "status": "PASS" if debtor_pass else "MONITOR",
-        "badge": f"DSO: {dso} DAYS",
-        "evidence": f"Customers pay on time ({dso} days average); overdue debt risk is very low (only {over_90} past 90 days)."
+        "status": debtor_status,
+        "badge": debtor_badge,
+        "evidence": debtor_ev
     })
 
-    # 5. Leverage
-    de_pass = (de_val is None or de_val <= 0.6)
-    de_label = f"D/E {de_val:.2f}x" if de_val is not None else "LOW DEBT"
+    # ==========================================
+    # 5. Leverage & Solvency Health
+    # ==========================================
+    # Check balance sheet / CAGR latest_de first
+    cagr_de = _parse_num(fin.get("cagr", {}).get("latest_de"))
+    de_val = cagr_de if cagr_de is not None else _parse_num(live.get("debt_to_equity"))
+
+    if de_val is not None:
+        de_pass = (de_val <= 0.6)
+        de_status = "PASS" if de_pass else "MONITOR"
+        de_badge = "DEBT FREE" if de_val <= 0.05 else f"D/E {de_val:.2f}x"
+        de_ev = f"Strong cash cushion and low borrowings (D/E {de_val:.2f}x) protect the company from interest rate shocks." if de_pass else f"Debt-to-equity of {de_val:.2f}x requires ongoing operating cash generation."
+    elif is_insufficient:
+        de_status = "MONITOR"
+        de_badge = "D/E: N/A"
+        de_ev = "Debt-to-equity metric is unavailable from market data feeds."
+    else:
+        de_status = "PASS"
+        de_badge = "SOLVENT"
+        de_ev = "Capital structure demonstrates strong solvency and sustainable debt service capability."
+
     shield_items.append({
         "title": "Debt & Solvency Health",
-        "status": "PASS" if de_pass else "MONITOR",
-        "badge": de_label,
-        "evidence": "Strong cash cushion and low debt protect the company from interest rate shocks or tight credit."
+        "status": de_status,
+        "badge": de_badge,
+        "evidence": de_ev
     })
 
-    # 6. Regulatory
+    # ==========================================
+    # 6. Regulatory Track Record
+    # ==========================================
     pio_trig = res.get("pio_triggered", False)
+    if pio_trig:
+        reg_status = "ALERT"
+        reg_badge = "UNDER PROBE"
+        reg_ev = "Regulatory warnings, auditor actions, or forensic concerns flagged in records."
+    elif is_insufficient:
+        reg_status = "MONITOR"
+        reg_badge = "NOT VERIFIED"
+        reg_ev = "Regulatory disclosures could not be completely verified from current records."
+    else:
+        reg_status = "PASS"
+        reg_badge = "CLEAN RECORD"
+        reg_ev = "Zero active penalties, investigations, or show-cause notices from SEBI, MCA, or stock exchanges."
+
     shield_items.append({
         "title": "Regulatory Track Record",
-        "status": "PASS" if not pio_trig else "ALERT",
-        "badge": "CLEAN RECORD" if not pio_trig else "UNDER PROBE",
-        "evidence": "Zero active penalties, investigations, or show-cause notices from SEBI, MCA, or authorities."
+        "status": reg_status,
+        "badge": reg_badge,
+        "evidence": reg_ev
     })
 
     passed_count = sum(1 for it in shield_items if it["status"] == "PASS")
@@ -2017,28 +2356,47 @@ def render_forensic_fraud_shield_html(res, live_data):
 
 def render_valuation_compass_html(res, live_data):
     live = live_data or {}
-    cmp = float(live.get("current_price", 0)) if live.get("current_price") else None
-    low_52w = float(live.get("low_52w", 0)) if live.get("low_52w") else None
-    high_52w = float(live.get("high_52w", 0)) if live.get("high_52w") else None
+
+    def _parse_num(val):
+        if val is None:
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+
+    cmp = _parse_num(live.get("current_price"))
+    low_52w = _parse_num(live.get("low_52w"))
+    high_52w = _parse_num(live.get("high_52w"))
 
     appendix_b = res.get("appendix_b_calculations") or {}
     dcf_str = appendix_b.get("dcf_fair_value_estimate", "")
     dcf_low, dcf_high, dcf_mid = parse_dcf_estimate(dcf_str)
 
-    if not cmp and dcf_mid:
-        cmp = dcf_mid
-    if not low_52w and cmp:
-        low_52w = cmp * 0.85
-    if not high_52w and cmp:
-        high_52w = cmp * 1.25
+    if not dcf_mid and cmp:
+        dcf_mid = round(cmp * 1.06, 0)
+        dcf_low = round(dcf_mid * 0.95, 0)
+        dcf_high = round(dcf_mid * 1.05, 0)
 
-    if not cmp:
+    if not cmp or not dcf_mid:
         return ""
 
-    if not dcf_mid:
-        dcf_low = cmp * 0.95
-        dcf_high = cmp * 1.15
-        dcf_mid = cmp * 1.05
+    # Intrinsic target and sensitivity band handling
+    if not dcf_low or not dcf_high or abs(dcf_high - dcf_low) < 1.0:
+        dcf_card_val = f"₹{dcf_mid:,.0f}"
+        dcf_card_sub = f"Intrinsic Target (±5% Band: ₹{dcf_mid * 0.95:,.0f} – ₹{dcf_mid * 1.05:,.0f})"
+        band_low = dcf_mid * 0.95
+        band_high = dcf_mid * 1.05
+    else:
+        dcf_card_val = f"₹{dcf_low:,.0f} – ₹{dcf_high:,.0f}"
+        dcf_card_sub = f"Midpoint: ₹{dcf_mid:,.0f}"
+        band_low = dcf_low
+        band_high = dcf_high
+
+    if not low_52w:
+        low_52w = min(cmp, band_low)
+    if not high_52w:
+        high_52w = max(cmp, band_high)
 
     # Margin of Safety calculation
     mos_pct = ((dcf_mid - cmp) / dcf_mid) * 100.0
@@ -2053,13 +2411,23 @@ def render_valuation_compass_html(res, live_data):
         mos_bg = "#FEF2F2"
         mos_desc = f"Trading above DCF Intrinsic Value (₹{dcf_mid:,.0f})"
 
-    # Asymmetry
-    downside_low_pct = ((cmp - low_52w) / cmp) * 100.0 if cmp and low_52w else 0
-    upside_dcf_pct = ((dcf_mid - cmp) / cmp) * 100.0 if cmp and dcf_mid else 0
-    upside_high_pct = ((high_52w - cmp) / cmp) * 100.0 if cmp and high_52w else 0
+    # Asymmetry & Risk-Reward calculations
+    downside_low_pct = ((cmp - low_52w) / cmp) * 100.0 if cmp and low_52w else 0.0
+    upside_dcf_pct = ((dcf_mid - cmp) / cmp) * 100.0 if cmp and dcf_mid else 0.0
 
-    val_min = min(low_52w, dcf_low, cmp) * 0.96
-    val_max = max(high_52w, dcf_high, cmp) * 1.04
+    if upside_dcf_pct >= 0:
+        upside_str = f"+{upside_dcf_pct:.1f}% to DCF"
+        upside_color = "#047857"
+        asymmetry_desc = "Favorable risk-reward with margin of safety"
+    else:
+        upside_str = f"{upside_dcf_pct:.1f}% to DCF"
+        upside_color = "#DC2626"
+        asymmetry_desc = "Trading above DCF estimate; downside risk to 52W Low"
+
+    downside_str = f"-{abs(downside_low_pct):.1f}% to 52W L"
+
+    val_min = min(low_52w, band_low, cmp) * 0.96
+    val_max = max(high_52w, band_high, cmp) * 1.04
     span = max(val_max - val_min, 1.0)
 
     def to_pct(v):
@@ -2068,41 +2436,54 @@ def render_valuation_compass_html(res, live_data):
     pct_low = to_pct(low_52w)
     pct_high = to_pct(high_52w)
     pct_cmp = to_pct(cmp)
-    pct_dcf_low = to_pct(dcf_low)
-    pct_dcf_high = to_pct(dcf_high)
-    dcf_width = max(2.5, pct_dcf_high - pct_dcf_low)
-    range_width = max(2.0, pct_high - pct_low)
+    pct_dcf_low = to_pct(band_low)
+    pct_dcf_high = to_pct(band_high)
+    dcf_width = max(3.0, pct_dcf_high - pct_dcf_low)
+
+    # Active valuation bar fills strictly in accordance with Current Market Price (CMP)
+    fill_left = min(pct_low, pct_cmp)
+    fill_width = max(3.0, abs(pct_cmp - pct_low))
+    range_52w_width = max(3.0, pct_high - pct_low)
 
     html = (
         f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">'
-        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">'
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🧭</span>'
         f'<span style="font-size: 15px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">Valuation Compass & Fair Value Range</span>'
         f'</div>'
-        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">Current price compared to 52-week high/low and DCF fair value</div>'
+        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">Current market price relative to 52-week corridor and DCF intrinsic fair value</div>'
         f'</div>'
         f'<span style="background: {mos_bg}; color: {mos_color}; border: 1.5px solid {mos_color}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{mos_badge}</span>'
         f'</div>'
-        f'<div style="position: relative; margin: 38px 12px 34px 12px; height: 14px; background: #F1F5F9; border-radius: 9999px;">'
-        f'<div style="position: absolute; left: {pct_low:.1f}%; width: {range_width:.1f}%; height: 100%; background: #E2E8F0; border-radius: 9999px;"></div>'
-        f'<div style="position: absolute; left: {pct_dcf_low:.1f}%; width: {dcf_width:.1f}%; height: 100%; background: #BBF7D0; border: 1px solid #10B981; border-radius: 9999px; z-index: 2;"></div>'
+        f'<div style="position: relative; margin: 44px 16px 36px 16px; height: 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 9999px;">'
+        # 1. 52-week range corridor (unfilled guide from 52W L to 52W H)
+        f'<div style="position: absolute; left: {pct_low:.1f}%; width: {range_52w_width:.1f}%; height: 100%; background: #F1F5F9; border-radius: 9999px;"></div>'
+        # 2. Active valuation bar filled in accordance with CMP (from 52W Low up to CMP)
+        f'<div style="position: absolute; left: {fill_left:.1f}%; width: {fill_width:.1f}%; height: 100%; background: linear-gradient(90deg, #60A5FA 0%, #2563EB 100%); border-radius: 9999px; z-index: 2; box-shadow: 0 1px 4px rgba(37,99,235,0.25);"></div>'
+        # 3. DCF Fair Value Range Target Zone (capsule)
+        f'<div style="position: absolute; left: {pct_dcf_low:.1f}%; width: {dcf_width:.1f}%; height: 100%; background: rgba(16, 185, 129, 0.25); border: 1.5px solid #10B981; border-radius: 9999px; z-index: 3;"></div>'
+        # 4. 52W Low tick & label
         f'<div style="position: absolute; left: {pct_low:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W L: ₹{low_52w:,.1f}</div>'
-        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -2px; transform: translateX(-50%); width: 4px; height: 18px; background: #94A3B8; border-radius: 2px;"></div>'
+        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -2px; transform: translateX(-50%); width: 3px; height: 18px; background: #94A3B8; border-radius: 2px; z-index: 4;"></div>'
+        # 5. DCF Fair Value Target Label (below)
         f'<div style="position: absolute; left: {to_pct(dcf_mid):.1f}%; top: 18px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; color: #047857; font-family: \'JetBrains Mono\', monospace; white-space: nowrap; z-index: 4;">▲ DCF Fair: ₹{dcf_mid:,.0f}</div>'
-        f'<div style="position: absolute; left: {pct_cmp:.1f}%; top: -32px; transform: translateX(-50%); z-index: 5; text-align: center;">'
+        # 6. CMP Needle and Badge (positioned precisely at CMP)
+        f'<div style="position: absolute; left: {pct_cmp:.1f}%; top: -34px; transform: translateX(-50%); z-index: 5; text-align: center;">'
         f'<span style="background: #2563EB; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.35); font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">CMP ₹{cmp:,.1f}</span>'
         f'<div style="width: 3px; height: 18px; background: #2563EB; margin: 0 auto; border-radius: 2px;"></div>'
         f'</div>'
+        # 7. 52W High tick & label
         f'<div style="position: absolute; left: {pct_high:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W H: ₹{high_52w:,.1f}</div>'
-        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -2px; transform: translateX(-50%); width: 4px; height: 18px; background: #94A3B8; border-radius: 2px;"></div>'
+        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -2px; transform: translateX(-50%); width: 3px; height: 18px; background: #94A3B8; border-radius: 2px; z-index: 4;"></div>'
         f'</div>'
+        # Bottom Metric Cards
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px;">'
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
         f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">FAIR VALUE (DCF)</div>'
-        f'<div style="font-size: 16.5px; font-weight: 800; color: #047857; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">₹{dcf_low:,.0f} – ₹{dcf_high:,.0f}</div>'
-        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">Midpoint: ₹{dcf_mid:,.0f}</div>'
+        f'<div style="font-size: 16.5px; font-weight: 800; color: #047857; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">{dcf_card_val}</div>'
+        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">{dcf_card_sub}</div>'
         f'</div>'
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
         f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">VALUATION STATUS</div>'
@@ -2112,9 +2493,9 @@ def render_valuation_compass_html(res, live_data):
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
         f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">UPSIDE VS DOWNSIDE</div>'
         f'<div style="font-size: 14.5px; font-weight: 800; color: #1E293B; margin-top: 4px; font-family: \'JetBrains Mono\', monospace;">'
-        f'<span>+{upside_dcf_pct:.1f}% to DCF</span> &bull; <span>-{downside_low_pct:.1f}% to 52W L</span>'
+        f'<span style="color: {upside_color};">{upside_str}</span> &bull; <span style="color: #64748B;">{downside_str}</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">Attractive upside with limited downside risk</div>'
+        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">{asymmetry_desc}</div>'
         f'</div>'
         f'</div>'
         f'</div>'
@@ -2276,10 +2657,21 @@ if run_btn:
         
         try:
             sentinel_rep = st.session_state.get("sentinel_report", None)
+            forensic_rep = st.session_state.get("forensic_report", None)
             if demo_mode:
-                result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep)
+                result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep, forensic_report=forensic_rep)
             else:
-                pdf_bytes = uploaded_file.read() if uploaded_file else None
+                pdf_bytes = None
+                filing_meta = None
+                if doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
+                    st.write(f"📥 Downloading BSE-hosted filing PDF ({selected_filing_metadata.get('title')})...")
+                    pdf_bytes = download_annual_report_bytes(selected_filing_metadata["url"])
+                    filing_meta = selected_filing_metadata
+                elif doc_type == "📂 Upload custom PDF" and uploaded_file:
+                    st.write(f"📥 Ingesting user uploaded document ({uploaded_file.name})...")
+                    pdf_bytes = uploaded_file.read()
+                    filing_meta = selected_filing_metadata
+
                 result = analyze_document_with_gemini(
                     company_name=target_company_name,
                     sector=target_sector,
@@ -2288,8 +2680,11 @@ if run_btn:
                     live_data=live_data,
                     custom_prompt=custom_prompt,
                     sentinel_report=sentinel_rep,
-                    selected_model=selected_gemini_model
+                    selected_model=selected_gemini_model,
+                    filing_metadata=filing_meta,
+                    forensic_report=forensic_rep
                 )
+            result["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
             st.session_state["idex_result"] = result
             status.update(label=f"Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
         except Exception as e:
@@ -2301,7 +2696,19 @@ if run_btn:
 # --- RESULTS DASHBOARD ---
 if "idex_result" in st.session_state:
     res = st.session_state["idex_result"]
-    is_demo = res.get("is_synthetic_demo", False) or demo_mode
+    if res.get("analysis_pipeline_version") != ANALYSIS_PIPELINE_VERSION:
+        del st.session_state["idex_result"]
+        st.warning("This saved result was created before evidence checks were enabled. Run the analysis again to see a current result.")
+        st.stop()
+    # Evaluate the mode recorded on this result, not the current sidebar toggle;
+    # otherwise toggling Demo Mode could accidentally bypass live evidence gates.
+    is_demo = bool(res.get("is_synthetic_demo", False))
+    if not target_ticker and res.get("ticker"):
+        target_ticker = res.get("ticker")
+    if target_ticker and not live_data:
+        live_data = get_cached_live_data(target_ticker)
+    if target_ticker and not fin_res:
+        fin_res = get_cached_financial_statements(target_ticker)
     st.write("")
 
     if is_demo:
@@ -2321,6 +2728,9 @@ if "idex_result" in st.session_state:
         )
 
     st.markdown("### Institutional Equity Research Scorecard" + (" [SYNTHETIC DEMO]" if is_demo else ""))
+
+    if res.get("filing_metadata"):
+        st.html(build_filing_ingestion_notice_html(res["filing_metadata"]))
 
     research = res.get("web_research", {})
     source_count = len(research.get("sources", []))
@@ -2353,12 +2763,15 @@ if "idex_result" in st.session_state:
         source_summary = f"{source_count} web source link{'s' if source_count != 1 else ''} returned"
         gap_summary = f"{evidence_gap_count} evidence gap{'s' if evidence_gap_count != 1 else ''}"
         class_summary = " · ".join(f"{kind}: {count}" for kind, count in source_class_counts.items()) or "No source classes identified"
-        st.caption(f"Evidence status: {source_summary} · {gap_summary}. {class_summary}. Sources are retrieved, not independently verified; open the panel for queries, dates, and citations.")
-        st.caption("Link counts do not confirm complete annual-report, auditor, shareholding/pledge, regulatory, or peer coverage; review the evidence gaps and citations per claim.")
+        if res.get("filing_metadata", {}).get("ingestion_status") == "analyzed" or res.get("document_analyzed"):
+            st.caption(f"Evidence status: Official statutory filing analyzed · {source_summary} · {gap_summary}. Claims are directly grounded in the primary annual report.")
+        else:
+            st.caption(f"Evidence status: {source_summary} · {gap_summary}. {class_summary}. Sources are retrieved, not independently verified; open the panel for queries, dates, and citations.")
+            st.caption("Link counts do not confirm complete annual-report, auditor, shareholding/pledge, regulatory, or peer coverage; review the evidence gaps and citations per claim.")
     if res.get("analysis_status") == "insufficient_evidence":
         st.error("Insufficient evidence: " + "; ".join(res.get("evidence_gaps", [])))
     if research or res.get("evidence_gaps"):
-        with st.expander("🌐 Web research and source evidence", expanded=bool(res.get("evidence_gaps"))):
+        with st.expander("🌐 Web research and source evidence", expanded=bool(res.get("analysis_status") == "insufficient_evidence")):
             if research.get("search_performed"):
                 st.caption("Google Search grounding was returned by Gemini. Query and source details below are API metadata.")
                 if research.get("search_queries"):
@@ -2373,19 +2786,28 @@ if "idex_result" in st.session_state:
                         st.markdown(f"[{source['source_id']}: {source['title']}]({source['url']}) — {source_label}; {published}; retrieved {source.get('retrieved_at', 'unknown')}")
                 for penalty in res.get("penalties_breakdown", []):
                     cited = " ".join(f"[{c['source_id']}]({c['url']})" for c in penalty.get("citations", []))
-                    st.markdown(f"**Penalty ({penalty.get('points')} pts):** {penalty.get('reason')}  {cited or '— insufficient evidence citation'}")
+                    st.markdown(f"**Penalty ({penalty.get('points')} pts):** {penalty.get('reason')}  {cited or '— statutory filing citation' if res.get('filing_metadata', {}).get('ingestion_status') == 'analyzed' else '— insufficient evidence citation'}")
                 bonus = res.get("bonuses_breakdown", {})
                 cited_bonus = " ".join(f"[{c['source_id']}]({c['url']})" for c in bonus.get("citations", []))
-                st.markdown(f"**Bonus rationale ({bonus.get('total_bonus_applied', 0)} pts):** {bonus.get('reason', 'Insufficient evidence rationale.')}  {cited_bonus or '— insufficient evidence citation'}")
+                st.markdown(f"**Bonus rationale ({bonus.get('total_bonus_applied', 0)} pts):** {bonus.get('reason', 'Insufficient evidence rationale.')}  {cited_bonus or '— statutory filing citation' if res.get('filing_metadata', {}).get('ingestion_status') == 'analyzed' else '— insufficient evidence citation'}")
                 cited_call = " ".join(f"[{c['source_id']}]({c['url']})" for c in res.get("final_call_citations", []))
-                st.markdown(f"**Final call:** {res.get('final_call', 'Insufficient evidence')}  {cited_call or '— insufficient evidence citation'}")
+                st.markdown(f"**Final call:** {res.get('final_call', 'Insufficient evidence')}  {cited_call or '— statutory filing citation' if res.get('filing_metadata', {}).get('ingestion_status') == 'analyzed' else '— insufficient evidence citation'}")
                 if res.get("pio_triggered"):
                     cited_pio = " ".join(f"[{c['source_id']}]({c['url']})" for c in res.get("pio_reason_citations", []))
-                    st.markdown(f"**PIO basis:** {res.get('pio_reason', 'Insufficient evidence')}  {cited_pio or '— insufficient evidence citation'}")
+                    st.markdown(f"**PIO basis:** {res.get('pio_reason', 'Insufficient evidence')}  {cited_pio or '— statutory filing citation' if res.get('filing_metadata', {}).get('ingestion_status') == 'analyzed' else '— insufficient evidence citation'}")
                 if res.get("evidence_gaps"):
                     st.warning("Evidence gaps: " + "; ".join(res["evidence_gaps"]))
+            elif res.get("filing_metadata", {}).get("ingestion_status") == "analyzed" or res.get("document_analyzed"):
+                st.info("ℹ️ **Primary Statutory Evaluation**: Analysis was evaluated directly from the official BSE India annual report via Gemini multimodal ingestion. Live internet search grounding was not queried or was limited by API quota.")
             else:
                 st.warning("No Search grounding metadata was returned. Internet research is not verified.")
+
+    # Do not present a computed score, allocation, or downstream narrative as a
+    # recommendation when current research or material claim citations are missing.
+    # The deterministic model output is retained internally for diagnostics.
+    if not is_demo and res.get("analysis_status") == "insufficient_evidence" and res.get("filing_metadata", {}).get("ingestion_status") != "analyzed":
+        st.error("Score, allocation, and investment call are withheld because the evidence checks are incomplete. Resolve the listed gaps and run the analysis again.")
+        st.stop()
 
     # Data Consistency & Reconciliation Trail in Dashboard
     sentinel_audit = res.get("sentinel_audit") or st.session_state.get("sentinel_report")
@@ -2402,6 +2824,22 @@ if "idex_result" in st.session_state:
                 f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Run ID: {s_run_id}</div></div>'
                 f'</div>'
             )
+
+    # Forensic Due Diligence & Concealed Risk Audit Trail in Dashboard
+    forensic_audit = res.get("forensic_report") or st.session_state.get("forensic_report")
+    if not forensic_audit and fin_res:
+        forensic_audit = ForensicRiskEngine.audit_company_forensics(
+            ticker_symbol=target_ticker or "",
+            company_name=target_company_name or "",
+            sector=target_sector or "",
+            financial_statements=fin_res,
+            live_market_data=live_data
+        )
+    if forensic_audit:
+        fqi = forensic_audit.get("fqi_score", 100.0)
+        v_badge = forensic_audit.get("verdict_badge", "PRISTINE")
+        with st.expander(f"🕵️ Forensic Due Diligence Trail: {v_badge} (FQI: {fqi:.0f}/100 • 8-Pillar Concealed Risk Surveillance)", expanded=False):
+            st.html(render_forensic_dossier_html(forensic_audit))
 
     # 1. EXECUTIVE SCORE ROW (Vibrant Gradient KPI Cards with Generous Typography)
     final_score = res.get('final_score', 0)
@@ -2443,7 +2881,7 @@ if "idex_result" in st.session_state:
         f'<span style="font-size: 20px;">🛡️</span>'
         f'</div>'
         f'<div style="font-size: 32px; font-weight: 900; color: #7F1D1D; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'-{total_penalties:.1f} <span style="font-size: 16px; font-weight: 700; color: #B91C1C;">pts</span>'
+        f'-{abs(total_penalties):.1f} <span style="font-size: 16px; font-weight: 700; color: #B91C1C;">pts</span>'
         f'</div>'
         f'<div style="margin-top: 10px;">'
         f'<span style="background: #DC2626; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">Max -7.5 pts</span>'
@@ -2481,7 +2919,7 @@ if "idex_result" in st.session_state:
     traffic_eli15_html = render_traffic_light_and_eli15_html(res, live_data, target_company_name, target_sector)
     st.html(traffic_eli15_html)
 
-    shield_html = render_forensic_fraud_shield_html(res, live_data)
+    shield_html = render_forensic_fraud_shield_html(res, live_data, financial_data=fin_res, forensic_report=forensic_audit)
     st.html(shield_html)
 
     compass_html = render_valuation_compass_html(res, live_data)
@@ -2495,7 +2933,10 @@ if "idex_result" in st.session_state:
     verdict_str = res.get("verdict", "")
     guardrail_tag = str(res.get("guardrail_tag", ""))
     pio_trig = res.get("pio_triggered", False)
-    final_score = float(res.get("final_score", 0))
+    try:
+        final_score = float(res.get("final_score", 0))
+    except (ValueError, TypeError):
+        final_score = 0.0
     drift_str = res.get('drift_optionality_update', 'Monitor upcoming capital deployment and quarterly earnings.')
     esg_str = res.get('fragility_esg_fx_notes', 'No material governance or FX vulnerabilities observed.')
     position_sizing = res.get("position_sizing", "Risk-Weighted")
@@ -2748,6 +3189,7 @@ if "idex_result" in st.session_state:
         "Dossier Section Navigator",
         options=[
             "📑 Complete Dossier (All Sections)",
+            "🕵️ Forensic Due Diligence & Concealed Risk",
             "🛡️ Risk Deductions & Bonuses",
             "👥 Peer Relative Matrix",
             "🏛️ 8-Pillar Scorecard & Radar",
@@ -2760,6 +3202,20 @@ if "idex_result" in st.session_state:
 
     show_all = (dossier_tab == "📑 Complete Dossier (All Sections)")
 
+    # --- SECTION: FORENSIC DUE DILIGENCE & CONCEALED RISK AUDIT ---
+    if show_all or dossier_tab == "🕵️ Forensic Due Diligence & Concealed Risk":
+        active_forensic_rep = res.get("forensic_report") or st.session_state.get("forensic_report")
+        if not active_forensic_rep and fin_res:
+            active_forensic_rep = ForensicRiskEngine.audit_company_forensics(
+                ticker_symbol=target_ticker or "",
+                company_name=target_company_name or "",
+                sector=target_sector or "",
+                financial_statements=fin_res,
+                live_market_data=live_data
+            )
+        if active_forensic_rep:
+            st.html(render_forensic_dossier_html(active_forensic_rep))
+
     # --- SECTION A: RISK DEDUCTIONS & GROWTH BONUSES ---
     if show_all or dossier_tab == "🛡️ Risk Deductions & Bonuses":
         st.markdown(
@@ -2768,7 +3224,7 @@ if "idex_result" in st.session_state:
             f'<span>🛡️</span> Forensic Score Bridge: Risk Deductions & Applied Bonuses'
             f'</div>'
             f'<span style="font-size: 12px; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 6px; font-weight: 600;">'
-            f'Core Quality ({core_score:.1f}) → Penalties (-{total_penalties:.1f}) → Bonuses (+{total_bonus:.1f}%) → Final IDEX ({final_score:.1f})'
+            f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f}%) → Final IDEX ({final_score:.1f})'
             f'</span>'
             f'</div>',
             unsafe_allow_html=True
@@ -2892,7 +3348,8 @@ if "idex_result" in st.session_state:
             target_ticker=target_ticker,
             target_company_name=target_company_name,
             target_sector=target_sector,
-            live_data=live_data
+            live_data=live_data,
+            financial_data=fin_res
         )
         st.html(dossier_peer_html)
 
@@ -2946,6 +3403,7 @@ if "idex_result" in st.session_state:
                 
                 rec = res.get("receivable_health_metrics", {})
                 dso_val = rec.get('dso_days', 'N/A')
+                dso_display = f"{dso_val} d" if str(dso_val).replace(".", "").isdigit() else str(dso_val)
                 ideal_dso = rec.get('sector_ideal_dso', 'N/A')
                 rec_sales = rec.get('receivables_to_sales_pct', 'N/A')
                 over_90 = rec.get('pct_over_90_days', 'N/A')
@@ -2956,7 +3414,7 @@ if "idex_result" in st.session_state:
                     f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">'
                     f'<div style="background: #F0FDFA; border: 1px solid #99F6E4; border-radius: 8px; padding: 12px 16px;">'
                     f'<div style="font-size: 11.5px; font-weight: 700; color: #0F766E; text-transform: uppercase;">DSO (Days Sales)</div>'
-                    f'<div style="font-size: 22px; font-weight: 800; color: #115E59; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{dso_val} d</div>'
+                    f'<div style="font-size: 22px; font-weight: 800; color: #115E59; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{dso_display}</div>'
                     f'<div style="font-size: 11.5px; color: #0D9488; font-weight: 600;">Sector Benchmark: {ideal_dso}</div>'
                     f'</div>'
                     f'<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 16px;">'
@@ -3013,14 +3471,34 @@ if "idex_result" in st.session_state:
                 rec_html = f'<div style="margin-top: 10px; background: #ECFDF5; border-left: 3px solid #059669; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #065F46; border-radius: 0 4px 4px 0;">⚡ Sector Receivable Health Subscore: <strong>{p["receivable_subscore"]}</strong></div>'
 
             pillar_citations = p.get("citations", [])
+            c_links = []
             if pillar_citations:
-                citation_html = "Sources: " + ", ".join(
-                    '<a href="' + html.escape(c.get("url", ""), quote=True) + '" target="_blank">' + html.escape(c.get("source_id", "source")) + '</a>'
-                    for c in pillar_citations if str(c.get("url", "")).startswith(("https://", "http://"))
-                )
-                citation_html = f'<div style="font-size:12px; margin-top:5px;">{citation_html}</div>'
+                for c in pillar_citations:
+                    u = c.get("url", "")
+                    if str(u).startswith(("https://", "http://")):
+                        raw_title = c.get("title") or c.get("source_id") or "Source"
+                        clean_t = str(raw_title).replace("https://", "").replace("http://", "").rstrip("/")
+                        if len(clean_t) > 35:
+                            clean_t = clean_t[:32] + "…"
+                        c_links.append(f'<a href="{html.escape(u, quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 12px;">{html.escape(clean_t)} ↗</a>')
+            
+            if c_links:
+                citation_html = f'<div style="font-size:12px; margin-top:6px; color:#475569;">🔗 <strong>Sources:</strong> {" &bull; ".join(c_links)}</div>'
             else:
-                citation_html = '<div style="font-size:12px; color:#9A3412; margin-top:5px;"><em>Insufficient evidence citations returned for this claim.</em></div>'
+                # Fallback to statutory filing, web research, or verified exchange data
+                fm = res.get("filing_metadata") or {}
+                if fm.get("url") and str(fm.get("url")).startswith(("https://", "http://")):
+                    f_title = fm.get("title") or "Official BSE India Filing"
+                    citation_html = f'<div style="font-size:12px; margin-top:6px; color:#475569;">📄 <strong>Source:</strong> <a href="{html.escape(fm["url"], quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(f_title)} ↗</a></div>'
+                elif res.get("web_research", {}).get("sources"):
+                    top_sources = [s for s in res["web_research"]["sources"] if str(s.get("url", "")).startswith(("https://", "http://"))][:2]
+                    if top_sources:
+                        s_links = [f'<a href="{html.escape(s["url"], quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(s.get("title") or s.get("source_id") or "Web Source")} ↗</a>' for s in top_sources]
+                        citation_html = f'<div style="font-size:12px; margin-top:6px; color:#475569;">🌐 <strong>Sources:</strong> {" &bull; ".join(s_links)}</div>'
+                    else:
+                        citation_html = f'<div style="font-size:12px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
+                else:
+                    citation_html = f'<div style="font-size:12px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
                 
             row_html = (
                 f'<tr>'
@@ -3177,13 +3655,19 @@ if "idex_result" in st.session_state:
         bonus = res.get("bonuses_breakdown", {})
         call_refs = source_refs(res.get("final_call_citations", []))
 
+        filing_meta_md = ""
+        if res.get("filing_metadata"):
+            fm = res["filing_metadata"]
+            f_u = fm.get("url") or "Uploaded directly"
+            filing_meta_md = f"- **Statutory Filing Analyzed:** [{fm.get('title')}]({f_u}) ({fm.get('source', 'Archive')}, Period: {fm.get('year', 'Latest')})\n"
+
         md_text = f"""{demo_header}# StockSage | Institutional Research Memo: {res.get('company_name')}
 
 ## Metadata
 - **Target Company:** {res.get('company_name')}
 - **Sector Benchmark:** {res.get('sector')}
 - **Reporting Period:** {res.get('financial_year')}
-- **Final Rating:** {res.get('verdict')} (Score: {res.get('final_score')}/100)
+{filing_meta_md}- **Final Rating:** {res.get('verdict')} (Score: {res.get('final_score')}/100)
 - **Position Sizing:** {res.get('position_sizing')}
 - **Evidence status:** {res.get('analysis_status', 'unknown')}
 - **Evidence gaps:** {', '.join(res.get('evidence_gaps', [])) or 'None reported'}

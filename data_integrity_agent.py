@@ -39,8 +39,8 @@ class DataIntegritySentinel:
         penalties = 0.0
         audit_flags: List[str] = []
 
-        fin = financial_statements or {}
-        live = live_market_data or {}
+        fin = financial_statements if isinstance(financial_statements, dict) else {}
+        live = live_market_data if isinstance(live_market_data, dict) else {}
         pnl = fin.get("pnl", {})
         bs = fin.get("bs", {})
         cf = fin.get("cf", {})

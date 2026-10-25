@@ -43,10 +43,11 @@ IF ANY PIO TRIGGERS:
 5. Require explicit Forensic Appendix A entries.
 
 PPRM (Promoter Pledge Risk Meter):
-- <10% pledged: Neutral
+- <10% pledged: Neutral (0.0% unencumbered is clean and passes all governance screens)
 - 10-30% pledged: -1.0 point under Pillar 8
 - >30% pledged: -3.0 points under Pillar 8 + PROM-ALERT tag
 - >50% pledged: Trigger PIO (GOV-RED)
+- Note on Disclosure Reading: Indian corporate filings and SEBI SAST reports disclose pledges numerically in shareholding tables (e.g. "Shares Pledged or otherwise encumbered: 0 shares / 0.00% / Nil"). When no shares are encumbered or pledged shares are 0, explicitly state: "Promoter Pledge Filing: 0.0% shares pledged (100% unencumbered promoter holding)" in appendix_a_forensic_evidence.
 
 RECEIVABLE HEALTH & SECTOR BENCHMARK LAYER:
 - Extract/estimate: DSO (Days Sales Outstanding), Receivables / Annual Sales %, % >90 days overdue, Top debtor concentration %, Provision coverage %.
@@ -110,7 +111,8 @@ Return ONLY valid JSON matching this exact structure:
       "name": "Governance & Capital Allocation",
       "score": 17.5,
       "max_score": 20.0,
-      "justification": "High promoter integrity, prudent capital reinvestment, zero dilution."
+      "justification": "High promoter integrity, prudent capital reinvestment, zero dilution.",
+      "source_ids": ["S1", "S2"]
     }},
     {{
       "id": 2,
@@ -118,7 +120,8 @@ Return ONLY valid JSON matching this exact structure:
       "score": 16.5,
       "max_score": 20.0,
       "receivable_subscore": "3.5 / 4.0 (DSO at 32d vs sector ideal 30d; >90d = 1.8%)",
-      "justification": "CFO/PAT ratio 0.92, strong cash conversion, receivables tightly controlled."
+      "justification": "CFO/PAT ratio 0.92, strong cash conversion, receivables tightly controlled.",
+      "source_ids": ["S2", "S3"]
     }},
     {{
       "id": 3,
@@ -189,6 +192,7 @@ Return ONLY valid JSON matching this exact structure:
   "fragility_esg_fx_notes": "Minimal environmental liability. Raw material import exposes margin to INR depreciation.",
   "drift_optionality_update": "Upcoming capacity expansion in Q3 FY25 may trigger operational leverage inflection.",
   "final_call": "Buy on Dips — High-quality compounder with exceptional governance; accumulate at reasonable valuations.",
+  "final_call_source_ids": ["S1"],
   "appendix_a_forensic_evidence": [
     "Auditor's Report (Page 45): Unmodified opinion with no adverse remarks or qualifications.",
     "Promoter Pledge Filing: 0.0% shares pledged as of latest quarter filing.",

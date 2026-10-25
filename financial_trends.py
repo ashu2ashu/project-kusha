@@ -692,92 +692,117 @@ def render_financial_table_html(statement_dict: Dict[str, Any], years: List[str]
 
 def generate_forensic_cagr_insights(fin_data: Dict[str, Any], company_name: str) -> List[Dict[str, str]]:
     """Generates concise institutional takeaways based on multi-year trends."""
-    cagr = fin_data.get("cagr", {})
-    sales_cagr = cagr.get("sales_cagr")
-    pat_cagr = cagr.get("pat_cagr")
-    sales_yoy = cagr.get("sales_yoy", 0.0)
-    pat_yoy = cagr.get("pat_yoy", 0.0)
-    avg_cfo_pat = cagr.get("avg_cfo_pat", 0.0)
-    latest_de = cagr.get("latest_de", 0.0)
-    latest_roe = cagr.get("latest_roe", 0.0)
-    n_years = cagr.get("n_years", 3)
-    opm_exp = cagr.get("opm_expansion", 0.0)
+    cagr = fin_data.get("cagr", {}) if isinstance(fin_data, dict) else {}
+
+    def _safe_float(val):
+        if val is None:
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+
+    sales_cagr = _safe_float(cagr.get("sales_cagr"))
+    pat_cagr = _safe_float(cagr.get("pat_cagr"))
+    sales_yoy = _safe_float(cagr.get("sales_yoy"))
+    pat_yoy = _safe_float(cagr.get("pat_yoy"))
+    avg_cfo_pat = _safe_float(cagr.get("avg_cfo_pat"))
+    latest_de = _safe_float(cagr.get("latest_de"))
+    latest_roe = _safe_float(cagr.get("latest_roe"))
+    opm_exp = _safe_float(cagr.get("opm_expansion"))
+    n_years = cagr.get("n_years", 3) or 3
 
     insights = []
 
     # 1. Sales & Growth Momentum
     if sales_cagr is not None:
+        yoy_str = f"with latest fiscal YoY growth of {sales_yoy:+.1f}%" if sales_yoy is not None else "over recent reporting periods"
         if sales_cagr >= 15:
             insights.append({
                 "type": "positive",
                 "title": f"Aggressive Topline Compounder ({sales_cagr:.1f}% {n_years}Y CAGR)",
-                "body": f"{company_name} demonstrates strong revenue compounding over {n_years} years with latest fiscal YoY growth of {sales_yoy:+.1f}%, indicating sustained market share expansion."
+                "body": f"{company_name} demonstrates strong revenue compounding over {n_years} years {yoy_str}, indicating sustained market share expansion."
             })
         elif sales_cagr >= 8:
             insights.append({
                 "type": "positive",
                 "title": f"Steady Topline Expansion ({sales_cagr:.1f}% {n_years}Y CAGR)",
-                "body": f"Solid revenue growth trajectory matching or outpacing Indian GDP nominal growth. Latest fiscal expansion recorded at {sales_yoy:+.1f}% YoY."
+                "body": f"Solid revenue growth trajectory matching or outpacing Indian GDP nominal growth. Latest fiscal expansion recorded {yoy_str}."
             })
         else:
             insights.append({
                 "type": "neutral",
                 "title": f"Moderate Growth / Mature Scale ({sales_cagr:.1f}% {n_years}Y CAGR)",
-                "body": f"Topline expansion reflects mature market saturation or cyclical plateau. Latest fiscal growth clocked {sales_yoy:+.1f}% YoY."
+                "body": f"Topline expansion reflects mature market saturation or cyclical plateau. Latest fiscal growth clocked {yoy_str}."
             })
 
     # 2. Forensic Earnings Quality & Cash Flow
-    if avg_cfo_pat >= 95:
-        insights.append({
-            "type": "positive",
-            "title": f"High Earnings Quality (Avg CFO/PAT: {avg_cfo_pat:.1f}%)",
-            "body": "Exceptional cash flow conversion. Accounting net profit is backed 1-to-1 or better by audited operating cash flow, ruling out aggressive revenue accruals."
-        })
-    elif avg_cfo_pat >= 70:
-        insights.append({
-            "type": "neutral",
-            "title": f"Acceptable Cash Flow Backing (Avg CFO/PAT: {avg_cfo_pat:.1f}%)",
-            "body": "Operating cash flow broadly tracks net profit, though working capital requirements or inventory cycles absorb a portion of annual earnings."
-        })
+    if avg_cfo_pat is not None:
+        if avg_cfo_pat >= 95:
+            insights.append({
+                "type": "positive",
+                "title": f"High Earnings Quality (Avg CFO/PAT: {avg_cfo_pat:.1f}%)",
+                "body": "Exceptional cash flow conversion. Accounting net profit is backed 1-to-1 or better by audited operating cash flow, ruling out aggressive revenue accruals."
+            })
+        elif avg_cfo_pat >= 70:
+            insights.append({
+                "type": "neutral",
+                "title": f"Acceptable Cash Flow Backing (Avg CFO/PAT: {avg_cfo_pat:.1f}%)",
+                "body": "Operating cash flow broadly tracks net profit, though working capital requirements or inventory cycles absorb a portion of annual earnings."
+            })
+        else:
+            insights.append({
+                "type": "caution",
+                "title": f"Forensic Accrual Divergence (Avg CFO/PAT: {avg_cfo_pat:.1f}%)",
+                "body": "Reported net profits exceed audited cash generated from operations, indicating working capital buildup, extended debtor days, or aggressive revenue recognition."
+            })
     else:
         insights.append({
-            "type": "caution",
-            "title": f"Forensic Accrual Divergence (Avg CFO/PAT: {avg_cfo_pat:.1f}%)",
-            "body": "Reported net profits exceed audited cash generated from operations, indicating working capital buildup, extended debtor days, or aggressive revenue recognition."
+            "type": "neutral",
+            "title": "CFO / PAT Conversion: Uncalculated / Negative Base",
+            "body": "Cash conversion percentage is not applicable due to negative net profit or non-positive baseline cash flows across reporting periods."
         })
 
     # 3. Solvency & Balance Sheet Endurance
-    if latest_de <= 0.2:
-        insights.append({
-            "type": "positive",
-            "title": f"Fortress Balance Sheet (D/E: {latest_de:.2f}x)",
-            "body": "Virtually zero debt distress risk. Robust net worth foundation provides high resilience against interest rate hikes and economic downcycles."
-        })
-    elif latest_de <= 0.8:
-        insights.append({
-            "type": "neutral",
-            "title": f"Prudent Capital Leverage (D/E: {latest_de:.2f}x)",
-            "body": "Manageable debt levels well within standard institutional solvency guardrails for Indian corporate balance sheets."
-        })
+    if latest_de is not None:
+        if latest_de <= 0.2:
+            insights.append({
+                "type": "positive",
+                "title": f"Fortress Balance Sheet (D/E: {latest_de:.2f}x)",
+                "body": "Virtually zero debt distress risk. Robust net worth foundation provides high resilience against interest rate hikes and economic downcycles."
+            })
+        elif latest_de <= 0.8:
+            insights.append({
+                "type": "neutral",
+                "title": f"Prudent Capital Leverage (D/E: {latest_de:.2f}x)",
+                "body": "Manageable debt levels well within standard institutional solvency guardrails for Indian corporate balance sheets."
+            })
+        else:
+            insights.append({
+                "type": "caution",
+                "title": f"Elevated Balance Sheet Leverage (D/E: {latest_de:.2f}x)",
+                "body": "Higher debt burden requires sustained operating cash flows to comfortably service interest costs and refinancing maturities."
+            })
     else:
         insights.append({
-            "type": "caution",
-            "title": f"Elevated Balance Sheet Leverage (D/E: {latest_de:.2f}x)",
-            "body": "Higher debt burden requires sustained operating cash flows to comfortably service interest costs and refinancing maturities."
+            "type": "neutral",
+            "title": "Solvency & Leverage: Data Unavailable",
+            "body": "Debt-to-equity ratio could not be determined from the available historical balance sheet statements."
         })
 
     # 4. Operating Margin & Return on Equity
-    if opm_exp > 1.0:
-        insights.append({
-            "type": "positive",
-            "title": f"Operating Margin Expansion (+{opm_exp:.1f}% over {n_years}Y)",
-            "body": f"Operating efficiency has expanded over {n_years} fiscal periods, proving operating leverage and pricing power against raw material cost pressures."
-        })
-    elif opm_exp < -2.0:
-        insights.append({
-            "type": "caution",
-            "title": f"Operating Margin Compression ({opm_exp:.1f}% over {n_years}Y)",
-            "body": f"Operating margins have faced compression over {n_years} fiscal periods, reflecting competitive discounting, higher input costs, or elevated marketing spend."
-        })
+    if opm_exp is not None:
+        if opm_exp > 1.0:
+            insights.append({
+                "type": "positive",
+                "title": f"Operating Margin Expansion (+{opm_exp:.1f}% over {n_years}Y)",
+                "body": f"Operating efficiency has expanded over {n_years} fiscal periods, proving operating leverage and pricing power against raw material cost pressures."
+            })
+        elif opm_exp < -2.0:
+            insights.append({
+                "type": "caution",
+                "title": f"Operating Margin Compression ({opm_exp:.1f}% over {n_years}Y)",
+                "body": f"Operating margins have faced compression over {n_years} fiscal periods, reflecting competitive discounting, higher input costs, or elevated marketing spend."
+            })
 
     return insights

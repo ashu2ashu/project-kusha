@@ -22,7 +22,7 @@ def _analysis_json():
 
 
 class TestGeminiSearchGrounding(unittest.TestCase):
-    def _run_with_mock_client(self, pdf_bytes=None, failure=False, no_sources=False):
+    def _run_with_mock_client(self, pdf_bytes=None, failure=False, no_sources=False, upload_failure=False, filing_metadata=None):
         source = pytypes.SimpleNamespace(title="Example Annual Report", uri="https://example.com/report.pdf")
         metadata = pytypes.SimpleNamespace(
             web_search_queries=["Example Ltd annual report 2025", "Example Ltd BSE pledge filing"],
@@ -32,17 +32,23 @@ class TestGeminiSearchGrounding(unittest.TestCase):
                 grounding_chunk_indices=[0],
             )],
         )
+        research_response = pytypes.SimpleNamespace(
+            text="Example Ltd FY2025 annual report was located; auditor and pledge filings require further review.",
+            candidates=[pytypes.SimpleNamespace(grounding_metadata=metadata)],
+        )
         response = pytypes.SimpleNamespace(
             text=_analysis_json(),
-            candidates=[pytypes.SimpleNamespace(grounding_metadata=metadata)],
+            candidates=[pytypes.SimpleNamespace(grounding_metadata=None)],
         )
         uploaded = pytypes.SimpleNamespace(name="files/mock-pdf")
         fake_client = MagicMock()
         fake_client.files.upload.return_value = uploaded
+        if upload_failure:
+            fake_client.files.upload.side_effect = RuntimeError("mock PDF upload failure")
         if failure:
             fake_client.models.generate_content.side_effect = RuntimeError("mock search failure")
         else:
-            fake_client.models.generate_content.return_value = response
+            fake_client.models.generate_content.side_effect = [research_response, response]
 
         class Config:
             def __init__(self, **kwargs):
@@ -60,7 +66,8 @@ class TestGeminiSearchGrounding(unittest.TestCase):
         modules = {"google": google_module, "google.genai": genai_module, "google.genai.types": type_module}
         with unittest.mock.patch.dict(sys.modules, modules):
             result = analyze_document_with_gemini(
-                "Example Ltd", "Industrials", "test-key", pdf_bytes=pdf_bytes
+                "Example Ltd", "Industrials", "test-key", pdf_bytes=pdf_bytes,
+                filing_metadata=filing_metadata,
             )
         return result, fake_client, uploaded
 
@@ -68,11 +75,17 @@ class TestGeminiSearchGrounding(unittest.TestCase):
         for pdf in (None, b"%PDF-mock"):
             with self.subTest(uploaded_pdf=bool(pdf)):
                 _, client, uploaded = self._run_with_mock_client(pdf_bytes=pdf)
-                config = client.models.generate_content.call_args.kwargs["config"]
-                self.assertEqual(config.tools, [{"google_search": "google-search-tool"}])
-                contents = client.models.generate_content.call_args.kwargs["contents"]
+                research_call, analysis_call = client.models.generate_content.call_args_list
+                research_config = research_call.kwargs["config"]
+                analysis_config = analysis_call.kwargs["config"]
+                self.assertEqual(research_config.tools, [{"google_search": "google-search-tool"}])
+                self.assertFalse(hasattr(research_config, "response_mime_type"))
+                self.assertFalse(hasattr(analysis_config, "tools"))
+                self.assertEqual(analysis_config.response_mime_type, "application/json")
+                contents = analysis_call.kwargs["contents"]
                 if pdf:
                     self.assertIn(uploaded, contents)
+                    self.assertIn("Grounding metadata:", contents[-1])
                 else:
                     self.assertTrue(any(isinstance(item, str) for item in contents))
                     self.assertNotIn(uploaded, contents)
@@ -97,12 +110,28 @@ class TestGeminiSearchGrounding(unittest.TestCase):
         self.assertGreater(client.models.generate_content.call_count, 0)
 
     def test_search_without_useful_source_urls_returns_evidence_gap(self):
-        result, _, _ = self._run_with_mock_client(no_sources=True)
+        result, _, _ = self._run_with_mock_client(no_sources=True, pdf_bytes=b"%PDF-mock")
         self.assertEqual(result["analysis_status"], "insufficient_evidence")
-        self.assertIn("no usable web source URLs", result["evidence_gaps"][-1])
+        self.assertTrue(any("no usable web source URLs" in gap for gap in result["evidence_gaps"]))
         self.assertEqual(result["web_research"]["sources"], [])
         self.assertEqual(result["pillars"][0]["evidence_status"], "insufficient_evidence")
         self.assertIn("INSUFFICIENT EVIDENCE", result["final_call"])
+
+    def test_pdf_upload_failure_is_reported_and_not_labeled_analyzed(self):
+        metadata = {
+            "title": "Annual Report 2025",
+            "source": "BSE-hosted PDF (discovered via Screener.in)",
+            "url": "https://www.bseindia.com/report.pdf",
+        }
+        result, _, _ = self._run_with_mock_client(
+            pdf_bytes=b"%PDF-mock",
+            upload_failure=True,
+            filing_metadata=metadata,
+        )
+
+        self.assertEqual(result["analysis_status"], "insufficient_evidence")
+        self.assertEqual(result["filing_metadata"]["ingestion_status"], "not_analyzed")
+        self.assertTrue(any("could not be attached" in gap for gap in result["evidence_gaps"]))
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any, List, Optional
 import streamlit as st
+from nifty_universe import find_company_info
 
 # The 16 Canonical Screener Metrics matching user's template:
 # 1. CMP Rs.
@@ -29,7 +30,7 @@ import streamlit as st
 # 16. Down %
 
 # Canonical dataset metadata
-NIFTY_50_DATASET_AS_OF = "March 2024 (FY24 Annual Filings, Updated Q2 FY25)"
+NIFTY_50_DATASET_AS_OF = "FY24 financial basis; updated Q2 FY25"
 NIFTY_50_DATASET_TYPE = "Historical Benchmark Reference Sample"
 NIFTY_50_DATASET_DISCLAIMER = "Peer comparison uses historical FY24 audited financial disclosures as a standardized reference set. Not real-time exchange ticks."
 
@@ -1332,12 +1333,12 @@ def render_nifty50_screener_view():
             Companies in Nifty 50 (Historical Benchmark Sample)
           </div>
           <div style="font-size:13px; color:#64748B; margin-top:2px;">
-            50 constituents • Standardized historical reference dataset as of March 2024 / FY24 annual filings. Not live exchange data.
+            50 constituents • FY24 financial basis; dataset note updated Q2 FY25. Static reference sample, not live exchange data.
           </div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <span style="background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">
-            📅 As of: FY24 Filings
+            📅 FY24 basis · Q2 FY25 update note
           </span>
           <span style="background:#F8FAFC; color:#334155; border:1px solid #CBD5E1; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">
             16 Canonical Metrics
@@ -1426,103 +1427,102 @@ def render_nifty50_screener_view():
         """
         st.html(kpi_strip_html)
 
-    # Screener-styled High-Density Responsive Table
-    rows = []
-    for _, r in df_export.iterrows():
-        comp_name = r["Company"]
-        sym = r["Symbol"]
-        cmp_v = f"₹{r['CMP Rs.']:,.2f}"
-        mc_v = f"{r['Mar Cap Rs.Cr.']:,.2f}"
-        sales_v = f"{r['Sales Rs.Cr.']:,.2f}"
-        sales_var = f"{r['Sales Var 3Yrs %']:+.2f}%"
-        profit_var = f"{r['Profit Var 3Yrs %']:+.2f}%"
-        qtr_var = f"{r['Qtr Sales Var %']:+.2f}%"
-        npm_v = f"{r['NPM Ann %']:.2f}%"
-        ind_pe_v = f"{r['Ind PE']:.2f}"
-        pe_v = f"{r['P/E']:.2f}"
-        peg_v = f"{r['PEG']:.2f}"
-        ev_v = f"{r['EV / EBITDA']:.2f}"
-        roic_v = f"{r['ROIC %']:.2f}%"
-        croic_v = f"{r['CROIC %']:.2f}%"
-        roce_v = f"{r['ROCE %']:.2f}%"
-        fcf_v = f"{r['Free Cash Flow 3Yrs Rs.Cr.']:,.2f}"
-        down_v = f"{r['Down %']:.2f}%"
+    # Focused metric views keep the historical benchmark easier to scan on small screens.
+    metric_views = {
+        "Overview": ["Company", "Symbol", "CMP Rs.", "Mar Cap Rs.Cr.", "Sales Var 3Yrs %", "Profit Var 3Yrs %", "ROCE %"],
+        "Growth": ["Company", "Symbol", "CMP Rs.", "Sales Var 3Yrs %", "Profit Var 3Yrs %", "Qtr Sales Var %", "NPM Ann %"],
+        "Valuation": ["Company", "Symbol", "CMP Rs.", "P/E", "PEG", "EV / EBITDA", "Down %"],
+        "Returns & Cash Flow": ["Company", "Symbol", "CMP Rs.", "ROIC %", "CROIC %", "ROCE %", "Free Cash Flow 3Yrs Rs.Cr."],
+    }
+    control_col, sort_col = st.columns([2, 1])
+    with control_col:
+        metric_view = st.segmented_control("Metrics", list(metric_views), default="Overview", key="nifty50_metric_view")
+    with sort_col:
+        active_view = metric_view or "Overview"
+        sort_column = st.selectbox("Sort rows by", metric_views[active_view][2:], key=f"nifty50_sort_column_{active_view}")
+    direction_col, layout_col = st.columns([1, 1])
+    with direction_col:
+        sort_direction = st.selectbox("Order", ["Highest first", "Lowest first"], key=f"nifty50_sort_direction_{active_view}")
+    with layout_col:
+        compact_display = st.toggle("Compact", value=True, key="nifty50_compact_display", help="Use a narrow three-column view for small screens.")
 
-        # Highlight styles
-        pe_color = "#047857" if r['P/E'] <= 22 else ("#B45309" if r['P/E'] <= 35 else "#B91C1C")
-        roce_color = "#047857" if r['ROCE %'] >= 20 else "#334155"
+    st.caption("Historical FY24 benchmark sample · not live exchange data. Tap a row to select it; the Analyze action appears just below. Use the sort controls or table headers to reorder rows.")
+    display_df = df_export[metric_views[active_view]].copy()
+    display_df.insert(0, "Company / Symbol", display_df["Symbol"] + " · " + display_df["Company"])
+    display_df = display_df.sort_values(sort_column, ascending=sort_direction == "Lowest first", na_position="last")
+    display_symbols = display_df["Symbol"].copy()
+    display_df = display_df.drop(columns=["Company", "Symbol"])
+    page_number = 1
+    if compact_display:
+        page_size = 10
+        page_count = max(1, (len(display_df) + page_size - 1) // page_size)
+        page_key = f"nifty50_page_{abs(hash((chosen_sector, search_query, active_view, sort_column, sort_direction)))}"
+        page_number = st.selectbox("Page", list(range(1, page_count + 1)), key=page_key)
+        page_start = (page_number - 1) * page_size
+        visible_symbols = display_symbols.iloc[page_start:page_start + page_size]
+        page_end = min(page_start + page_size, len(display_df))
+        if len(display_df):
+            st.caption(f"Showing rows {page_start + 1}–{page_end} of {len(display_df)} · 10 per page")
+        else:
+            st.info("No benchmark companies match these filters.")
+        compact_columns = ["Company / Symbol", "CMP Rs."]
+        if sort_column != "CMP Rs.":
+            compact_columns.append(sort_column)
+        table_df = display_df[compact_columns]
+        table_df = table_df.iloc[page_start:page_start + page_size]
+    else:
+        table_df = display_df
+        visible_symbols = display_symbols
+    benchmark_event = st.dataframe(
+        table_df,
+        hide_index=True,
+        width="stretch",
+        height=min(430 if compact_display else 680, 44 + 36 * max(len(table_df), 1)),
+        on_select="rerun",
+        selection_mode="single-row",
+        key=f"nifty50_metric_table_{abs(hash((chosen_sector, search_query, active_view, sort_column, sort_direction, compact_display, page_number)))}",
+        column_config={
+            "CMP Rs.": st.column_config.NumberColumn("Price (₹)", format="₹ %.2f"),
+            "Mar Cap Rs.Cr.": st.column_config.NumberColumn("Market cap (₹ Cr)", format="%.0f"),
+            "Sales Rs.Cr.": st.column_config.NumberColumn("Sales (₹ Cr)", format="%.0f"),
+            "Sales Var 3Yrs %": st.column_config.NumberColumn("Sales growth (3Y) %", format="%.2f%%"),
+            "Profit Var 3Yrs %": st.column_config.NumberColumn("Profit growth (3Y) %", format="%.2f%%"),
+            "Qtr Sales Var %": st.column_config.NumberColumn("Quarterly sales change %", format="%.2f%%"),
+            "NPM Ann %": st.column_config.NumberColumn("Net margin %", format="%.2f%%"),
+            "P/E": st.column_config.NumberColumn("P/E", format="%.2fx"),
+            "Ind PE": st.column_config.NumberColumn("Industry P/E", format="%.2fx"),
+            "PEG": st.column_config.NumberColumn("PEG", format="%.2fx"),
+            "EV / EBITDA": st.column_config.NumberColumn("EV / EBITDA", format="%.2fx"),
+            "ROIC %": st.column_config.NumberColumn("ROIC %", format="%.2f%%"),
+            "CROIC %": st.column_config.NumberColumn("CROIC %", format="%.2f%%"),
+            "ROCE %": st.column_config.NumberColumn("ROCE %", format="%.2f%%"),
+            "Free Cash Flow 3Yrs Rs.Cr.": st.column_config.NumberColumn("3Y free cash flow (₹ Cr)", format="%.0f"),
+            "Down %": st.column_config.NumberColumn("Downside %", format="%.2f%%"),
+        },
+    )
 
-        rows.append(f"""
-        <tr class="nifty50-screener-row">
-          <td style="padding:11px 14px; font-weight:700; color:#0284C7; white-space:nowrap; border-right:1px solid #E2E8F0; position:sticky; left:0; background:#FFFFFF; z-index:4; box-shadow: 2px 0 4px rgba(0,0,0,0.02);">
-            {comp_name} <span style="font-size:11px; color:#64748B; font-family:'JetBrains Mono', monospace;">({sym})</span>
-          </td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; font-weight:700; color:#0F172A;">{cmp_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{mc_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{sales_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#059669; font-weight:600;">{sales_var}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#059669; font-weight:600;">{profit_var}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#475569;">{qtr_var}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{npm_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#64748B;">{ind_pe_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; font-weight:800; color:{pe_color};">{pe_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{peg_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{ev_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#0F172A; font-weight:600;">{roic_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#0D9488; font-weight:600;">{croic_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; font-weight:800; color:{roce_color};">{roce_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{fcf_v}</td>
-          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#DC2626; font-weight:600;">{down_v}</td>
-        </tr>
-        """)
-
-    table_html = f"""
-    <div style="border:1.5px solid #CBD5E1; border-radius:14px; max-height:640px; overflow-y:auto; overflow-x:auto; background:#FFFFFF; box-shadow:0 4px 20px -2px rgba(15,23,42,0.05);">
-      <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-        <thead style="position:sticky; top:0; z-index:10; background:#F8FAFC;">
-          <tr style="background:#F8FAFC; border-bottom:2px solid #CBD5E1; color:#475569; font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.4px;">
-            <th style="padding:13px 14px; text-align:left; border-right:1px solid #E2E8F0; width:180px; position:sticky; left:0; background:#F8FAFC; z-index:11; box-shadow: 2px 0 4px rgba(0,0,0,0.02);">Company</th>
-            <th style="padding:13px 14px; text-align:right;">CMP Rs.</th>
-            <th style="padding:13px 14px; text-align:right;">Mar Cap Rs.Cr.</th>
-            <th style="padding:13px 14px; text-align:right;">Sales Rs.Cr.</th>
-            <th style="padding:13px 14px; text-align:right;">Sales Var 3Yrs %</th>
-            <th style="padding:13px 14px; text-align:right;">Profit Var 3Yrs %</th>
-            <th style="padding:13px 14px; text-align:right;">Qtr Sales Var %</th>
-            <th style="padding:13px 14px; text-align:right;">NPM Ann %</th>
-            <th style="padding:13px 14px; text-align:right;">Ind PE</th>
-            <th style="padding:13px 14px; text-align:right;">P/E</th>
-            <th style="padding:13px 14px; text-align:right;">PEG</th>
-            <th style="padding:13px 14px; text-align:right;">EV / EBITDA</th>
-            <th style="padding:13px 14px; text-align:right;">ROIC %</th>
-            <th style="padding:13px 14px; text-align:right;">CROIC %</th>
-            <th style="padding:13px 14px; text-align:right;">ROCE %</th>
-            <th style="padding:13px 14px; text-align:right;">Free Cash Flow 3Yrs Rs.Cr.</th>
-            <th style="padding:13px 14px; text-align:right;">Down %</th>
-          </tr>
-        </thead>
-        <tbody>
-          {"".join(rows)}
-        </tbody>
-      </table>
-    </div>
-    """
-    st.html(table_html)
-
-    # 1-Click Company Deep-Dive Selector
+    # Launch the company selected directly in the current filtered and sorted table.
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown("##### 🔍 1-Click Launch: Forensic Audit for any Nifty 50 Company")
-        qc_col1, qc_col2 = st.columns([3, 1])
-        with qc_col1:
-            comp_options = [f"{c['company']} ({c['symbol']})" for c in NIFTY_50_DATA]
-            chosen_launch = st.selectbox(
-                "Select Company to Analyze in StockSage",
-                options=comp_options,
-                key="nifty50_quick_launch_select",
-                label_visibility="collapsed"
-            )
-        with qc_col2:
-            if st.button("🚀 Run Forensic Deep Dive", key="btn_launch_from_screener", width="stretch"):
-                st.session_state["selected_company_choice"] = chosen_launch
-                st.session_state["active_nav_mode"] = "🔬 Company Forensic Audit"
-                st.rerun()
+        st.markdown("##### 🔍 Analyze a company from this benchmark")
+        selected_rows = benchmark_event.selection.rows if benchmark_event else []
+        if selected_rows:
+            row_index = selected_rows[0]
+            selected_symbol = visible_symbols.iloc[row_index]
+            selected_company = table_df.iloc[row_index]["Company / Symbol"]
+            action_col, hint_col = st.columns([1, 3])
+            with hint_col:
+                st.caption(f"Selected from the current filters and sort: {selected_company}")
+            with action_col:
+                if st.button("Analyze selected company ↗", key="btn_launch_from_screener", type="primary", width="stretch"):
+                    company_info = find_company_info(selected_symbol)
+                    st.session_state["selected_company_choice"] = company_info["display"]
+                    if company_info.get("ticker") == "CUSTOM":
+                        st.session_state["benchmark_launch_notice"] = (
+                            f"{selected_company} uses a historical benchmark symbol that is not in the current tracked company universe. "
+                            "Choose the current listed entity and ticker manually before running a current analysis."
+                        )
+                    st.session_state["active_nav_mode"] = "🔬 Company Analysis"
+                    st.rerun()
+        else:
+            st.caption("Tap a row in the table above to analyze that company.")

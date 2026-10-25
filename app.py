@@ -11,6 +11,7 @@ import os
 import re
 import html
 import time
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 
 # Load local environment variables dynamically
@@ -634,6 +635,8 @@ st.markdown("""
     @media (max-width:900px) { .ss-hero { grid-template-columns:1fr; gap:20px; padding:24px; } .ss-hero-stats { max-width:720px; } }
     @media (max-width:600px) {
         [data-testid="stMainBlockContainer"] { padding:.8rem .8rem 2rem; }
+        [data-testid="stHorizontalBlock"] { flex-direction:column !important; align-items:stretch !important; gap:.45rem !important; }
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] { width:100% !important; min-width:0 !important; flex:1 1 100% !important; }
         .ss-hero { padding:18px 16px; border-radius:16px; gap:13px; }
         .ss-hero-title { font-size:26px; }
         .ss-hero-subtitle { font-size:13px; }
@@ -747,111 +750,124 @@ st.html(f"""
 </section>
 """)
 
-# --- TERMINAL WORKSPACE NAVIGATION (Single-Stock Analysis vs Nifty 50 Screener & Peer Index) ---
+# --- TOP-LEVEL WORKSPACE NAVIGATION ---
+workspace_options = ["🌐 Explore", "🔬 Company Analysis", "📊 Nifty 50"]
+if st.session_state.get("active_nav_mode") not in workspace_options:
+    st.session_state.pop("active_nav_mode", None)
 terminal_mode = st.segmented_control(
-    "Terminal View Mode",
-    options=["🔬 Company Forensic Analysis", "📊 Nifty 50 Screener & Peer Index"],
-    default=st.session_state.get("active_nav_mode", "🔬 Company Forensic Analysis"),
+    "Workspace",
+    options=workspace_options,
+    default=st.session_state.get("active_nav_mode", "🌐 Explore"),
     key="active_nav_mode",
     label_visibility="collapsed"
 )
 
-if terminal_mode == "📊 Nifty 50 Screener & Peer Index":
+if terminal_mode == "📊 Nifty 50":
     render_nifty50_screener_view()
     st.stop()
 
-# --- INTAKE CONSOLE ---
-with st.container(border=True):
-    st.markdown("#### Start a company review")
-    st.caption("Choose a company, then review its filings and supporting web sources.")
+if terminal_mode == "🔬 Company Analysis":
+    benchmark_launch_notice = st.session_state.pop("benchmark_launch_notice", None)
+    if benchmark_launch_notice:
+        st.warning(benchmark_launch_notice)
+    # --- COMPANY ANALYSIS INTAKE ---
+    with st.container(border=True):
+        st.markdown("#### Start a company review")
+        st.caption("Choose a company, then review its filings and supporting web sources.")
     
-    # Fast Preset Benchmark Chips
-    st.caption("Quick picks")
-    presets = [
-        ("Reliance", "RELIANCE", "🔵"),
-        ("HDFC Bank", "HDFCBANK", "🟢"),
-        ("Tata Consumer", "TATACONSUM", "🟠"),
-        ("TCS", "TCS", "🟣"),
-        ("Dixon Tech", "DIXON", "🔷"),
-        ("HDFC Life", "HDFCLIFE", "🔴"),
-    ]
-    for row_start in range(0, len(presets), 3):
-        preset_cols = st.columns(3)
-        for col_idx, (label, sym, emoji) in enumerate(presets[row_start:row_start + 3]):
-            with preset_cols[col_idx]:
-                if st.button(f"{emoji} {label}", key=f"btn_preset_{sym}", width="stretch"):
-                    info = find_company_info(sym)
-                    st.session_state["selected_company_choice"] = info["display"]
-                    st.rerun()
+        # Fast Preset Benchmark Chips
+        st.caption("Quick picks")
+        presets = [
+            ("Reliance", "RELIANCE", "🔵"),
+            ("HDFC Bank", "HDFCBANK", "🟢"),
+            ("TCS", "TCS", "🟣"),
+        ]
+        for row_start in range(0, len(presets), 3):
+            preset_cols = st.columns(3)
+            for col_idx, (label, sym, emoji) in enumerate(presets[row_start:row_start + 3]):
+                with preset_cols[col_idx]:
+                    if st.button(f"{emoji} {label}", key=f"btn_preset_{sym}", width="stretch"):
+                        info = find_company_info(sym)
+                        st.session_state["selected_company_choice"] = info["display"]
+                        st.rerun()
 
-    c_list = company_options
-    cur_choice = st.session_state.get("selected_company_choice", None)
-    default_idx = c_list.index(cur_choice) if (cur_choice and cur_choice in c_list) else None
+        c_list = company_options
+        cur_choice = st.session_state.get("selected_company_choice", None)
+        default_idx = c_list.index(cur_choice) if (cur_choice and cur_choice in c_list) else None
 
-    col_sel1, col_sel2 = st.columns([2.5, 1.5])
+        col_sel1, col_sel2 = st.columns([2.5, 1.5])
     
-    with col_sel1:
-        selected_company_str = st.selectbox(
-            "Company",
-            options=c_list,
-            index=default_idx,
-            placeholder="Search by company name or symbol (e.g. Reliance, HDFC Bank, Infosys, Dixon)...",
-            help="Search the tracked company universe. Quotes are third-party market data; source citations appear with the analysis."
-        )
-        if selected_company_str != cur_choice:
-            st.session_state["selected_company_choice"] = selected_company_str
+        with col_sel1:
+            selected_company_str = st.selectbox(
+                "Company",
+                options=c_list,
+                index=default_idx,
+                placeholder="Search by company name or symbol (e.g. Reliance, HDFC Bank, Infosys, Dixon)...",
+                help="Search the tracked company universe. Quotes are third-party market data; source citations appear with the analysis."
+            )
+            if selected_company_str != cur_choice:
+                st.session_state["selected_company_choice"] = selected_company_str
     
-    matched_info = find_company_info(selected_company_str) if selected_company_str else None
+        matched_info = find_company_info(selected_company_str) if selected_company_str else None
     
-    with col_sel2:
-        if matched_info and matched_info["ticker"] == "CUSTOM":
-            target_company_name = st.text_input("Company Name", placeholder="e.g. Amber Enterprises Ltd")
-            target_ticker = st.text_input("NSE/BSE Symbol", placeholder="e.g. AMBER")
-        elif matched_info:
-            target_company_name = matched_info["name"]
-            target_ticker = matched_info["ticker"]
-            st.text_input("NSE Ticker", value=target_ticker, disabled=True)
-        else:
-            target_company_name = None
-            target_ticker = None
-            st.text_input("NSE Ticker", value="", placeholder="Awaiting selection...", disabled=True)
+        with col_sel2:
+            if matched_info and matched_info["ticker"] == "CUSTOM":
+                target_company_name = st.text_input("Company Name", placeholder="e.g. Amber Enterprises Ltd")
+                target_ticker = st.text_input("NSE/BSE Symbol", placeholder="e.g. AMBER")
+            elif matched_info:
+                target_company_name = matched_info["name"]
+                target_ticker = matched_info["ticker"]
+                st.text_input("NSE Ticker", value=target_ticker, disabled=True)
+            else:
+                target_company_name = None
+                target_ticker = None
+                st.text_input("NSE Ticker", value="", placeholder="Awaiting selection...", disabled=True)
             
-    col_sec1, col_sec2 = st.columns([2, 2])
-    with col_sec1:
-        sector_list = get_sector_list()
+        col_sec1, col_sec2 = st.columns([2, 2])
+        with col_sec1:
+            sector_list = get_sector_list()
         
-        def_sector_idx = sector_list.index(matched_info["sector"]) if (matched_info and matched_info.get("sector") in sector_list) else 0
-        target_sector = st.selectbox(
-            "Sector",
-            sector_list,
-            index=def_sector_idx,
-            help="Applies sector-specific thresholds for DSO, inventory, and operating margins."
-        )
+            def_sector_idx = sector_list.index(matched_info["sector"]) if (matched_info and matched_info.get("sector") in sector_list) else 0
+            target_sector = st.selectbox(
+                "Sector",
+                sector_list,
+                index=def_sector_idx,
+                help="Applies sector-specific thresholds for DSO, inventory, and operating margins."
+            )
         
-    with col_sec2:
-        doc_type = st.segmented_control(
-            "Data Source",
-            ["Web research", "Add annual report PDF"],
-            default="Web research",
-            help="Both choices include web research for current filings and supporting documents."
-        )
+        with col_sec2:
+            doc_type = st.segmented_control(
+                "Data Source",
+                ["Web research", "Add annual report PDF"],
+                default="Web research",
+                help="Both choices include web research for current filings and supporting documents."
+            )
 
     # Optional PDF Upload
-    uploaded_file = None
-    if doc_type == "Add annual report PDF":
-        uploaded_file = st.file_uploader(
-            "Upload Annual Report (PDF)",
-            type=["pdf"],
-            help="The uploaded report is analyzed alongside current web sources; it does not replace filing research."
-        )
+        uploaded_file = None
+        if doc_type == "Add annual report PDF":
+            uploaded_file = st.file_uploader(
+                "Upload Annual Report (PDF)",
+                type=["pdf"],
+                help="The uploaded report is analyzed alongside current web sources; it does not replace filing research."
+            )
 
-# Reset evaluation if user cleared or switched selected company
-if "selected_company_memory" not in st.session_state:
-    st.session_state["selected_company_memory"] = selected_company_str
-elif st.session_state["selected_company_memory"] != selected_company_str:
-    st.session_state["selected_company_memory"] = selected_company_str
-    if "idex_result" in st.session_state:
-        del st.session_state["idex_result"]
+else:
+    selected_company_str = None
+    matched_info = None
+    target_company_name = None
+    target_ticker = None
+    target_sector = None
+    uploaded_file = None
+
+# Reset evaluation only when the user changes the active company.
+if terminal_mode == "🔬 Company Analysis":
+    if "selected_company_memory" not in st.session_state:
+        st.session_state["selected_company_memory"] = selected_company_str
+    elif st.session_state["selected_company_memory"] != selected_company_str:
+        st.session_state["selected_company_memory"] = selected_company_str
+        if "idex_result" in st.session_state:
+            del st.session_state["idex_result"]
 
 # Fetch Live Online Market Data (Cached for snappy performance)
 @st.cache_data(ttl=180, show_spinner=False)
@@ -976,8 +992,26 @@ live_data = None
 if target_ticker and target_ticker != "CUSTOM":
     live_data = get_cached_live_data(target_ticker)
 
-# Live Market Pulse & Benchmark Quotes (When no company is selected)
-if not selected_company_str:
+# Live market discovery is the dedicated Explore landing page.
+if terminal_mode == "🌐 Explore":
+    with st.container(border=True):
+        st.markdown("#### Find any tracked company")
+        explore_search_col, explore_action_col = st.columns([4, 1])
+        with explore_search_col:
+            explore_company = st.selectbox(
+                "Search all tracked equities",
+                company_options,
+                index=None,
+                placeholder="Type a company name or NSE symbol",
+                key="explore_company_search",
+                label_visibility="collapsed",
+            )
+        with explore_action_col:
+            if st.button("Analyze ↗", type="primary", width="stretch", disabled=not bool(explore_company), key="explore_company_analyze"):
+                st.session_state["selected_company_choice"] = explore_company
+                st.session_state["active_nav_mode"] = "🔬 Company Analysis"
+                st.rerun()
+
     st.html("""
     <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
       <div>
@@ -985,7 +1019,7 @@ if not selected_company_str:
           <span>📈</span> Indian Market Snapshot
         </div>
         <div style="font-size: 13.5px; color: #475569; margin-top: 4px;">
-          Market quotes are supplied by Yahoo Finance, a third-party provider. Select a company above to review its analysis and sources.
+          Market quotes are supplied by Yahoo Finance, a third-party provider. Use the mover table below to open a company analysis with its research sources.
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -997,81 +1031,137 @@ if not selected_company_str:
     """)
     
     indices_list = get_cached_market_indices()
-    idx_cols = st.columns(4)
-    for i, idx in enumerate(indices_list):
-        with idx_cols[i]:
-            is_pos = idx["pct"] >= 0
-            delta_col = "#047857" if is_pos else "#DC2626"
-            delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
-            delta_sign = "+" if is_pos else ""
-            delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
-            
-            card_html = (
-                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
-                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
-                f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
-                f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 7px; border-radius: 4px;">{delta_str}</span>'
-                f'</div>'
-                f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
-                f'<div style="font-size: 11px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between;">'
-                f'<span>L: {idx["lo"]:,.0f}</span>'
-                f'<span>H: {idx["hi"]:,.0f}</span>'
-                f'</div>'
-                f'</div>'
-            )
-            st.html(card_html)
-            
-    st.markdown("<div style='margin-top: 22px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
-    b_c1, b_c2, b_c3 = st.columns([2.5, 1.3, 1])
-    with b_c1:
-        st.markdown(
-            '<div style="font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
-            '<span>🇮🇳</span> NIFTY 50 Benchmark Performance'
-            '</div>',
-            unsafe_allow_html=True
-        )
-    with b_c2:
-        nifty_tf = st.segmented_control("Nifty Range", options=["1M", "3M", "6M", "1Y"], default="6M", key="nifty_tf_ctrl", label_visibility="collapsed")
-    with b_c3:
-        nifty_style = st.segmented_control("Nifty Style", options=["Area", "Candles"], default="Area", key="nifty_style_ctrl", label_visibility="collapsed")
+    with st.expander("Market indices", expanded=False):
+        idx_cols = st.columns(4)
+        for i, idx in enumerate(indices_list):
+            with idx_cols[i]:
+                is_pos = idx["pct"] >= 0
+                delta_col = "#047857" if is_pos else "#DC2626"
+                delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
+                delta_sign = "+" if is_pos else ""
+                delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
 
-    tf_map = {"1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y"}
-    nifty_period = tf_map.get(nifty_tf or "6M", "6mo")
-    nifty_df = get_cached_ticker_history("^NSEI", period=nifty_period)
-    if not nifty_df.empty:
-        nifty_fig = build_ticker_chart(nifty_df, "NIFTY 50", nifty_style or "Area", show_dma=True)
-        if nifty_fig:
-            st.plotly_chart(nifty_fig, width="stretch")
+                card_html = (
+                    f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
+                    f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+                    f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
+                    f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 7px; border-radius: 4px;">{delta_str}</span>'
+                    f'</div>'
+                    f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
+                    f'<div style="font-size: 11px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between;">'
+                    f'<span>L: {idx["lo"]:,.0f}</span>'
+                    f'<span>H: {idx["hi"]:,.0f}</span>'
+                    f'</div>'
+                    f'</div>'
+                )
+                st.html(card_html)
+
+    with st.expander("📈 NIFTY 50 historical trend", expanded=False):
+        st.caption("Yahoo Finance historical market data · third-party provider.")
+        b_c1, b_c2 = st.columns([1.3, 1])
+        with b_c1:
+            nifty_tf = st.segmented_control("Range", options=["1M", "3M", "6M", "1Y"], default="6M", key="nifty_tf_ctrl")
+        with b_c2:
+            nifty_style = st.segmented_control("Chart style", options=["Area", "Candles"], default="Area", key="nifty_style_ctrl")
+
+        tf_map = {"1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y"}
+        nifty_period = tf_map.get(nifty_tf or "6M", "6mo")
+        nifty_df = get_cached_ticker_history("^NSEI", period=nifty_period)
+        if not nifty_df.empty:
+            nifty_fig = build_ticker_chart(nifty_df, "NIFTY 50", nifty_style or "Area", show_dma=True)
+            if nifty_fig:
+                st.plotly_chart(nifty_fig, width="stretch")
 
     st.markdown("""
     <div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 10px;">
       <div style="font-size: 17px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-        <span>⚡</span> Tracked Market Movers
+        <span>⚡</span> Market movers · 10-company shortlist
       </div>
-      <span style="font-size: 12px; color: #64748B;">Click <strong>Analyze Stock ↗</strong> on any equity to launch terminal</span>
+      <span style="font-size: 12px; color: #64748B;">Filter the list, then open a company in Company Analysis</span>
     </div>
     """, unsafe_allow_html=True)
 
     stocks_list = get_cached_marquee_stocks()
-    for stk in stocks_list:
-        row_c1, row_c2, row_c3, row_c4, row_c5 = st.columns([3.2, 2.2, 1.8, 1.8, 1.4])
-        is_p = stk["pct"] >= 0
-        p_col = "#047857" if is_p else "#DC2626"
-        p_bg = "#ECFDF5" if is_p else "#FEF2F2"
-        p_sign = "+" if is_p else ""
-        
-        with row_c1:
-            st.markdown(f"**{stk['name']}**  \n<span style='font-size: 12px; color: #047857; font-weight: 700; background: #F0FDF4; padding: 1px 6px; border-radius: 4px; border: 1px solid #BBF7D0;'>● NSE: {stk['ticker']}</span>", unsafe_allow_html=True)
-        with row_c2:
-            st.markdown(f"<span style='font-size: 12px; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 3px 8px; border-radius: 6px; font-weight: 600;'>🏛️ {stk['sector']}</span>", unsafe_allow_html=True)
-        with row_c3:
-            st.markdown(f"<div style='font-family: monospace; font-size: 15px; font-weight: 800; color: #0F172A;'>₹ {stk['cur']:,.2f}</div><div style='font-size: 11px; color: #64748B;'>Day: ₹{stk['lo']:,.0f} - ₹{stk['hi']:,.0f}</div>", unsafe_allow_html=True)
-        with row_c4:
-            st.markdown(f"<span style='color: {p_col}; background: {p_bg}; border: 1px solid {p_col}40; font-weight: 800; font-size: 13px; padding: 4px 8px; border-radius: 6px;'>{p_sign}{stk['pct']:.2f}% ({p_sign}₹{stk['chg']:,.1f})</span>", unsafe_allow_html=True)
-        with row_c5:
-            if st.button("Analyze ↗", key=f"btn_stk_{stk['ticker']}", width="stretch"):
-                st.session_state["selected_company_choice"] = stk["display"]
-                st.rerun()
+    if stocks_list:
+        stocks_df = pd.DataFrame(stocks_list)
+        status_values = set(stocks_df["data_status"].dropna().unique()) if "data_status" in stocks_df else set()
+        is_sample_fallback = status_values == {"sample_fallback"}
+        if is_sample_fallback:
+            st.warning("The latest provider quote fetch failed. These are sample fallback values, not current market prices.")
+        elif status_values == {"provider"}:
+            st.caption("Market mover shortlist: 10 tracked names across selected sectors; this is not a scan of all 501 equities.")
+        else:
+            st.warning("Market quote source status could not be verified for this cached data. Treat these values as unverified.")
+        filter_col, sector_col = st.columns([2, 1.3])
+        with filter_col:
+            mover_search = st.text_input("Find a ticker", placeholder="Company or symbol", key="mover_search")
+        with sector_col:
+            sector_options = ["All sectors"] + sorted(stocks_df["sector"].dropna().unique().tolist())
+            mover_sector = st.selectbox("Sector", sector_options, key="mover_sector")
+        sort_options = {
+            "Largest daily gain": ("pct", False),
+            "Largest daily decline": ("pct", True),
+            "Company name": ("name", True),
+            "Market price": ("cur", False),
+        }
+        sort_col, layout_col = st.columns([2, 1])
+        with sort_col:
+            mover_sort = st.selectbox("Sort by", list(sort_options), key="mover_sort")
+        with layout_col:
+            compact_movers = st.toggle("Compact", value=True, key="mover_compact", help="Show only company, price, and daily move.")
+
+        visible_df = stocks_df.copy()
+        if mover_search:
+            match = visible_df["name"].str.contains(mover_search, case=False, na=False) | visible_df["ticker"].str.contains(mover_search, case=False, na=False)
+            visible_df = visible_df[match]
+        if mover_sector != "All sectors":
+            visible_df = visible_df[visible_df["sector"] == mover_sector]
+        sort_key, ascending = sort_options[mover_sort]
+        visible_df = visible_df.sort_values(sort_key, ascending=ascending)
+        st.caption(f"Showing {len(visible_df)} of {len(stocks_df)} tracked market movers")
+        visible_options = {f"{row['name']} ({row['ticker']})": row["display"] for _, row in visible_df.iterrows()}
+        visible_df["Company / Symbol"] = visible_df["name"] + " (" + visible_df["ticker"] + ")"
+        visible_df["Day range"] = visible_df.apply(lambda row: f"₹{row['lo']:,.2f}–₹{row['hi']:,.2f}", axis=1)
+        visible_df = visible_df.rename(columns={
+            "sector": "Sector", "cur": "Price (₹)", "pct": "Change (%)"
+        })
+        mover_table_event = st.dataframe(
+            visible_df[["Company / Symbol", "Price (₹)", "Change (%)"] if compact_movers else ["Company / Symbol", "Sector", "Price (₹)", "Change (%)", "Day range"]],
+            hide_index=True,
+            width="stretch",
+            height=min(420, 42 + 35 * max(len(visible_df), 1)),
+            on_select="rerun",
+            selection_mode="single-row",
+            key=f"mover_table_{abs(hash((mover_search, mover_sector, mover_sort, compact_movers)))}",
+            column_config={
+                "Price (₹)": st.column_config.NumberColumn(format="₹ %.2f"),
+                "Change (%)": st.column_config.NumberColumn(format="%.2f%%"),
+            },
+        )
+        if status_values == {"provider"}:
+            st.caption("Source: Yahoo Finance, a third-party market-data provider. App cache refresh interval: 60 seconds; exact quote timestamps are not supplied consistently.")
+
+        selected_rows = mover_table_event.selection.rows if mover_table_event else []
+        if visible_options and selected_rows:
+            selected_row = visible_df.iloc[selected_rows[0]]
+            selected_mover = f"{selected_row['name']} ({selected_row['ticker']})"
+            launch_col, action_col = st.columns([3, 1])
+            with launch_col:
+                st.caption(f"Selected: {selected_mover}")
+            with action_col:
+                if st.button("Analyze ↗", type="primary", width="stretch", key="launch_mover_analysis"):
+                    st.session_state["selected_company_choice"] = selected_row["display"]
+                    st.session_state["active_nav_mode"] = "🔬 Company Analysis"
+                    st.rerun()
+        elif visible_options:
+            st.caption("Select a row to enable company analysis.")
+        else:
+            st.info("No tracked companies match these filters. Clear the search or choose another sector.")
+    else:
+        st.warning("Market mover data is unavailable. No live quotes or fallback examples were returned.")
+
+if terminal_mode == "🌐 Explore":
+    st.stop()
 
 # --- STOCKSAGE BESPOKE COMPANY INTELLIGENCE & 27 KEY METRICS MATRIX ---
 if live_data:
@@ -1087,6 +1177,7 @@ if live_data:
     delta_str = f"{delta_sign}{chg_pct:.2f}%"
     
     price_date = live_data.get("price_date", "close price")
+    quote_status_label = "delayed third-party data" if live_data.get("is_delayed") is True else "third-party data"
     website_url = live_data.get("website_url", "#")
     website_display = live_data.get("website_display", "company.com")
     about_text = live_data.get("about_summary", "")
@@ -1288,7 +1379,7 @@ if live_data:
         f'<span style="font-size: 32px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1;">{cur_str}</span>'
         f'<span style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}40; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 800;">{delta_str}</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 6px;">Market Quote (Yahoo Finance feed) • {price_date}</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 6px;">Yahoo Finance · {quote_status_label}<br>Retrieved: {price_date} · Market quote timestamp: unavailable</div>'
         f'<div style="margin-top: 10px; width: 220px; margin-left: auto;">'
         f'<div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748B; font-weight: 700; margin-bottom: 4px;">'
         f'<span>52W L: ₹ {l52_num:,.0f}</span>'
@@ -2232,6 +2323,38 @@ if "idex_result" in st.session_state:
     st.markdown("### Institutional Equity Research Scorecard" + (" [SYNTHETIC DEMO]" if is_demo else ""))
 
     research = res.get("web_research", {})
+    source_count = len(research.get("sources", []))
+    evidence_gap_count = len(res.get("evidence_gaps", []))
+    issuer_host = (urlparse(str((live_data or {}).get("website_url") or "")).hostname or "").lower().removeprefix("www.")
+
+    def classify_research_source(source):
+        host = (urlparse(str(source.get("url") or "")).hostname or "").lower().removeprefix("www.")
+        def is_domain(domain):
+            return host == domain or host.endswith("." + domain)
+
+        if source.get("source_type") == "third_party_market_data" or any(is_domain(domain) for domain in ("yahoo.com", "moneycontrol.com", "screener.in")):
+            return "Third-party market data"
+        if is_domain("nseindia.com") or is_domain("bseindia.com"):
+            return "Official exchange"
+        if is_domain("sebi.gov.in"):
+            return "Regulator"
+        if issuer_host and (host == issuer_host or host.endswith("." + issuer_host)):
+            return "Issuer website"
+        reporting_domains = ("reuters.com", "economictimes.indiatimes.com", "livemint.com", "thehindu.com", "business-standard.com", "financialexpress.com")
+        if any(is_domain(domain) for domain in reporting_domains):
+            return "News/reporting publisher"
+        return "Web publisher unclassified"
+
+    source_class_counts = {}
+    for source in research.get("sources", []):
+        source_class = classify_research_source(source)
+        source_class_counts[source_class] = source_class_counts.get(source_class, 0) + 1
+    if research or evidence_gap_count:
+        source_summary = f"{source_count} web source link{'s' if source_count != 1 else ''} returned"
+        gap_summary = f"{evidence_gap_count} evidence gap{'s' if evidence_gap_count != 1 else ''}"
+        class_summary = " · ".join(f"{kind}: {count}" for kind, count in source_class_counts.items()) or "No source classes identified"
+        st.caption(f"Evidence status: {source_summary} · {gap_summary}. {class_summary}. Sources are retrieved, not independently verified; open the panel for queries, dates, and citations.")
+        st.caption("Link counts do not confirm complete annual-report, auditor, shareholding/pledge, regulatory, or peer coverage; review the evidence gaps and citations per claim.")
     if res.get("analysis_status") == "insufficient_evidence":
         st.error("Insufficient evidence: " + "; ".join(res.get("evidence_gaps", [])))
     if research or res.get("evidence_gaps"):
@@ -2243,10 +2366,10 @@ if "idex_result" in st.session_state:
                     for query in research["search_queries"]:
                         st.write(f"- {query}")
                 if research.get("sources"):
-                    st.markdown("**Grounded sources** (retrieved date is recorded; publication date is shown only when the API provides it)")
+                    st.markdown("**Sources returned by Google Search** (publication date is shown only when provided by the API; retrieval time is recorded)")
                     for source in research["sources"]:
                         published = source.get("published_date") or "Publication date not provided by API"
-                        source_label = "THIRD-PARTY MARKET DATA" if source.get("source_type") == "third_party_market_data" else "Web evidence"
+                        source_label = classify_research_source(source).upper()
                         st.markdown(f"[{source['source_id']}: {source['title']}]({source['url']}) — {source_label}; {published}; retrieved {source.get('retrieved_at', 'unknown')}")
                 for penalty in res.get("penalties_breakdown", []):
                     cited = " ".join(f"[{c['source_id']}]({c['url']})" for c in penalty.get("citations", []))

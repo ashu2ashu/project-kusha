@@ -590,7 +590,8 @@ def fetch_marquee_stocks_data() -> List[Dict[str, Any]]:
                             "chg": chg,
                             "pct": pct,
                             "hi": hi,
-                            "lo": lo
+                            "lo": lo,
+                            "data_status": "provider"
                         })
             if stocks_out:
                 return stocks_out
@@ -612,6 +613,7 @@ def fetch_marquee_stocks_data() -> List[Dict[str, Any]]:
     for item in fallback:
         info = find_company_info(item["ticker"])
         item["display"] = info["display"] if info else f"{item['name']} ({item['ticker']})"
+        item["data_status"] = "sample_fallback"
     return fallback
 
 

@@ -1252,7 +1252,7 @@ def render_head_to_head_comparison_html(
         if valid_vals:
             leader_val = min(valid_vals) if lower_better else max(valid_vals)
 
-        td_cells = [f'<td style="padding:10px 14px; font-weight:700; color:#1E293B; font-size:13px; background:#F8FAFC; border-bottom:1px solid #E2E8F0;">{m_label}</td>']
+        td_cells = [f'<td style="padding:10px 14px; font-weight:700; color:#1E293B; font-size:13px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; position:sticky; left:0; z-index:2;">{m_label}</td>']
         for p in peers:
             v = p.get(m_key, 0.0)
             is_leader = (leader_val is not None and v == leader_val and len(valid_vals) > 1)
@@ -1276,15 +1276,15 @@ def render_head_to_head_comparison_html(
                 cell_style = "color:#334155; font-weight:600; border-bottom:1px solid #E2E8F0;"
                 badge = ''
 
-            td_cells.append(f'<td style="padding:10px 14px; text-align:right; font-size:13.5px; font-family:monospace; {cell_style}">{fmt_str}{badge}</td>')
+            td_cells.append(f'<td style="padding:10px 14px; text-align:right; font-size:13.5px; font-family:\'JetBrains Mono\', monospace; {cell_style}">{fmt_str}{badge}</td>')
 
         rows_html.append(f"<tr>{''.join(td_cells)}</tr>")
 
     table_body = "".join(rows_html)
 
     html = (
-        f'<div style="background:#FFFFFF; border:1.5px solid #CBD5E1; border-radius:12px; padding:20px 22px; margin-top:22px; margin-bottom:24px; box-shadow:0 3px 12px rgba(0,0,0,0.03);">'
-        f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">'
+        f'<div style="background:#FFFFFF; border:1.5px solid #CBD5E1; border-radius:16px; padding:24px 26px; margin-top:22px; margin-bottom:24px; box-shadow:0 4px 20px -2px rgba(15,23,42,0.05);">'
+        f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">'
         f'<div>'
         f'<div style="display:flex; align-items:center; gap:8px;">'
         f'<span style="font-size:20px;">⚔️</span>'
@@ -1294,15 +1294,15 @@ def render_head_to_head_comparison_html(
         f'</div>'
         f'<span style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:9999px;">★ Leader Highlighted</span>'
         f'</div>'
-        f'<div style="overflow-x:auto; border-radius:8px; border:1px solid #E2E8F0;">'
+        f'<div style="overflow-x:auto; border-radius:10px; border:1px solid #E2E8F0; box-shadow:0 1px 3px rgba(0,0,0,0.02);">'
         f'<table style="width:100%; border-collapse:collapse; background:#FFFFFF;">'
         f'<thead><tr>{header_row}</tr></thead>'
         f'<tbody>{table_body}</tbody>'
         f'</table>'
         f'</div>'
-        f'<div style="font-size:11.5px; color:#64748B; margin-top:8px; display:flex; justify-content:space-between;">'
+        f'<div style="font-size:12px; color:#64748B; margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">'
         f'<span>Source: Screener.in institutional 16-metric framework & BSE/NSE audited filings</span>'
-        f'<span>★ Indicates sector category leader</span>'
+        f'<span style="font-weight:600; color:#047857;">★ Indicates sector category leader</span>'
         f'</div>'
         f'</div>'
     )
@@ -1428,51 +1428,51 @@ def render_nifty50_screener_view():
         roce_color = "#047857" if r['ROCE %'] >= 20 else "#334155"
 
         rows.append(f"""
-        <tr style="border-bottom:1px solid #F1F5F9; transition:background 0.15s ease;" onmouseover="this.style.background='#F0FDF4'" onmouseout="this.style.background='#FFFFFF'">
-          <td style="padding:10px 12px; font-weight:700; color:#0284C7; white-space:nowrap; border-right:1px solid #F1F5F9;">
-            {comp_name} <span style="font-size:11px; color:#64748B; font-family:monospace;">({sym})</span>
+        <tr style="border-bottom:1px solid #F1F5F9; transition:background 0.15s ease;" onmouseover="this.style.background='#F0FDF4'; this.children[0].style.background='#F0FDF4';" onmouseout="this.style.background='#FFFFFF'; this.children[0].style.background='#FFFFFF';">
+          <td style="padding:11px 14px; font-weight:700; color:#0284C7; white-space:nowrap; border-right:1px solid #E2E8F0; position:sticky; left:0; background:#FFFFFF; z-index:4; box-shadow: 2px 0 4px rgba(0,0,0,0.02);">
+            {comp_name} <span style="font-size:11px; color:#64748B; font-family:'JetBrains Mono', monospace;">({sym})</span>
           </td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; font-weight:700; color:#0F172A;">{cmp_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#334155;">{mc_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#334155;">{sales_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#059669; font-weight:600;">{sales_var}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#059669; font-weight:600;">{profit_var}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#475569;">{qtr_var}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#334155;">{npm_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#64748B;">{ind_pe_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; font-weight:800; color:{pe_color};">{pe_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#334155;">{peg_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#334155;">{ev_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#0F172A; font-weight:600;">{roic_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#0D9488; font-weight:600;">{croic_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; font-weight:800; color:{roce_color};">{roce_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#334155;">{fcf_v}</td>
-          <td style="padding:10px 12px; text-align:right; font-family:monospace; color:#DC2626; font-weight:600;">{down_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; font-weight:700; color:#0F172A;">{cmp_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{mc_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{sales_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#059669; font-weight:600;">{sales_var}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#059669; font-weight:600;">{profit_var}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#475569;">{qtr_var}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{npm_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#64748B;">{ind_pe_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; font-weight:800; color:{pe_color};">{pe_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{peg_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{ev_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#0F172A; font-weight:600;">{roic_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#0D9488; font-weight:600;">{croic_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; font-weight:800; color:{roce_color};">{roce_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#334155;">{fcf_v}</td>
+          <td style="padding:11px 14px; text-align:right; font-family:'JetBrains Mono', monospace; color:#DC2626; font-weight:600;">{down_v}</td>
         </tr>
         """)
 
     table_html = f"""
-    <div style="border:1.5px solid #E2E8F0; border-radius:10px; overflow-x:auto; background:#FFFFFF; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+    <div style="border:1.5px solid #CBD5E1; border-radius:14px; max-height:640px; overflow-y:auto; overflow-x:auto; background:#FFFFFF; box-shadow:0 4px 20px -2px rgba(15,23,42,0.05);">
       <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-        <thead>
-          <tr style="background:#F8FAFC; border-bottom:2px solid #CBD5E1; color:#475569; font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.3px;">
-            <th style="padding:12px; text-align:left; border-right:1px solid #E2E8F0; width:180px;">Company</th>
-            <th style="padding:12px; text-align:right;">CMP Rs.</th>
-            <th style="padding:12px; text-align:right;">Mar Cap Rs.Cr.</th>
-            <th style="padding:12px; text-align:right;">Sales Rs.Cr.</th>
-            <th style="padding:12px; text-align:right;">Sales Var 3Yrs %</th>
-            <th style="padding:12px; text-align:right;">Profit Var 3Yrs %</th>
-            <th style="padding:12px; text-align:right;">Qtr Sales Var %</th>
-            <th style="padding:12px; text-align:right;">NPM Ann %</th>
-            <th style="padding:12px; text-align:right;">Ind PE</th>
-            <th style="padding:12px; text-align:right;">P/E</th>
-            <th style="padding:12px; text-align:right;">PEG</th>
-            <th style="padding:12px; text-align:right;">EV / EBITDA</th>
-            <th style="padding:12px; text-align:right;">ROIC %</th>
-            <th style="padding:12px; text-align:right;">CROIC %</th>
-            <th style="padding:12px; text-align:right;">ROCE %</th>
-            <th style="padding:12px; text-align:right;">Free Cash Flow 3Yrs Rs.Cr.</th>
-            <th style="padding:12px; text-align:right;">Down %</th>
+        <thead style="position:sticky; top:0; z-index:10; background:#F8FAFC;">
+          <tr style="background:#F8FAFC; border-bottom:2px solid #CBD5E1; color:#475569; font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.4px;">
+            <th style="padding:13px 14px; text-align:left; border-right:1px solid #E2E8F0; width:180px; position:sticky; left:0; background:#F8FAFC; z-index:11; box-shadow: 2px 0 4px rgba(0,0,0,0.02);">Company</th>
+            <th style="padding:13px 14px; text-align:right;">CMP Rs.</th>
+            <th style="padding:13px 14px; text-align:right;">Mar Cap Rs.Cr.</th>
+            <th style="padding:13px 14px; text-align:right;">Sales Rs.Cr.</th>
+            <th style="padding:13px 14px; text-align:right;">Sales Var 3Yrs %</th>
+            <th style="padding:13px 14px; text-align:right;">Profit Var 3Yrs %</th>
+            <th style="padding:13px 14px; text-align:right;">Qtr Sales Var %</th>
+            <th style="padding:13px 14px; text-align:right;">NPM Ann %</th>
+            <th style="padding:13px 14px; text-align:right;">Ind PE</th>
+            <th style="padding:13px 14px; text-align:right;">P/E</th>
+            <th style="padding:13px 14px; text-align:right;">PEG</th>
+            <th style="padding:13px 14px; text-align:right;">EV / EBITDA</th>
+            <th style="padding:13px 14px; text-align:right;">ROIC %</th>
+            <th style="padding:13px 14px; text-align:right;">CROIC %</th>
+            <th style="padding:13px 14px; text-align:right;">ROCE %</th>
+            <th style="padding:13px 14px; text-align:right;">Free Cash Flow 3Yrs Rs.Cr.</th>
+            <th style="padding:13px 14px; text-align:right;">Down %</th>
           </tr>
         </thead>
         <tbody>

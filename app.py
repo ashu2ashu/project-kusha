@@ -78,6 +78,7 @@ st.markdown("""
     html, body, [class*="css"] {
         font-size: 16.5px !important;
         line-height: 1.6 !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
     
     /* Screener-Style Main Headings */
@@ -102,6 +103,50 @@ st.markdown("""
         font-size: 19px !important;
         font-weight: 700 !important;
         color: #0F172A !important;
+    }
+
+    /* Live Glowing Beacon Animation */
+    @keyframes pulse-live {
+        0% { transform: scale(0.92); opacity: 0.85; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+        70% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
+        100% { transform: scale(0.92); opacity: 0.85; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+    }
+    .live-pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: #34D399;
+        border-radius: 50%;
+        margin-right: 6px;
+        animation: pulse-live 2s infinite ease-in-out;
+        vertical-align: middle;
+    }
+
+    /* Ultra-Modern Institutional Segmented Control */
+    div[data-testid="stSegmentedControl"] {
+        background-color: #F1F5F9 !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 10px !important;
+        padding: 4px !important;
+        gap: 4px !important;
+    }
+    div[data-testid="stSegmentedControl"] button {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 14.5px !important;
+        color: #475569 !important;
+        padding: 7px 18px !important;
+        border: none !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] {
+        background-color: #FFFFFF !important;
+        color: #047857 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    }
+    div[data-testid="stSegmentedControl"] button:hover {
+        color: #059669 !important;
     }
 
     /* Screener.in Iconic Tabs: Big, Bold, Clean Green Underline */
@@ -145,13 +190,15 @@ st.markdown("""
     [data-testid="stMetric"] {
         background-color: #FFFFFF;
         padding: 18px 22px !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
         border: 1.5px solid #E2E8F0 !important;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
-        transition: border-color 0.15s ease !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+        transition: all 0.2s ease !important;
     }
     [data-testid="stMetric"]:hover {
         border-color: #A7F3D0 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.08) !important;
     }
     [data-testid="stMetricValue"] {
         font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace !important;
@@ -175,7 +222,7 @@ st.markdown("""
 
     /* Screener-Style Institutional Emerald Primary Button */
     button[kind="primary"] {
-        background-color: #059669 !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #FFFFFF !important;
         font-size: 17.5px !important;
         font-weight: 800 !important;
@@ -183,11 +230,12 @@ st.markdown("""
         border-radius: 8px !important;
         border: 1px solid #047857 !important;
         letter-spacing: -0.2px !important;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2) !important;
         transition: all 0.2s ease !important;
     }
     button[kind="primary"]:hover {
-        background-color: #047857 !important;
-        opacity: 0.95 !important;
+        background: linear-gradient(135deg, #047857 0%, #065F46 100%) !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3) !important;
         transform: translateY(-1px) !important;
     }
 
@@ -208,11 +256,11 @@ st.markdown("""
         border-collapse: separate;
         border-spacing: 0;
         border: 1px solid #E2E8F0;
-        border-radius: 8px;
+        border-radius: 10px;
         overflow: hidden;
         background: #FFFFFF;
         margin: 14px 0 24px 0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
     .pillar-table th {
         background-color: #F8FAFC;
@@ -252,34 +300,34 @@ st.markdown("""
         background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
         border: 1.5px solid #10B981;
         border-left: 5px solid #059669;
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 18px 24px;
         color: #0F172A;
         margin-top: 16px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.06);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
     }
     .guardrail-alert-box {
         background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
         border: 1.5px solid #F59E0B;
         border-left: 5px solid #D97706;
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 18px 24px;
         color: #0F172A;
         margin-top: 16px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.06);
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
     }
     .guardrail-red-box {
         background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
         border: 2px solid #EF4444;
         border-left: 5px solid #DC2626;
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 18px 24px;
         color: #0F172A;
         margin-top: 16px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.06);
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
     }
 
     /* Preset Benchmark Chips */
@@ -299,11 +347,16 @@ st.markdown("""
     .facts-header-card {
         background: #FFFFFF;
         border: 1.5px solid #E2E8F0;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 26px 30px;
         margin-top: 16px;
         margin-bottom: 22px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .facts-header-card:hover {
+        border-color: #CBD5E1;
+        box-shadow: 0 8px 28px -4px rgba(15, 23, 42, 0.08);
     }
     .metrics-3col-grid {
         display: grid;
@@ -319,14 +372,20 @@ st.markdown("""
     .metric-domain-card {
         background: #FFFFFF;
         border: 1.5px solid #E2E8F0;
-        border-radius: 12px;
+        border-radius: 14px;
         overflow: hidden;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .metric-domain-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.07);
+    }
+    .metric-domain-header {
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     .metric-table-spacious {
         width: 100%;
@@ -343,21 +402,38 @@ st.markdown("""
         background-color: #F0FDF4 !important;
     }
     .metric-table-spacious td.m-label {
-        padding: 14px 20px;
-        font-size: 15.5px;
+        padding: 13px 20px;
+        font-size: 15px;
         font-weight: 700;
         color: #334155;
         text-align: left;
         white-space: nowrap;
     }
     .metric-table-spacious td.m-value {
-        padding: 14px 20px;
-        font-size: 16.5px;
+        padding: 13px 20px;
+        font-size: 16px;
         font-family: 'JetBrains Mono', monospace;
         font-weight: 800;
         color: #0F172A;
         text-align: right;
         white-space: nowrap;
+    }
+
+    /* Custom Financial Terminal Scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #F1F5F9;
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94A3B8;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -427,29 +503,29 @@ with st.sidebar:
 
 # Top Hero Brand Navigation Banner
 st.html("""
-<div style="background: linear-gradient(135deg, #064E3B 0%, #065F46 45%, #047857 75%, #0F172A 100%); padding: 22px 28px; border-radius: 12px; margin-bottom: 20px; color: #FFFFFF; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.16);">
+<div style="background: linear-gradient(135deg, #022C22 0%, #064E3B 38%, #047857 72%, #0F172A 100%); padding: 22px 28px; border-radius: 14px; margin-bottom: 20px; color: #FFFFFF; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px -2px rgba(5, 150, 105, 0.22); border: 1px solid rgba(255, 255, 255, 0.1);">
   <div>
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
       <span style="font-size: 26px; font-weight: 900; letter-spacing: -0.6px; color: #FFFFFF;">Stock<span style="color: #34D399;">Sage</span></span>
-      <span style="background: #10B981; color: #022C22; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px; letter-spacing: 0.5px;">PRO EDITION</span>
-      <span style="background: rgba(255,255,255,0.15); color: #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 9999px;">IDEX-7.5SC HYBRID</span>
+      <span style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10B981; color: #6EE7B7; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px; letter-spacing: 0.5px; display: inline-flex; align-items: center;"><span class="live-pulse-dot"></span>PRO EDITION</span>
+      <span style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 9999px;">IDEX-7.5SC HYBRID</span>
     </div>
     <div style="font-size: 13.5px; color: #D1FAE5; font-weight: 400; max-width: 680px; line-height: 1.5;">
       Institutional Equity Intelligence & Forensic Audit Terminal • Real-Time NSE/BSE Market Grounding & 501 Nifty 500 Constituents
     </div>
   </div>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 14px; text-align: center;">
-      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase;">Universe</div>
-      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">501 Stocks</div>
+    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; padding: 6px 14px; text-align: center;">
+      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Universe</div>
+      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono', monospace;">501 Stocks</div>
     </div>
-    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 14px; text-align: center;">
-      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase;">Taxonomy</div>
-      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">24 Sectors</div>
+    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; padding: 6px 14px; text-align: center;">
+      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Taxonomy</div>
+      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono', monospace;">24 Sectors</div>
     </div>
-    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 14px; text-align: center;">
-      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase;">Feed</div>
-      <div style="font-size: 15px; font-weight: 800; color: #34D399;">● LIVE</div>
+    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; padding: 6px 14px; text-align: center;">
+      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Feed</div>
+      <div style="font-size: 15px; font-weight: 800; color: #34D399; display: flex; align-items: center; justify-content: center;"><span class="live-pulse-dot"></span>LIVE</div>
     </div>
   </div>
 </div>
@@ -1509,46 +1585,46 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
         eli_biz = f"<strong>{company_clean}</strong> is an established business in India\'s <strong>{sector_clean}</strong> sector with healthy operating cash flows and strong market reach."
 
     html = (
-        f'<div style="background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%); border: 1.5px solid #CBD5E1; border-radius: 12px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 3px 10px rgba(0,0,0,0.03);">'
+        f'<div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🚦</span>'
-        f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">10-Second Summary & Quick Takeaway</span>'
+        f'<span style="font-size: 15px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">10-Second Summary & Quick Takeaway</span>'
         f'</div>'
-        f'<span style="background: {eli_badge_bg}; color: {eli_badge_fg}; border: 1.5px solid {eli_badge_fg}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: monospace;">{eli_badge}</span>'
+        f'<span style="background: {eli_badge_bg}; color: {eli_badge_fg}; border: 1.5px solid {eli_badge_fg}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{eli_badge}</span>'
         f'</div>'
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">'
-        f'<div style="background: {gov_bg}; border: 1.5px solid {gov_border}; border-radius: 10px; padding: 16px 18px;">'
-        f'<div style="font-size: 11.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">1. MANAGEMENT & AUDIT</div>'
+        f'<div style="background: {gov_bg}; border: 1.5px solid {gov_border}; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">1. MANAGEMENT & AUDIT</div>'
         f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">'
         f'<span style="font-size: 18px;">{gov_icon}</span>'
-        f'<span style="font-size: 17px; font-weight: 900; color: {gov_color}; font-family: monospace;">{gov_status}</span>'
+        f'<span style="font-size: 17px; font-weight: 900; color: {gov_color}; font-family: \'JetBrains Mono\', monospace;">{gov_status}</span>'
         f'</div>'
-        f'<div style="font-size: 12.5px; line-height: 1.5; color: #334155;">{gov_sub}</div>'
+        f'<div style="font-size: 13px; line-height: 1.5; color: #334155;">{gov_sub}</div>'
         f'</div>'
-        f'<div style="background: {bs_bg}; border: 1.5px solid {bs_border}; border-radius: 10px; padding: 16px 18px;">'
-        f'<div style="font-size: 11.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">2. BALANCE SHEET HEALTH</div>'
+        f'<div style="background: {bs_bg}; border: 1.5px solid {bs_border}; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">2. BALANCE SHEET HEALTH</div>'
         f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">'
         f'<span style="font-size: 18px;">{bs_icon}</span>'
-        f'<span style="font-size: 17px; font-weight: 900; color: {bs_color}; font-family: monospace;">{bs_status}</span>'
+        f'<span style="font-size: 17px; font-weight: 900; color: {bs_color}; font-family: \'JetBrains Mono\', monospace;">{bs_status}</span>'
         f'</div>'
-        f'<div style="font-size: 12.5px; line-height: 1.5; color: #334155;">{bs_sub}</div>'
+        f'<div style="font-size: 13px; line-height: 1.5; color: #334155;">{bs_sub}</div>'
         f'</div>'
-        f'<div style="background: {val_bg}; border: 1.5px solid {val_border}; border-radius: 10px; padding: 16px 18px;">'
-        f'<div style="font-size: 11.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">3. VALUATION & PRICE</div>'
+        f'<div style="background: {val_bg}; border: 1.5px solid {val_border}; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">3. VALUATION & PRICE</div>'
         f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">'
         f'<span style="font-size: 18px;">{val_icon}</span>'
-        f'<span style="font-size: 17px; font-weight: 900; color: {val_color}; font-family: monospace;">{val_status}</span>'
+        f'<span style="font-size: 17px; font-weight: 900; color: {val_color}; font-family: \'JetBrains Mono\', monospace;">{val_status}</span>'
         f'</div>'
-        f'<div style="font-size: 12.5px; line-height: 1.5; color: #334155;">{val_sub}</div>'
+        f'<div style="font-size: 13px; line-height: 1.5; color: #334155;">{val_sub}</div>'
         f'</div>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1.5px dashed #94A3B8; border-left: 4.5px solid #059669; border-radius: 8px; padding: 14px 18px;">'
+        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-left: 5px solid #059669; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
         f'<div style="font-size: 12px; font-weight: 800; color: #065F46; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
         f'<span>💬</span> Plain-English Summary (ELI15 Takeaway)'
         f'</div>'
-        f'<div style="font-size: 13.5px; line-height: 1.6; color: #1E293B; margin-bottom: 6px;">{eli_biz}</div>'
-        f'<div style="font-size: 13.5px; line-height: 1.6; color: #0F172A; font-weight: 600;">{eli_action}</div>'
+        f'<div style="font-size: 14px; line-height: 1.6; color: #1E293B; margin-bottom: 6px;">{eli_biz}</div>'
+        f'<div style="font-size: 14px; line-height: 1.6; color: #0F172A; font-weight: 700;">{eli_action}</div>'
         f'</div>'
         f'</div>'
     )
@@ -1645,32 +1721,32 @@ def render_forensic_fraud_shield_html(res, live_data):
         badge_border = "#A7F3D0" if is_pass else ("#FDE68A" if it["status"] == "MONITOR" else "#FECACA")
         
         cards_html_list.append(
-            f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between;">'
+            f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease;">'
             f'<div>'
             f'<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">'
             f'<div style="display: flex; align-items: center; gap: 8px;">'
             f'<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: {icon_bg}; color: {icon_fg}; border-radius: 50%; font-size: 13px; font-weight: 900;">{icon_str}</span>'
-            f'<span style="font-size: 13px; font-weight: 800; color: #0F172A;">{it["title"]}</span>'
+            f'<span style="font-size: 13.5px; font-weight: 800; color: #0F172A;">{it["title"]}</span>'
             f'</div>'
-            f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 9999px; white-space: nowrap; font-family: monospace;">{it["badge"]}</span>'
+            f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 9999px; white-space: nowrap; font-family: \'JetBrains Mono\', monospace;">{it["badge"]}</span>'
             f'</div>'
-            f'<div style="font-size: 12px; line-height: 1.5; color: #475569; margin-top: 4px;">{it["evidence"]}</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #475569; margin-top: 4px;">{it["evidence"]}</div>'
             f'</div>'
             f'</div>'
         )
     cards_html = "".join(cards_html_list)
 
     html = (
-        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">'
+        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">'
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🛡️</span>'
-        f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">6-Point Forensic Safety Shield (Anti-Fraud Filter)</span>'
+        f'<span style="font-size: 15px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">6-Point Forensic Safety Shield (Anti-Fraud Filter)</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 3px;">A 6-point background check for accounting tricks, hidden debt, and promoter red flags</div>'
+        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">A 6-point background check for accounting tricks, hidden debt, and promoter red flags</div>'
         f'</div>'
-        f'<span style="background: {shield_badge_bg}; color: #FFFFFF; font-size: 12px; font-weight: 800; padding: 5px 13px; border-radius: 9999px; letter-spacing: 0.4px; font-family: monospace;">{shield_badge}</span>'
+        f'<span style="background: {shield_badge_bg}; color: #FFFFFF; font-size: 12px; font-weight: 800; padding: 5px 13px; border-radius: 9999px; letter-spacing: 0.4px; font-family: \'JetBrains Mono\', monospace;">{shield_badge}</span>'
         f'</div>'
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">'
         f'{cards_html}'
@@ -1738,47 +1814,47 @@ def render_valuation_compass_html(res, live_data):
     range_width = max(2.0, pct_high - pct_low)
 
     html = (
-        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">'
+        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">'
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🧭</span>'
-        f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">Valuation Compass & Fair Value Range</span>'
+        f'<span style="font-size: 15px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">Valuation Compass & Fair Value Range</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 3px;">Current price compared to 52-week high/low and DCF fair value</div>'
+        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">Current price compared to 52-week high/low and DCF fair value</div>'
         f'</div>'
-        f'<span style="background: {mos_bg}; color: {mos_color}; border: 1.5px solid {mos_color}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: monospace;">{mos_badge}</span>'
+        f'<span style="background: {mos_bg}; color: {mos_color}; border: 1.5px solid {mos_color}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{mos_badge}</span>'
         f'</div>'
         f'<div style="position: relative; margin: 38px 12px 34px 12px; height: 14px; background: #F1F5F9; border-radius: 9999px;">'
         f'<div style="position: absolute; left: {pct_low:.1f}%; width: {range_width:.1f}%; height: 100%; background: #E2E8F0; border-radius: 9999px;"></div>'
         f'<div style="position: absolute; left: {pct_dcf_low:.1f}%; width: {dcf_width:.1f}%; height: 100%; background: #BBF7D0; border: 1px solid #10B981; border-radius: 9999px; z-index: 2;"></div>'
-        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: monospace; white-space: nowrap;">52W L: ₹{low_52w:,.1f}</div>'
+        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W L: ₹{low_52w:,.1f}</div>'
         f'<div style="position: absolute; left: {pct_low:.1f}%; top: -2px; transform: translateX(-50%); width: 4px; height: 18px; background: #94A3B8; border-radius: 2px;"></div>'
-        f'<div style="position: absolute; left: {to_pct(dcf_mid):.1f}%; top: 18px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; color: #047857; font-family: monospace; white-space: nowrap; z-index: 4;">▲ DCF Fair: ₹{dcf_mid:,.0f}</div>'
+        f'<div style="position: absolute; left: {to_pct(dcf_mid):.1f}%; top: 18px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; color: #047857; font-family: \'JetBrains Mono\', monospace; white-space: nowrap; z-index: 4;">▲ DCF Fair: ₹{dcf_mid:,.0f}</div>'
         f'<div style="position: absolute; left: {pct_cmp:.1f}%; top: -32px; transform: translateX(-50%); z-index: 5; text-align: center;">'
-        f'<span style="background: #2563EB; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(37,99,235,0.3); font-family: monospace; white-space: nowrap;">CMP ₹{cmp:,.1f}</span>'
+        f'<span style="background: #2563EB; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.35); font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">CMP ₹{cmp:,.1f}</span>'
         f'<div style="width: 3px; height: 18px; background: #2563EB; margin: 0 auto; border-radius: 2px;"></div>'
         f'</div>'
-        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: monospace; white-space: nowrap;">52W H: ₹{high_52w:,.1f}</div>'
+        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W H: ₹{high_52w:,.1f}</div>'
         f'<div style="position: absolute; left: {pct_high:.1f}%; top: -2px; transform: translateX(-50%); width: 4px; height: 18px; background: #94A3B8; border-radius: 2px;"></div>'
         f'</div>'
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px;">'
-        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
+        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
         f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">FAIR VALUE (DCF)</div>'
-        f'<div style="font-size: 16px; font-weight: 800; color: #047857; font-family: monospace; margin-top: 4px;">₹{dcf_low:,.0f} – ₹{dcf_high:,.0f}</div>'
-        f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">Midpoint: ₹{dcf_mid:,.0f}</div>'
+        f'<div style="font-size: 16.5px; font-weight: 800; color: #047857; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">₹{dcf_low:,.0f} – ₹{dcf_high:,.0f}</div>'
+        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">Midpoint: ₹{dcf_mid:,.0f}</div>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
+        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
         f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">VALUATION STATUS</div>'
-        f'<div style="font-size: 16px; font-weight: 800; color: {mos_color}; font-family: monospace; margin-top: 4px;">{mos_badge}</div>'
-        f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">{mos_desc}</div>'
+        f'<div style="font-size: 16.5px; font-weight: 800; color: {mos_color}; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">{mos_badge}</div>'
+        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">{mos_desc}</div>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
+        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
         f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">UPSIDE VS DOWNSIDE</div>'
-        f'<div style="font-size: 14px; font-weight: 800; color: #1E293B; margin-top: 4px; font-family: monospace;">'
+        f'<div style="font-size: 14.5px; font-weight: 800; color: #1E293B; margin-top: 4px; font-family: \'JetBrains Mono\', monospace;">'
         f'<span>+{upside_dcf_pct:.1f}% to DCF</span> &bull; <span>-{downside_low_pct:.1f}% to 52W L</span>'
         f'</div>'
-        f'<div style="font-size: 11.5px; color: #475569; margin-top: 2px;">Attractive upside with limited downside risk</div>'
+        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">Attractive upside with limited downside risk</div>'
         f'</div>'
         f'</div>'
         f'</div>'
@@ -2106,31 +2182,31 @@ if "idex_result" in st.session_state:
         c_color = c["color"]
         c_text = c["text"]
         card_blocks_list.append(
-            f'<div style="background: {c_bg}; border: 1px solid {c_border}; border-radius: 8px; padding: 12px 14px;">'
-            f'<div style="font-size: 11px; font-weight: 800; color: {c_hcolor}; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">'
+            f'<div style="background: {c_bg}; border: 1.5px solid {c_border}; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
+            f'<div style="font-size: 11px; font-weight: 800; color: {c_hcolor}; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;">'
             f'<span>{c_icon}</span> {c_title}'
             f'</div>'
-            f'<div style="font-size: 13px; line-height: 1.45; color: {c_color}; font-weight: 600;">{c_text}</div>'
+            f'<div style="font-size: 13.5px; line-height: 1.5; color: {c_color}; font-weight: 600;">{c_text}</div>'
             f'</div>'
         )
     card_blocks = "".join(card_blocks_list)
 
     thesis_banner_html = (
-        f'<div style="background: #FFFFFF; border: 2px solid {banner_border}; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">'
-        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">'
+        f'<div style="background: #FFFFFF; border: 2px solid {banner_border}; border-radius: 16px; padding: 24px 26px; margin-bottom: 18px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">'
         f'<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">'
         f'<span style="background: #F8FAFC; color: #0F172A; border: 1.5px solid #CBD5E1; font-size: 11.5px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase;">🎯 POSITION CALL</span>'
-        f'<span style="background: {badge_bg}; color: #FFFFFF; border: 1.5px solid {badge_border}; font-size: 12px; font-weight: 900; padding: 3px 12px; border-radius: 9999px; font-family: monospace; letter-spacing: 0.4px;">{badge_text}</span>'
+        f'<span style="background: {badge_bg}; color: #FFFFFF; border: 1.5px solid {badge_border}; font-size: 12px; font-weight: 900; padding: 3px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.4px;">{badge_text}</span>'
         f'</div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">⏱️ 1–2 Year Horizon</span>'
         f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">⚖️ Sizing: {sizing_display}</span>'
         f'</div>'
         f'</div>'
-        f'<div style="font-size: 16px; font-weight: 800; color: {summary_color}; line-height: 1.45; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1.5px solid #F1F5F9;">'
+        f'<div style="font-size: 16.5px; font-weight: 800; color: {summary_color}; line-height: 1.45; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1.5px solid #F1F5F9;">'
         f'{call_summary}'
         f'</div>'
-        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">'
+        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">'
         f'{card_blocks}'
         f'</div>'
         f'</div>'

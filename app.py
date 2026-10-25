@@ -62,7 +62,7 @@ st.set_page_config(
     page_title="StockSage | Institutional AI Financial Intelligence",
     page_icon="📈",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Brand Logo Integration
@@ -610,21 +610,65 @@ st.markdown("""
     ::-webkit-scrollbar-thumb:hover {
         background: var(--ss-slate-400);
     }
+    /* StockSage workspace polish */
+    [data-testid="stAppViewContainer"] { background: #F6F8FB; }
+    [data-testid="stMainBlockContainer"] { max-width: 1480px; padding-top: 1.4rem; padding-bottom: 3rem; }
+    .ss-hero { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(310px,.9fr); gap:28px; align-items:center; padding:28px 32px; margin:8px 0 22px; color:#F8FAFC; border:1px solid rgba(255,255,255,.12); border-radius:20px; background:radial-gradient(ellipse at 78% 8%,rgba(52,211,153,.22),transparent 34%),linear-gradient(125deg,#071F1A 0%,#064E3B 54%,#102B2A 100%); box-shadow:0 14px 34px rgba(15,23,42,.12); }
+    .ss-hero-kicker { display:inline-flex; gap:8px; align-items:center; color:#A7F3D0; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .ss-hero-title { margin:10px 0 8px; color:#FFF; font-size:clamp(28px,3vw,38px); font-weight:800; letter-spacing:-.04em; line-height:1.08; }
+    .ss-hero-subtitle { max-width:650px; margin:0; color:#D1FAE5; font-size:14px; line-height:1.6; }
+    .ss-hero-meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+    .ss-hero-meta span { padding:5px 9px; border:1px solid rgba(255,255,255,.16); border-radius:999px; color:#E2E8F0; background:rgba(255,255,255,.07); font-size:11px; font-weight:600; }
+    .ss-hero-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+    .ss-hero-stat { min-height:84px; display:flex; flex-direction:column; justify-content:center; padding:12px 13px; border:1px solid rgba(255,255,255,.15); border-radius:13px; background:rgba(255,255,255,.075); }
+    .ss-hero-stat-label { color:#A7F3D0; font-size:9px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
+    .ss-hero-stat-value { margin-top:6px; color:#FFF; font-size:15px; font-weight:750; line-height:1.25; }
+    .ss-source-card { padding:12px 14px; border:1px solid #DCE5E8; border-radius:12px; background:linear-gradient(135deg,#F7FBF9,#FFF); }
+    .ss-source-label { margin-bottom:8px; color:#64748B; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .ss-source-row { display:flex; justify-content:space-between; gap:12px; margin:5px 0; color:#334155; font-size:11px; }
+    .ss-source-row strong { color:#0F172A; font-weight:700; text-align:right; }
+    .ss-source-note { margin-top:8px; color:#64748B; font-size:10px; line-height:1.45; }
+    div[data-testid="stVerticalBlockBorderWrapper"] > div { border-radius:16px !important; }
+    div[data-testid="stSegmentedControl"] { white-space:normal; }
+    div[data-testid="stButton"] button { min-height:40px; white-space:normal; line-height:1.25; }
+    @media (max-width:900px) { .ss-hero { grid-template-columns:1fr; gap:20px; padding:24px; } .ss-hero-stats { max-width:720px; } }
+    @media (max-width:600px) {
+        [data-testid="stMainBlockContainer"] { padding:.8rem .8rem 2rem; }
+        .ss-hero { padding:18px 16px; border-radius:16px; gap:13px; }
+        .ss-hero-title { font-size:26px; }
+        .ss-hero-subtitle { font-size:13px; }
+        .ss-hero-meta span:nth-child(n+2) { display:none; }
+        .ss-hero-meta { margin-top:11px; }
+        .ss-hero-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+        .ss-hero-stat { min-height:64px; padding:8px 7px; }
+        .ss-hero-stat:last-child { grid-column:1 / -1; min-height:48px; flex-direction:row; align-items:center; justify-content:space-between; }
+        .ss-hero-stat-label { font-size:8px; letter-spacing:.04em; }
+        .ss-hero-stat-value { font-size:11px; line-height:1.2; overflow-wrap:anywhere; }
+        div[data-testid="stButton"] button { font-size:11px !important; padding-left:.3rem !important; padding-right:.3rem !important; }
+    }
+    .ss-pipeline-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; position:relative; margin-bottom:24px; }
+    @media (max-width:1000px) { .ss-pipeline-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } }
+    @media (max-width:600px) { .ss-pipeline-grid { grid-template-columns:1fr !important; } .pillar-table { display:block; overflow-x:auto; } }
 </style>
 """, unsafe_allow_html=True)
+
+# Prepare accurate universe counts once for the sidebar and hero summary.
+company_options = get_company_list()
+tracked_equity_count = sum(1 for item in company_options if find_company_info(item).get("ticker") != "CUSTOM")
+sector_count = len(get_sector_list())
 
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
     st.markdown("### StockSage")
     st.caption("Institutional Financial Terminal • Ashu Elite Edition")
     
-    st.html("""
-    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border: 1.5px solid #86EFAC; border-radius: 8px; padding: 10px 14px; margin-top: 8px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(5,150,105,0.08);">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 11.5px; font-weight: 800; color: #065F46; letter-spacing: 0.3px;">NSE / BSE GROUNDING</span>
-            <span style="background: #059669; color: #FFFFFF; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">● LIVE</span>
-        </div>
-        <div style="font-size: 11px; color: #047857; margin-top: 4px; font-weight: 600;">501 Nifty Equities • 24 Sectors</div>
+    st.html(f"""
+    <div class="ss-source-card">
+        <div class="ss-source-label">Evidence and data sources</div>
+        <div class="ss-source-row"><span>Company universe</span><strong>{tracked_equity_count} tracked equities</strong></div>
+        <div class="ss-source-row"><span>Market quotes</span><strong>Yahoo Finance · third party</strong></div>
+        <div class="ss-source-row"><span>Research documents</span><strong>Google Search citations</strong></div>
+        <div class="ss-source-note">Exchange and audited filings are identified as sources in the analysis when available.</div>
     </div>
     """)
     st.divider()
@@ -635,7 +679,7 @@ with st.sidebar:
         "Google Gemini API Key",
         value=env_key,
         type="password",
-        help="Free key with 15 RPM & 1M context from Google AI Studio."
+        help="Use a Gemini API key from Google AI Studio. Your key stays masked in this field."
     )
 
     active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
@@ -663,7 +707,7 @@ with st.sidebar:
         demo_mode = st.toggle("Demo Mode", value=False if active_api_key else True)
 
     if demo_mode:
-        st.caption("🧪 **Demo Mode Active**: Evaluating with synthetic demonstration parameters. No API calls or real audit assertions are made.")
+        st.caption("🧪 **Demo Mode Active**: The company assessment uses synthetic sample data and does not represent a real investment analysis.")
 
     st.divider()
     
@@ -686,34 +730,21 @@ with st.sidebar:
     - **Bonus Cap:** Cumulative +10% max
     """)
 
-# Top Hero Brand Navigation Banner
-st.html("""
-<div style="background: linear-gradient(135deg, #022C22 0%, #064E3B 38%, #047857 72%, #0F172A 100%); padding: 22px 28px; border-radius: 14px; margin-bottom: 20px; color: #FFFFFF; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px -2px rgba(5, 150, 105, 0.22); border: 1px solid rgba(255, 255, 255, 0.1);">
+# Top hero: product promise and transparent source attribution.
+st.html(f"""
+<section class="ss-hero">
   <div>
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
-      <span style="font-size: 26px; font-weight: 900; letter-spacing: -0.6px; color: #FFFFFF;">Stock<span style="color: #34D399;">Sage</span></span>
-      <span style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10B981; color: #6EE7B7; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px; letter-spacing: 0.5px; display: inline-flex; align-items: center;"><span class="live-pulse-dot"></span>PRO EDITION</span>
-      <span style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 9999px;">IDEX-7.5SC HYBRID</span>
-    </div>
-    <div style="font-size: 13.5px; color: #D1FAE5; font-weight: 400; max-width: 680px; line-height: 1.5;">
-      Institutional Equity Intelligence & Forensic Consistency Terminal • Yahoo Finance Grounding & 501 Nifty 500 Constituents
-    </div>
+    <div class="ss-hero-kicker">StockSage <span>•</span> Company research workspace</div>
+    <div class="ss-hero-title">See the business behind the ticker.</div>
+    <p class="ss-hero-subtitle">Review company fundamentals with market context, document research, and the IDEX-7.5SC framework in one clear workspace.</p>
+    <div class="ss-hero-meta"><span>IDEX-7.5SC Hybrid Pro</span><span>Source citations included in analysis</span><span>Settings in the sidebar</span></div>
   </div>
-  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; padding: 6px 14px; text-align: center;">
-      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Universe</div>
-      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono', monospace;">501 Stocks</div>
-    </div>
-    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; padding: 6px 14px; text-align: center;">
-      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Taxonomy</div>
-      <div style="font-size: 15px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono', monospace;">24 Sectors</div>
-    </div>
-    <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; padding: 6px 14px; text-align: center;">
-      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Market Feed</div>
-      <div style="font-size: 15px; font-weight: 800; color: #34D399; display: flex; align-items: center; justify-content: center;"><span class="live-pulse-dot"></span>ACTIVE</div>
-    </div>
+  <div class="ss-hero-stats">
+    <div class="ss-hero-stat"><div class="ss-hero-stat-label">Company universe</div><div class="ss-hero-stat-value">{tracked_equity_count} tracked equities</div></div>
+    <div class="ss-hero-stat"><div class="ss-hero-stat-label">Sector groups</div><div class="ss-hero-stat-value">{sector_count} sectors</div></div>
+    <div class="ss-hero-stat"><div class="ss-hero-stat-label">Quote provider</div><div class="ss-hero-stat-value">Yahoo Finance</div></div>
   </div>
-</div>
+</section>
 """)
 
 # --- TERMINAL WORKSPACE NAVIGATION (Single-Stock Analysis vs Nifty 50 Screener & Peer Index) ---
@@ -731,11 +762,11 @@ if terminal_mode == "📊 Nifty 50 Screener & Peer Index":
 
 # --- INTAKE CONSOLE ---
 with st.container(border=True):
-    st.markdown("#### Company Search")
+    st.markdown("#### Start a company review")
+    st.caption("Choose a company, then review its filings and supporting web sources.")
     
     # Fast Preset Benchmark Chips
-    st.caption("⚡ **Marquee Benchmark Equities (1-Click Instant Load):**")
-    preset_cols = st.columns(6)
+    st.caption("Quick picks")
     presets = [
         ("Reliance", "RELIANCE", "🔵"),
         ("HDFC Bank", "HDFCBANK", "🟢"),
@@ -744,14 +775,16 @@ with st.container(border=True):
         ("Dixon Tech", "DIXON", "🔷"),
         ("HDFC Life", "HDFCLIFE", "🔴"),
     ]
-    for idx, (label, sym, emoji) in enumerate(presets):
-        with preset_cols[idx]:
-            if st.button(f"{emoji} {label}", key=f"btn_preset_{sym}", width="stretch"):
-                info = find_company_info(sym)
-                st.session_state["selected_company_choice"] = info["display"]
-                st.rerun()
+    for row_start in range(0, len(presets), 3):
+        preset_cols = st.columns(3)
+        for col_idx, (label, sym, emoji) in enumerate(presets[row_start:row_start + 3]):
+            with preset_cols[col_idx]:
+                if st.button(f"{emoji} {label}", key=f"btn_preset_{sym}", width="stretch"):
+                    info = find_company_info(sym)
+                    st.session_state["selected_company_choice"] = info["display"]
+                    st.rerun()
 
-    c_list = get_company_list()
+    c_list = company_options
     cur_choice = st.session_state.get("selected_company_choice", None)
     default_idx = c_list.index(cur_choice) if (cur_choice and cur_choice in c_list) else None
 
@@ -763,7 +796,7 @@ with st.container(border=True):
             options=c_list,
             index=default_idx,
             placeholder="Search by company name or symbol (e.g. Reliance, HDFC Bank, Infosys, Dixon)...",
-            help="Select any listed Indian company from the Nifty 500 to pull live financial data."
+            help="Search the tracked company universe. Quotes are third-party market data; source citations appear with the analysis."
         )
         if selected_company_str != cur_choice:
             st.session_state["selected_company_choice"] = selected_company_str
@@ -798,17 +831,18 @@ with st.container(border=True):
     with col_sec2:
         doc_type = st.segmented_control(
             "Data Source",
-            ["Live Market & Filings", "Upload Annual Report (PDF)"],
-            default="Live Market & Filings"
+            ["Web research", "Add annual report PDF"],
+            default="Web research",
+            help="Both choices include web research for current filings and supporting documents."
         )
 
     # Optional PDF Upload
     uploaded_file = None
-    if doc_type == "Upload Annual Report (PDF)":
+    if doc_type == "Add annual report PDF":
         uploaded_file = st.file_uploader(
             "Upload Annual Report (PDF)",
             type=["pdf"],
-            help="Upload the annual report. 200–500 page Indian reports are fully ingested by Gemini 3.5 Flash."
+            help="The uploaded report is analyzed alongside current web sources; it does not replace filing research."
         )
 
 # Reset evaluation if user cleared or switched selected company
@@ -948,15 +982,15 @@ if not selected_company_str:
     <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
       <div>
         <div style="font-size: 21px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 10px; letter-spacing: -0.4px;">
-          <span>📈</span> Real-Time Indian Market Pulse & Benchmark Quotes
+          <span>📈</span> Indian Market Snapshot
         </div>
         <div style="font-size: 13.5px; color: #475569; margin-top: 4px;">
-          Live NSE & BSE index levels and marquee Nifty 500 equities. Select any stock above or click <strong>Analyze Stock ↗</strong> below.
+          Market quotes are supplied by Yahoo Finance, a third-party provider. Select a company above to review its analysis and sources.
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
         <span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;">
-          <span style="color: #059669; font-size: 14px;">●</span> LIVE MARKET FEEDS
+          Yahoo Finance · Third-party quotes
         </span>
       </div>
     </div>
@@ -1012,7 +1046,7 @@ if not selected_company_str:
     st.markdown("""
     <div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 10px;">
       <div style="font-size: 17px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-        <span>⚡</span> Marquee Nifty 500 Market Movers & Live Stock Prices
+        <span>⚡</span> Tracked Market Movers
       </div>
       <span style="font-size: 12px; color: #64748B;">Click <strong>Analyze Stock ↗</strong> on any equity to launch terminal</span>
     </div>
@@ -2011,17 +2045,17 @@ def render_graphical_forensic_architecture_html() -> str:
             <span style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px;">StockSage Forensic Architecture & Evaluation Pipeline</span>
           </div>
           <div style="font-size: 13.5px; color: #64748B; margin-top: 3px;">
-            Institutional equity methodology for Indian listed equities — from raw NSE/BSE filings to forensic conviction calls.
+            Company analysis combining market context with current filing and sector research.
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
           <span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px;">Ind AS Aligned</span>
-          <span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px;">Sentinel-1 Verified</span>
+          <span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px;">Internal consistency checks</span>
         </div>
       </div>
 
       <!-- Stage 1-4 Connected Pipeline Infographic -->
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative; margin-bottom: 24px;">
+      <div class="ss-pipeline-grid">
         <!-- Step 1 -->
         <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #059669; border-radius: 12px; padding: 18px 20px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -2029,10 +2063,10 @@ def render_graphical_forensic_architecture_html() -> str:
             <span style="font-size: 11px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 9999px;">DATA LAYER</span>
           </div>
           <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">Universe Ingestion</div>
-          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Pulls 501 Nifty 500 equities, live NSE/BSE tick feeds, and multi-year statutory reports.</div>
+          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Search 501 tracked equities, view Yahoo Finance quotes, and review current filings and supporting reports.</div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">501 Stocks</span>
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">Live Ticks</span>
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">501 tracked</span>
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">Yahoo Finance</span>
           </div>
         </div>
 

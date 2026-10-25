@@ -2197,6 +2197,39 @@ if "idex_result" in st.session_state:
 
     st.markdown("### Institutional Equity Research Scorecard" + (" [SYNTHETIC DEMO]" if is_demo else ""))
 
+    research = res.get("web_research", {})
+    if res.get("analysis_status") == "insufficient_evidence":
+        st.error("Insufficient evidence: " + "; ".join(res.get("evidence_gaps", [])))
+    if research or res.get("evidence_gaps"):
+        with st.expander("🌐 Web research and source evidence", expanded=bool(res.get("evidence_gaps"))):
+            if research.get("search_performed"):
+                st.caption("Google Search grounding was returned by Gemini. Query and source details below are API metadata.")
+                if research.get("search_queries"):
+                    st.markdown("**Search queries**")
+                    for query in research["search_queries"]:
+                        st.write(f"- {query}")
+                if research.get("sources"):
+                    st.markdown("**Grounded sources** (retrieved date is recorded; publication date is shown only when the API provides it)")
+                    for source in research["sources"]:
+                        published = source.get("published_date") or "Publication date not provided by API"
+                        source_label = "THIRD-PARTY MARKET DATA" if source.get("source_type") == "third_party_market_data" else "Web evidence"
+                        st.markdown(f"[{source['source_id']}: {source['title']}]({source['url']}) — {source_label}; {published}; retrieved {source.get('retrieved_at', 'unknown')}")
+                for penalty in res.get("penalties_breakdown", []):
+                    cited = " ".join(f"[{c['source_id']}]({c['url']})" for c in penalty.get("citations", []))
+                    st.markdown(f"**Penalty ({penalty.get('points')} pts):** {penalty.get('reason')}  {cited or '— insufficient evidence citation'}")
+                bonus = res.get("bonuses_breakdown", {})
+                cited_bonus = " ".join(f"[{c['source_id']}]({c['url']})" for c in bonus.get("citations", []))
+                st.markdown(f"**Bonus rationale ({bonus.get('total_bonus_applied', 0)} pts):** {bonus.get('reason', 'Insufficient evidence rationale.')}  {cited_bonus or '— insufficient evidence citation'}")
+                cited_call = " ".join(f"[{c['source_id']}]({c['url']})" for c in res.get("final_call_citations", []))
+                st.markdown(f"**Final call:** {res.get('final_call', 'Insufficient evidence')}  {cited_call or '— insufficient evidence citation'}")
+                if res.get("pio_triggered"):
+                    cited_pio = " ".join(f"[{c['source_id']}]({c['url']})" for c in res.get("pio_reason_citations", []))
+                    st.markdown(f"**PIO basis:** {res.get('pio_reason', 'Insufficient evidence')}  {cited_pio or '— insufficient evidence citation'}")
+                if res.get("evidence_gaps"):
+                    st.warning("Evidence gaps: " + "; ".join(res["evidence_gaps"]))
+            else:
+                st.warning("No Search grounding metadata was returned. Internet research is not verified.")
+
     # Data Consistency & Reconciliation Trail in Dashboard
     sentinel_audit = res.get("sentinel_audit") or st.session_state.get("sentinel_report")
     if sentinel_audit:
@@ -2821,6 +2854,16 @@ if "idex_result" in st.session_state:
             rec_html = ""
             if "receivable_subscore" in p:
                 rec_html = f'<div style="margin-top: 10px; background: #ECFDF5; border-left: 3px solid #059669; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #065F46; border-radius: 0 4px 4px 0;">⚡ Sector Receivable Health Subscore: <strong>{p["receivable_subscore"]}</strong></div>'
+
+            pillar_citations = p.get("citations", [])
+            if pillar_citations:
+                citation_html = "Sources: " + ", ".join(
+                    '<a href="' + html.escape(c.get("url", ""), quote=True) + '" target="_blank">' + html.escape(c.get("source_id", "source")) + '</a>'
+                    for c in pillar_citations if str(c.get("url", "")).startswith(("https://", "http://"))
+                )
+                citation_html = f'<div style="font-size:12px; margin-top:5px;">{citation_html}</div>'
+            else:
+                citation_html = '<div style="font-size:12px; color:#9A3412; margin-top:5px;"><em>Insufficient evidence citations returned for this claim.</em></div>'
                 
             row_html = (
                 f'<tr>'
@@ -2838,7 +2881,7 @@ if "idex_result" in st.session_state:
                 f'</div>'
                 f'</td>'
                 f'<td style="width: 16%; text-align: center;">{badge}</td>'
-                f'<td style="width: 45%;"><div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{p.get("justification", "")}</div>{rec_html}</td>'
+                f'<td style="width: 45%;"><div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{p.get("justification", "")}</div>{citation_html}{rec_html}</td>'
                 f'</tr>'
             )
             table_rows.append(row_html)
@@ -2959,6 +3002,24 @@ if "idex_result" in st.session_state:
             "It does not represent an actual investment analysis, audited statement verification, or buy/sell recommendation.\n\n---\n\n"
         ) if is_demo_export else ""
 
+        def source_refs(items):
+            return ", ".join(f"[{c.get('source_id', 'source')}]({c.get('url', '')})" for c in items if str(c.get("url", "")).startswith(("https://", "http://"))) or "Insufficient evidence citation"
+
+        web_sources_md = "\n".join(
+            f"- [{s.get('source_id')}: {s.get('title')}]({s.get('url')}) — published: {s.get('published_date') or 'not supplied by API'}; retrieved: {s.get('retrieved_at', 'unknown')} ({s.get('source_type', 'web evidence')})"
+            for s in res.get("web_research", {}).get("sources", [])
+        ) or "Insufficient evidence: no grounded web sources returned."
+        pillars_md = "\n".join(
+            f"- **Pillar {p.get('id')}: {p.get('name')}**: {p.get('score')}/{p.get('max_score')} ({p.get('justification')}) — {source_refs(p.get('citations', []))}"
+            for p in res.get("pillars", [])
+        )
+        penalties_md = "\n".join(
+            f"- **{p.get('penalty_name')} ({p.get('points')} pts):** {p.get('reason')} — {source_refs(p.get('citations', []))}"
+            for p in res.get("penalties_breakdown", [])
+        ) or "No penalties applied."
+        bonus = res.get("bonuses_breakdown", {})
+        call_refs = source_refs(res.get("final_call_citations", []))
+
         md_text = f"""{demo_header}# StockSage | Institutional Research Memo: {res.get('company_name')}
 
 ## Metadata
@@ -2967,13 +3028,23 @@ if "idex_result" in st.session_state:
 - **Reporting Period:** {res.get('financial_year')}
 - **Final Rating:** {res.get('verdict')} (Score: {res.get('final_score')}/100)
 - **Position Sizing:** {res.get('position_sizing')}
+- **Evidence status:** {res.get('analysis_status', 'unknown')}
+- **Evidence gaps:** {', '.join(res.get('evidence_gaps', [])) or 'None reported'}
+
+## Web Research Sources
+Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])) or 'No query metadata returned'}
+{web_sources_md}
 
 ## Mandatory Guardrail Tag
 **{res.get('guardrail_tag')}**
 {chr(10).join(['- ' + ev for ev in res.get('guardrail_evidence', [])])}
 
 ## Core 8-Pillar Scorecard
-{chr(10).join([f"- **Pillar {p.get('id')}: {p.get('name')}**: {p.get('score')}/{p.get('max_score')} ({p.get('justification')})" for p in res.get('pillars', [])])}
+{pillars_md}
+
+## Penalties and Bonuses
+{penalties_md}
+- **Bonus total ({bonus.get('total_bonus_applied', 0)} pts):** {bonus.get('reason', 'Insufficient evidence rationale.')} — {source_refs(bonus.get('citations', []))}
 
 ## Sector-Sensitive Receivable Layer
 - DSO: {rec.get('dso_days')} days (Ideal: {rec.get('sector_ideal_dso')})
@@ -2982,7 +3053,7 @@ if "idex_result" in st.session_state:
 - Verdict: {rec.get('receivable_verdict')}
 
 ## Final Call
-**{res.get('final_call')}**
+**{res.get('final_call')}** — {call_refs}
 """
         st.download_button(
             label="Download Investment Memo (.md)",

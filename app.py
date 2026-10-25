@@ -1146,15 +1146,6 @@ if live_data:
     # --- 27 KEY FUNDAMENTAL SCREENER RATIOS (3-COLUMN SPACIOUS MATRIX) ---
     st.html(f'<div class="metrics-3col-grid" style="margin-top: 22px;">{card_val}{card_ret}{card_sol}</div>')
 
-    # --- HEAD-TO-HEAD SECTOR PEER COMPARISON (16 CANONICAL SCREENER METRICS) ---
-    peer_matrix_html = render_head_to_head_comparison_html(
-        target_ticker=target_ticker,
-        target_company_name=target_company_name,
-        target_sector=target_sector,
-        live_data=live_data
-    )
-    st.html(peer_matrix_html)
-
     # --- MULTI-YEAR HISTORICAL FINANCIAL STATEMENTS & FORENSIC CAGR ENGINE ---
     fin_res = get_cached_financial_statements(target_ticker)
     if fin_res and "years" in fin_res and not fin_res.get("error"):

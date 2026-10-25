@@ -1252,7 +1252,7 @@ def render_head_to_head_comparison_html(
         if valid_vals:
             leader_val = min(valid_vals) if lower_better else max(valid_vals)
 
-        td_cells = [f'<td style="padding:10px 14px; font-weight:700; color:#1E293B; font-size:13px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; position:sticky; left:0; z-index:2;">{m_label}</td>']
+        td_cells = [f'<td style="padding:10px 14px; font-weight:700; color:#1E293B; font-size:13px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; position:sticky; left:0; z-index:2; transition:background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);">{m_label}</td>']
         for p in peers:
             v = p.get(m_key, 0.0)
             is_leader = (leader_val is not None and v == leader_val and len(valid_vals) > 1)
@@ -1276,13 +1276,18 @@ def render_head_to_head_comparison_html(
                 cell_style = "color:#334155; font-weight:600; border-bottom:1px solid #E2E8F0;"
                 badge = ''
 
-            td_cells.append(f'<td style="padding:10px 14px; text-align:right; font-size:13.5px; font-family:\'JetBrains Mono\', monospace; {cell_style}">{fmt_str}{badge}</td>')
+            td_cells.append(f'<td style="padding:10px 14px; text-align:right; font-size:13.5px; font-family:\'JetBrains Mono\', monospace; transition:background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1); {cell_style}">{fmt_str}{badge}</td>')
 
-        rows_html.append(f"<tr>{''.join(td_cells)}</tr>")
+        rows_html.append(f"<tr class='peer-matrix-row'>{''.join(td_cells)}</tr>")
 
     table_body = "".join(rows_html)
 
     html = (
+        f'<style>'
+        f'.peer-matrix-row {{ transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1); }}'
+        f'.peer-matrix-row:hover td {{ background-color: #F0FDF4 !important; }}'
+        f'.peer-matrix-row:hover td:first-child {{ background-color: #E6FBF0 !important; }}'
+        f'</style>'
         f'<div style="background:#FFFFFF; border:1.5px solid #CBD5E1; border-radius:16px; padding:24px 26px; margin-top:22px; margin-bottom:24px; box-shadow:0 4px 20px -2px rgba(15,23,42,0.05);">'
         f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">'
         f'<div>'
@@ -1376,7 +1381,22 @@ def render_nifty50_screener_view():
         med_croic = df_export["CROIC %"].median()
         
         kpi_strip_html = f"""
-        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:18px;">
+        <style>
+        .nifty50-screener-row {{
+            border-bottom: 1px solid #F1F5F9;
+            transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+        .nifty50-screener-row td {{
+            transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+        .nifty50-screener-row:hover td {{
+            background-color: #F0FDF4 !important;
+        }}
+        .nifty50-screener-row:hover td:first-child {{
+            background-color: #F0FDF4 !important;
+        }}
+        </style>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:18px;">
           <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px 14px;">
             <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">TOTAL MARKET CAP</div>
             <div style="font-size:18px; font-weight:800; color:#0F172A; margin-top:3px; font-family:monospace;">₹{total_mc:,.0f} Cr</div>
@@ -1428,7 +1448,7 @@ def render_nifty50_screener_view():
         roce_color = "#047857" if r['ROCE %'] >= 20 else "#334155"
 
         rows.append(f"""
-        <tr style="border-bottom:1px solid #F1F5F9; transition:background 0.15s ease;" onmouseover="this.style.background='#F0FDF4'; this.children[0].style.background='#F0FDF4';" onmouseout="this.style.background='#FFFFFF'; this.children[0].style.background='#FFFFFF';">
+        <tr class="nifty50-screener-row">
           <td style="padding:11px 14px; font-weight:700; color:#0284C7; white-space:nowrap; border-right:1px solid #E2E8F0; position:sticky; left:0; background:#FFFFFF; z-index:4; box-shadow: 2px 0 4px rgba(0,0,0,0.02);">
             {comp_name} <span style="font-size:11px; color:#64748B; font-family:'JetBrains Mono', monospace;">({sym})</span>
           </td>

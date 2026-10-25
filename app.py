@@ -22,10 +22,17 @@ import analyzer
 import nifty_universe
 import financial_trends
 import data_integrity_agent
+import nifty_peer_comparison
 importlib.reload(analyzer)
 importlib.reload(nifty_universe)
 importlib.reload(financial_trends)
 importlib.reload(data_integrity_agent)
+importlib.reload(nifty_peer_comparison)
+
+from nifty_peer_comparison import (
+    render_head_to_head_comparison_html,
+    render_nifty50_screener_view
+)
 
 from data_integrity_agent import (
     DataIntegritySentinel,
@@ -447,6 +454,19 @@ st.html("""
   </div>
 </div>
 """)
+
+# --- TERMINAL WORKSPACE NAVIGATION (Single-Stock Audit vs Nifty 50 Screener & Peer Index) ---
+terminal_mode = st.segmented_control(
+    "Terminal View Mode",
+    options=["🔬 Company Forensic Audit", "📊 Nifty 50 Screener & Peer Index"],
+    default=st.session_state.get("active_nav_mode", "🔬 Company Forensic Audit"),
+    key="active_nav_mode",
+    label_visibility="collapsed"
+)
+
+if terminal_mode == "📊 Nifty 50 Screener & Peer Index":
+    render_nifty50_screener_view()
+    st.stop()
 
 # --- FIRST-TIME VISITOR GUIDED ROADMAP & FORENSIC CHEAT SHEET ---
 is_first_time = not bool(st.session_state.get("selected_company_choice"))
@@ -1125,6 +1145,15 @@ if live_data:
 
     # --- 27 KEY FUNDAMENTAL SCREENER RATIOS (3-COLUMN SPACIOUS MATRIX) ---
     st.html(f'<div class="metrics-3col-grid" style="margin-top: 22px;">{card_val}{card_ret}{card_sol}</div>')
+
+    # --- HEAD-TO-HEAD SECTOR PEER COMPARISON (16 CANONICAL SCREENER METRICS) ---
+    peer_matrix_html = render_head_to_head_comparison_html(
+        target_ticker=target_ticker,
+        target_company_name=target_company_name,
+        target_sector=target_sector,
+        live_data=live_data
+    )
+    st.html(peer_matrix_html)
 
     # --- MULTI-YEAR HISTORICAL FINANCIAL STATEMENTS & FORENSIC CAGR ENGINE ---
     fin_res = get_cached_financial_statements(target_ticker)
@@ -2301,6 +2330,15 @@ if "idex_result" in st.session_state:
                 f'</div>'
             )
             st.html(peer_table_html)
+
+        # 16 Canonical Screener Metrics Side-by-Side Comparison Matrix
+        dossier_peer_html = render_head_to_head_comparison_html(
+            target_ticker=target_ticker,
+            target_company_name=target_company_name,
+            target_sector=target_sector,
+            live_data=live_data
+        )
+        st.html(dossier_peer_html)
 
     # --- SECTION C: 8-PILLAR SCORECARD & RADAR PROFILE ---
     if show_all or dossier_tab == "🏛️ 8-Pillar Scorecard & Radar":

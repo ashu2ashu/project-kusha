@@ -61,11 +61,16 @@ PENALTIES & BONUSES:
   - Resilience Bonus (Max +2%): Steady compounders (10-25% CAGR, clean governance).
 
 VERDICT MAPPING:
-- ECS (>=90) — Emerging Compounder (Position size: 10-15%)
-- PCGC (85-89) — Potential Compounder (Position size: 5-10%)
-- Watchlist (70-84) — Quality Tracker (Position size: 0-5%)
-- Red Flag (<70) — Avoid (Position size: 0%)
+- OCGC (>=90) — Outstanding Capital Allocator & Governance Compounder (Position size: 10-15%)
+- PCGC (85-89) — Potential Capital Allocator & Governance Compounder (Position size: 5-10%)
+- QTC (75-84) — Quality Compounder & Moat Tracker (Position size: 0-5%)
+- VTC (60-74) — Value Compounder (Position size: 0-3%)
+- STC (50-59) — Speculative / Cyclical Turnaround (Position size: 0%)
+- FRAGILE (<50) — High Risk / Governance Deficient (Position size: 0%)
 (If PIO triggered: "Auto-Red Flag due to PIO — GOV-RED 🔴", Position size: 0%)
+
+EVIDENCE DISCIPLINE:
+- If required data or statutory evidence is absent, state "insufficient evidence" in justification rather than guessing or assuming a favorable default.
 
 OUTPUT REQUIREMENT:
 Return ONLY valid JSON matching this exact structure:

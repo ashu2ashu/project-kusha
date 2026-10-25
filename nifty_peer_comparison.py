@@ -28,6 +28,11 @@ import streamlit as st
 # 15. Free Cash Flow 3Yrs Rs.Cr.
 # 16. Down %
 
+# Canonical dataset metadata
+NIFTY_50_DATASET_AS_OF = "March 2024 (FY24 Annual Filings, Updated Q2 FY25)"
+NIFTY_50_DATASET_TYPE = "Historical Benchmark Reference Sample"
+NIFTY_50_DATASET_DISCLAIMER = "Peer comparison uses historical FY24 audited financial disclosures as a standardized reference set. Not real-time exchange ticks."
+
 NIFTY_50_DATA: List[Dict[str, Any]] = [
     {
         "company": "Reliance Industries",
@@ -1324,15 +1329,15 @@ def render_nifty50_screener_view():
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
           <div style="font-size:22px; font-weight:800; color:#0F172A; letter-spacing:-0.4px;">
-            Companies in Nifty 50
+            Companies in Nifty 50 (Historical Benchmark Sample)
           </div>
           <div style="font-size:13px; color:#64748B; margin-top:2px;">
-            50 results found • Official NSE benchmark constituents benchmarked across Screener.in value & profitability ratios
+            50 constituents • Standardized historical reference dataset as of March 2024 / FY24 annual filings. Not live exchange data.
           </div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <span style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">
-            ● Nifty 50 Live
+          <span style="background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">
+            📅 As of: FY24 Filings
           </span>
           <span style="background:#F8FAFC; color:#334155; border:1px solid #CBD5E1; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">
             16 Canonical Metrics

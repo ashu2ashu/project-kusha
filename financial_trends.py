@@ -11,6 +11,7 @@ import yfinance as yf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -47,13 +48,13 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
 
     def get_val(df, candidates, col, scale=1e7):
         if df is None or df.empty:
-            return 0.0
+            return None
         for cand in candidates:
             if cand in df.index and col in df.columns:
                 val = df.loc[cand, col]
                 if pd.notna(val):
                     return float(val) / scale
-        return 0.0
+        return None
 
     # 1. P&L Statement (Annual)
     pnl_keys = [
@@ -76,7 +77,7 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
         cands = item[1]
         is_highlight = item[2]
         scale = item[3] if len(item) > 3 else 1e7
-        row_vals = [round(get_val(fin, cands, c, scale), 1) for c in valid_cols]
+        row_vals = [round(v, 1) if v is not None else None for v in [get_val(fin, cands, c, scale) for c in valid_cols]]
         extracted_pnl[label] = {
             "values": row_vals,
             "highlight": is_highlight,
@@ -88,8 +89,8 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
     ebitda_vals = extracted_pnl[op_key]["values"]
     pat_vals = extracted_pnl["Net Profit (PAT)"]["values"]
 
-    opm_vals = [round((e / r * 100), 1) if r > 0 else 0.0 for e, r in zip(ebitda_vals, rev_vals)]
-    npm_vals = [round((p / r * 100), 1) if r > 0 else 0.0 for p, r in zip(pat_vals, rev_vals)]
+    opm_vals = [round((e / r * 100), 1) if (e is not None and r is not None and r > 0) else None for e, r in zip(ebitda_vals, rev_vals)]
+    npm_vals = [round((p / r * 100), 1) if (p is not None and r is not None and r > 0) else None for p, r in zip(pat_vals, rev_vals)]
     extracted_pnl["OPM %"] = {"values": opm_vals, "highlight": False, "is_pct": True}
     extracted_pnl["NPM %"] = {"values": npm_vals, "highlight": False, "is_pct": True}
 
@@ -115,7 +116,7 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
 
     extracted_bs = {}
     for label, cands, is_highlight in bs_keys:
-        row_vals = [round(get_val(bs, cands, c, 1e7), 1) for c in bs_cols]
+        row_vals = [round(v, 1) if v is not None else None for v in [get_val(bs, cands, c, 1e7) for c in bs_cols]]
         extracted_bs[label] = {
             "values": row_vals,
             "highlight": is_highlight
@@ -138,28 +139,34 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
 
     extracted_cf = {}
     for label, cands, is_highlight in cf_keys:
-        row_vals = [round(get_val(cf, cands, c, 1e7), 1) for c in cf_cols]
+        row_vals = [round(v, 1) if v is not None else None for v in [get_val(cf, cands, c, 1e7) for c in cf_cols]]
         if label == "Capital Expenditure (Capex)":
-            row_vals = [-abs(x) if x != 0 else 0.0 for x in row_vals]
+            row_vals = [-abs(x) if x is not None else None for x in row_vals]
         extracted_cf[label] = {
             "values": row_vals,
             "highlight": is_highlight
         }
 
-    # Synthesize FCF if zero
+    # Free Cash Flow reconciliation without fabricating missing values
     cfo_vals = extracted_cf["Cash from Operations (CFO)"]["values"]
     capex_vals = extracted_cf["Capital Expenditure (Capex)"]["values"]
     fcf_vals = extracted_cf["Free Cash Flow (FCF)"]["values"]
-    if all(x == 0 for x in fcf_vals) and any(x != 0 for x in cfo_vals):
-        fcf_vals = [round(cfo + capex, 1) for cfo, capex in zip(cfo_vals, capex_vals)]
-        extracted_cf["Free Cash Flow (FCF)"]["values"] = fcf_vals
+    reconciled_fcf = []
+    for fcf, cfo, capex in zip(fcf_vals, cfo_vals, capex_vals):
+        if fcf is not None:
+            reconciled_fcf.append(fcf)
+        elif cfo is not None and capex is not None:
+            reconciled_fcf.append(round(cfo + capex, 1))
+        else:
+            reconciled_fcf.append(None)
+    extracted_cf["Free Cash Flow (FCF)"]["values"] = reconciled_fcf
 
     cfo_to_pat = []
     for cfo, pat in zip(cfo_vals, pat_vals[-len(cfo_vals):]):
-        if pat > 0:
+        if cfo is not None and pat is not None and pat > 0:
             cfo_to_pat.append(round((cfo / pat) * 100, 1))
         else:
-            cfo_to_pat.append(0.0)
+            cfo_to_pat.append(None)
     extracted_cf["CFO / PAT Conversion %"] = {"values": cfo_to_pat, "highlight": False, "is_pct": True}
 
     # 4. Quarterly Trends (Last 5 Quarters)
@@ -174,39 +181,40 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             ("Net Profit (PAT)", ["Net Income", "Net Income Common Stockholders"], True)
         ]
         for label, cands, is_hl in q_keys:
-            row_vals = [round(get_val(q_fin, cands, c, 1e7), 1) for c in valid_q_cols]
+            row_vals = [round(v, 1) if v is not None else None for v in [get_val(q_fin, cands, c, 1e7) for c in valid_q_cols]]
             extracted_quarterly[label] = {"values": row_vals, "highlight": is_hl}
 
         q_rev = extracted_quarterly.get("Sales / Revenue", {}).get("values", [])
         q_op = extracted_quarterly.get("Operating Profit", {}).get("values", [])
-        q_opm = [round((op / rv * 100), 1) if rv > 0 else 0.0 for op, rv in zip(q_op, q_rev)]
+        q_opm = [round((op / rv * 100), 1) if (op is not None and rv is not None and rv > 0) else None for op, rv in zip(q_op, q_rev)]
         extracted_quarterly["OPM %"] = {"values": q_opm, "highlight": False, "is_pct": True}
 
     # 5. Compound Growth Rates (CAGR) and Key Institutional Metas
     def calc_cagr(start_v, end_v, periods):
-        if start_v and end_v and start_v > 0 and end_v > 0 and periods > 0:
+        if start_v is not None and end_v is not None and start_v > 0 and end_v > 0 and periods > 0:
             return round(((end_v / start_v) ** (1.0 / periods) - 1.0) * 100, 1)
         return None
 
     n_years = len(valid_cols) - 1
-    sales_cagr = calc_cagr(rev_vals[0], rev_vals[-1], n_years) if n_years >= 2 else None
-    pat_cagr = calc_cagr(pat_vals[0], pat_vals[-1], n_years) if n_years >= 2 else None
-    ebitda_cagr = calc_cagr(ebitda_vals[0], ebitda_vals[-1], n_years) if n_years >= 2 else None
+    sales_cagr = calc_cagr(rev_vals[0], rev_vals[-1], n_years) if n_years >= 2 and rev_vals else None
+    pat_cagr = calc_cagr(pat_vals[0], pat_vals[-1], n_years) if n_years >= 2 and pat_vals else None
+    ebitda_cagr = calc_cagr(ebitda_vals[0], ebitda_vals[-1], n_years) if n_years >= 2 and ebitda_vals else None
 
     # Latest YoY Growth
-    sales_yoy = round(((rev_vals[-1] - rev_vals[-2]) / abs(rev_vals[-2])) * 100, 1) if len(rev_vals) >= 2 and rev_vals[-2] > 0 else 0.0
-    pat_yoy = round(((pat_vals[-1] - pat_vals[-2]) / abs(pat_vals[-2])) * 100, 1) if len(pat_vals) >= 2 and pat_vals[-2] > 0 else 0.0
-    ebitda_yoy = round(((ebitda_vals[-1] - ebitda_vals[-2]) / abs(ebitda_vals[-2])) * 100, 1) if len(ebitda_vals) >= 2 and ebitda_vals[-2] > 0 else 0.0
+    sales_yoy = round(((rev_vals[-1] - rev_vals[-2]) / abs(rev_vals[-2])) * 100, 1) if len(rev_vals) >= 2 and rev_vals[-1] is not None and rev_vals[-2] is not None and rev_vals[-2] > 0 else None
+    pat_yoy = round(((pat_vals[-1] - pat_vals[-2]) / abs(pat_vals[-2])) * 100, 1) if len(pat_vals) >= 2 and pat_vals[-1] is not None and pat_vals[-2] is not None and pat_vals[-2] > 0 else None
+    ebitda_yoy = round(((ebitda_vals[-1] - ebitda_vals[-2]) / abs(ebitda_vals[-2])) * 100, 1) if len(ebitda_vals) >= 2 and ebitda_vals[-1] is not None and ebitda_vals[-2] is not None and ebitda_vals[-2] > 0 else None
 
-    valid_conversions = [x for x in cfo_to_pat if x > 0]
-    avg_cfo_pat = round(float(np.mean(valid_conversions)), 1) if valid_conversions else 0.0
+    valid_conversions = [x for x in cfo_to_pat if x is not None and x > 0]
+    avg_cfo_pat = round(float(np.mean(valid_conversions)), 1) if valid_conversions else None
 
     nw_vals = extracted_bs.get("Total Net Worth / Equity", {}).get("values", [])
-    latest_roe = round((pat_vals[-1] / nw_vals[-1] * 100), 1) if nw_vals and nw_vals[-1] > 0 else 0.0
+    latest_roe = round((pat_vals[-1] / nw_vals[-1] * 100), 1) if nw_vals and pat_vals and nw_vals[-1] is not None and pat_vals[-1] is not None and nw_vals[-1] > 0 else None
 
     debt_vals = extracted_bs.get("Total Borrowings / Debt", {}).get("values", [])
-    latest_de = round((debt_vals[-1] / nw_vals[-1]), 2) if nw_vals and nw_vals[-1] > 0 and debt_vals else 0.0
+    latest_de = round((debt_vals[-1] / nw_vals[-1]), 2) if nw_vals and debt_vals and nw_vals[-1] is not None and debt_vals[-1] is not None and nw_vals[-1] > 0 else None
 
+    fetch_time = datetime.now(timezone.utc)
     return {
         "symbol": sym,
         "years": year_labels,
@@ -228,9 +236,12 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             "latest_roe": latest_roe,
             "latest_de": latest_de,
             "n_years": n_years,
-            "latest_opm": opm_vals[-1] if opm_vals else 0.0,
-            "opm_expansion": round(opm_vals[-1] - opm_vals[0], 1) if len(opm_vals) >= 2 else 0.0
-        }
+            "latest_opm": opm_vals[-1] if (opm_vals and opm_vals[-1] is not None) else None,
+            "opm_expansion": round(opm_vals[-1] - opm_vals[0], 1) if len(opm_vals) >= 2 and opm_vals[-1] is not None and opm_vals[0] is not None else None
+        },
+        "data_provider": "Yahoo Finance (unverified third-party dataset / delayed)",
+        "source_disclaimer": "Historical statements retrieved from Yahoo Finance. Not official statutory filings or SEBI disclosures.",
+        "fetched_at": fetch_time.isoformat()
     }
 
 
@@ -492,42 +503,53 @@ def build_balance_sheet_chart(fin_data: Dict[str, Any], company_name: str) -> go
 def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
     """Renders the 4-card Screener-style Compounded Growth & Quality KPI Matrix."""
     sales_cagr = cagr.get("sales_cagr")
-    sales_yoy = cagr.get("sales_yoy", 0.0)
+    sales_yoy = cagr.get("sales_yoy")
     pat_cagr = cagr.get("pat_cagr")
-    pat_yoy = cagr.get("pat_yoy", 0.0)
-    avg_cfo_pat = cagr.get("avg_cfo_pat", 0.0)
-    latest_roe = cagr.get("latest_roe", 0.0)
-    latest_de = cagr.get("latest_de", 0.0)
+    pat_yoy = cagr.get("pat_yoy")
+    avg_cfo_pat = cagr.get("avg_cfo_pat")
+    latest_roe = cagr.get("latest_roe")
+    latest_de = cagr.get("latest_de")
     n_years = cagr.get("n_years", 3)
-    latest_opm = cagr.get("latest_opm", 0.0)
-    opm_exp = cagr.get("opm_expansion", 0.0)
+    latest_opm = cagr.get("latest_opm")
+    opm_exp = cagr.get("opm_expansion")
 
     # Cash conversion forensic tag
-    if avg_cfo_pat >= 100:
-        cfo_badge = '<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟢 Institutional Grade</span>'
-    elif avg_cfo_pat >= 75:
-        cfo_badge = '<span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔵 Sound Accruals</span>'
-    elif avg_cfo_pat >= 50:
-        cfo_badge = '<span style="background: #FFFBEB; color: #B45309; border: 1.5px solid #FDE68A; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟡 Working Capital Drag</span>'
+    if avg_cfo_pat is not None:
+        if avg_cfo_pat >= 100:
+            cfo_badge = '<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟢 Institutional Grade</span>'
+        elif avg_cfo_pat >= 75:
+            cfo_badge = '<span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔵 Sound Accruals</span>'
+        elif avg_cfo_pat >= 50:
+            cfo_badge = '<span style="background: #FFFBEB; color: #B45309; border: 1.5px solid #FDE68A; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟡 Working Capital Drag</span>'
+        else:
+            cfo_badge = '<span style="background: #FEF2F2; color: #B91C1C; border: 1.5px solid #FECACA; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔴 Accrual Divergence</span>'
     else:
-        cfo_badge = '<span style="background: #FEF2F2; color: #B91C1C; border: 1.5px solid #FECACA; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔴 Accrual Divergence</span>'
+        cfo_badge = '<span style="background: #F1F5F9; color: #475569; border: 1.5px solid #CBD5E1; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">⚪ Data Unavailable</span>'
 
     # Debt tag
-    if latest_de <= 0.1:
-        de_badge = '<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Practically Debt Free</span>'
-    elif latest_de <= 0.5:
-        de_badge = '<span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Conservative Leverage</span>'
-    elif latest_de <= 1.0:
-        de_badge = '<span style="background: #FFFBEB; color: #B45309; border: 1.5px solid #FDE68A; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Moderate Debt</span>'
+    if latest_de is not None:
+        if latest_de <= 0.1:
+            de_badge = '<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Practically Debt Free</span>'
+        elif latest_de <= 0.5:
+            de_badge = '<span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Conservative Leverage</span>'
+        elif latest_de <= 1.0:
+            de_badge = '<span style="background: #FFFBEB; color: #B45309; border: 1.5px solid #FDE68A; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Moderate Debt</span>'
+        else:
+            de_badge = '<span style="background: #FEF2F2; color: #B91C1C; border: 1.5px solid #FECACA; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">High Leverage</span>'
     else:
-        de_badge = '<span style="background: #FEF2F2; color: #B91C1C; border: 1.5px solid #FECACA; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">High Leverage</span>'
+        de_badge = '<span style="background: #F1F5F9; color: #475569; border: 1.5px solid #CBD5E1; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">⚪ Data Unavailable</span>'
 
     sales_cagr_str = f"{sales_cagr:.1f}%" if sales_cagr is not None else "N/A"
     pat_cagr_str = f"{pat_cagr:.1f}%" if pat_cagr is not None else "N/A"
-    sales_yoy_color = "#059669" if sales_yoy >= 0 else "#DC2626"
-    pat_yoy_color = "#059669" if pat_yoy >= 0 else "#DC2626"
-    opm_exp_str = f"+{opm_exp:.1f}%" if opm_exp >= 0 else f"{opm_exp:.1f}%"
-    opm_color = "#059669" if opm_exp >= 0 else "#DC2626"
+    sales_yoy_str = f"{sales_yoy:+.1f}%" if sales_yoy is not None else "N/A"
+    sales_yoy_color = ("#059669" if sales_yoy >= 0 else "#DC2626") if sales_yoy is not None else "#64748B"
+    pat_yoy_str = f"{pat_yoy:+.1f}%" if pat_yoy is not None else "N/A"
+    pat_yoy_color = ("#059669" if pat_yoy >= 0 else "#DC2626") if pat_yoy is not None else "#64748B"
+    opm_exp_str = (f"+{opm_exp:.1f}%" if opm_exp >= 0 else f"{opm_exp:.1f}%") if opm_exp is not None else "N/A"
+    opm_color = ("#059669" if opm_exp >= 0 else "#DC2626") if opm_exp is not None else "#64748B"
+    avg_cfo_pat_str = f"{avg_cfo_pat:.1f}%" if avg_cfo_pat is not None else "N/A"
+    latest_roe_str = f"{latest_roe:.1f}%" if latest_roe is not None else "N/A"
+    latest_de_str = f"{latest_de:.2f}x" if latest_de is not None else "N/A"
 
     html = f"""
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 12px; margin-bottom: 22px;">
@@ -541,7 +563,7 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
         </div>
         <div style="margin-top: 10px; font-size: 13.5px; color: #475569; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 8px;">
           <span>Latest Fiscal YoY:</span>
-          <span style="font-weight: 800; font-size: 14.5px; color: {sales_yoy_color}; font-family: 'JetBrains Mono', monospace;">{sales_yoy:+.1f}%</span>
+          <span style="font-weight: 800; font-size: 14.5px; color: {sales_yoy_color}; font-family: 'JetBrains Mono', monospace;">{sales_yoy_str}</span>
         </div>
       </div>
 
@@ -554,7 +576,7 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
         </div>
         <div style="margin-top: 10px; font-size: 13.5px; color: #475569; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 8px;">
           <span>Latest Fiscal YoY:</span>
-          <span style="font-weight: 800; font-size: 14.5px; color: {pat_yoy_color}; font-family: 'JetBrains Mono', monospace;">{pat_yoy:+.1f}%</span>
+          <span style="font-weight: 800; font-size: 14.5px; color: {pat_yoy_color}; font-family: 'JetBrains Mono', monospace;">{pat_yoy_str}</span>
         </div>
       </div>
 
@@ -565,7 +587,7 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
           {cfo_badge}
         </div>
         <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 8px;">
-          <span style="font-size: 30px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{avg_cfo_pat:.1f}%</span>
+          <span style="font-size: 30px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{avg_cfo_pat_str}</span>
           <span style="font-size: 14px; font-weight: 700; color: #64748B;">Avg Cash Yield</span>
         </div>
         <div style="margin-top: 10px; font-size: 13.5px; color: #475569; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 8px;">
@@ -581,12 +603,12 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
           {de_badge}
         </div>
         <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 8px;">
-          <span style="font-size: 30px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{latest_roe:.1f}%</span>
+          <span style="font-size: 30px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{latest_roe_str}</span>
           <span style="font-size: 14px; font-weight: 700; color: #64748B;">ROE</span>
         </div>
         <div style="margin-top: 10px; font-size: 13.5px; color: #475569; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 8px;">
           <span>Debt / Equity:</span>
-          <span style="font-weight: 800; font-size: 14.5px; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{latest_de:.2f}x</span>
+          <span style="font-weight: 800; font-size: 14.5px; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{latest_de_str}</span>
         </div>
       </div>
 
@@ -618,7 +640,10 @@ def render_financial_table_html(statement_dict: Dict[str, Any], years: List[str]
 
         val_cells = []
         for v in vals:
-            if is_pct:
+            if v is None or pd.isna(v):
+                formatted_val = "N/A"
+                val_color = "#94A3B8"
+            elif is_pct:
                 formatted_val = f"{v:.1f}%"
                 val_color = "#059669" if v >= 0 else "#DC2626"
             elif is_eps:

@@ -8,8 +8,9 @@ import os
 import math
 import pandas as pd
 import yfinance as yf
+import time
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "nifty500.csv")
 
@@ -221,40 +222,68 @@ BSE_SCRIP_CODES = {
 
 def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
     """
-    Fetches comprehensive real-time financial metrics for Indian NSE/BSE stocks,
-    matching the signature Screener.in 27-metric table and corporate profile.
+    Fetches real-time financial metrics for Indian NSE/BSE stocks via Yahoo Finance API.
+    Does NOT synthesize or invent missing ratios; unavailable fields are represented as None / 'N/A'.
+    Includes provider attribution and retrieval timestamp.
     """
     if not ticker_symbol or ticker_symbol == "CUSTOM":
         return None
         
-    try:
-        import yfinance as yf
-        ns_ticker = f"{ticker_symbol.upper()}.NS"
-        stock = yf.Ticker(ns_ticker)
-        
-        fi = stock.fast_info
-        cur_price = fi.get("lastPrice") or fi.get("regularMarketPreviousClose")
-        
-        if not cur_price:
-            stock = yf.Ticker(f"{ticker_symbol.upper()}.BO")
+    import yfinance as yf
+    
+    # Graceful upstream retry with exponential backoff (2 attempts)
+    stock = None
+    fi = None
+    cur_price = None
+    
+    for attempt in range(2):
+        try:
+            ns_ticker = f"{ticker_symbol.upper()}.NS"
+            stock = yf.Ticker(ns_ticker)
             fi = stock.fast_info
             cur_price = fi.get("lastPrice") or fi.get("regularMarketPreviousClose")
             
-        if not cur_price:
+            if not cur_price:
+                stock = yf.Ticker(f"{ticker_symbol.upper()}.BO")
+                fi = stock.fast_info
+                cur_price = fi.get("lastPrice") or fi.get("regularMarketPreviousClose")
+                
+            if cur_price:
+                break
+        except Exception:
+            if attempt == 0:
+                time.sleep(1.0)
+                continue
             return None
-            
+
+    if not cur_price or not fi:
+        return None
+
+    try:
         cur_price = round(float(cur_price), 2)
-        prev_close = round(float(fi.get("previousClose", cur_price)), 2) if fi.get("previousClose") else cur_price
+        prev_close_raw = fi.get("previousClose")
+        prev_close = round(float(prev_close_raw), 2) if prev_close_raw is not None else cur_price
         
         change_val = round(cur_price - prev_close, 2)
         change_pct = round((change_val / prev_close) * 100, 2) if prev_close else 0.0
         
-        mcap = fi.get("marketCap", 0)
-        mcap_cr = round(float(mcap) / 1e7, 1) if mcap else 0
-        high52 = round(float(fi.get("yearHigh", 0)), 2) if fi.get("yearHigh") else round(cur_price * 1.15, 2)
-        low52 = round(float(fi.get("yearLow", 0)), 2) if fi.get("yearLow") else round(cur_price * 0.85, 2)
-        dma50 = round(float(fi.get("fiftyDayAverage", 0)), 2) if fi.get("fiftyDayAverage") else round(cur_price * 0.98, 2)
-        dma200 = round(float(fi.get("twoHundredDayAverage", 0)), 2) if fi.get("twoHundredDayAverage") else round(cur_price * 0.94, 2)
+        mcap = fi.get("marketCap")
+        mcap_cr = round(float(mcap) / 1e7, 1) if mcap is not None and mcap > 0 else None
+        
+        # 52W range - DO NOT FABRICATE
+        high52_raw = fi.get("yearHigh")
+        high52 = round(float(high52_raw), 2) if high52_raw is not None and float(high52_raw) > 0 else None
+        
+        low52_raw = fi.get("yearLow")
+        low52 = round(float(low52_raw), 2) if low52_raw is not None and float(low52_raw) > 0 else None
+        
+        # DMAs - DO NOT FABRICATE
+        dma50_raw = fi.get("fiftyDayAverage")
+        dma50 = round(float(dma50_raw), 2) if dma50_raw is not None and float(dma50_raw) > 0 else None
+        
+        dma200_raw = fi.get("twoHundredDayAverage")
+        dma200 = round(float(dma200_raw), 2) if dma200_raw is not None and float(dma200_raw) > 0 else None
+        
         currency = fi.get("currency", "INR")
         
         inf = {}
@@ -263,167 +292,173 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
         except Exception:
             pass
             
-        # 1. Core Valuation & Multiples
-        pe_val = float(inf.get("trailingPE") or 0)
-        fwd_pe = float(inf.get("forwardPE") or 0)
-        pb_val = float(inf.get("priceToBook") or 0)
+        # Core Valuation & Multiples - DO NOT FABRICATE
+        pe_raw = inf.get("trailingPE")
+        pe_val = round(float(pe_raw), 2) if pe_raw is not None and float(pe_raw) > 0 else None
         
-        bv_val = float(inf.get("bookValue") or (cur_price / pb_val if pb_val > 0 else cur_price * 0.45))
+        fwd_pe_raw = inf.get("forwardPE")
+        fwd_pe = round(float(fwd_pe_raw), 2) if fwd_pe_raw is not None and float(fwd_pe_raw) > 0 else None
+        
+        pb_raw = inf.get("priceToBook")
+        pb_val = round(float(pb_raw), 2) if pb_raw is not None and float(pb_raw) > 0 else None
+        
+        bv_raw = inf.get("bookValue")
+        bv_val = round(float(bv_raw), 2) if bv_raw is not None and float(bv_raw) > 0 else None
         
         # Dividend Yield
-        dy_raw = float(inf.get("dividendYield") or 0)
-        if dy_raw > 0 and dy_raw < 0.2:
-            dy_pct = dy_raw * 100
+        dy_raw = inf.get("dividendYield")
+        if dy_raw is not None and float(dy_raw) >= 0:
+            dy_val = float(dy_raw)
+            dy_pct = round(dy_val * 100 if dy_val < 0.2 else dy_val, 2)
         else:
-            dy_pct = dy_raw
+            dy_pct = None
             
-        # Return on Equity (ROE) & Return on Capital Employed (ROCE)
-        roe_raw = float(inf.get("returnOnEquity") or 0)
-        roe_pct = roe_raw * 100 if roe_raw != 0 else 13.5
+        # Profitability Ratios - DO NOT FABRICATE
+        roe_raw = inf.get("returnOnEquity")
+        roe_pct = round(float(roe_raw) * 100, 2) if roe_raw is not None else None
         
-        # Operating & Net Profit Margin
-        opm_raw = float(inf.get("operatingMargins") or 0)
-        opm_pct = opm_raw * 100 if opm_raw != 0 else 18.5
+        opm_raw = inf.get("operatingMargins")
+        opm_pct = round(float(opm_raw) * 100, 2) if opm_raw is not None else None
         
-        npm_raw = float(inf.get("profitMargins") or 0)
-        npm_pct = npm_raw * 100 if npm_raw != 0 else 12.0
+        npm_raw = inf.get("profitMargins")
+        npm_pct = round(float(npm_raw) * 100, 2) if npm_raw is not None else None
         
-        # ROCE & ROIC
-        roce_pct = max(roe_pct * 0.85, opm_pct * 0.65) if roe_pct > 0 else 14.2
-        roic_pct = roce_pct * 0.92
+        # ROCE and ROIC: only calculate if inputs exist, else None
+        roce_pct = None
+        roic_pct = None
         
         # Face Value
-        face_val = 1.00
+        face_val_raw = inf.get("faceValue")
+        face_val = float(face_val_raw) if face_val_raw is not None else None
         
-        # Graham Number: sqrt(22.5 * EPS * BVPS)
-        eps_val = float(inf.get("trailingEps") or (cur_price / pe_val if pe_val > 0 else cur_price * 0.05))
-        if eps_val > 0 and bv_val > 0:
-            graham_num = math.sqrt(22.5 * eps_val * bv_val)
+        # Graham Number: sqrt(22.5 * EPS * BVPS) - strictly calculated if inputs exist
+        eps_raw = inf.get("trailingEps")
+        eps_val = round(float(eps_raw), 2) if eps_raw is not None else None
+        if eps_val is not None and bv_val is not None and eps_val > 0 and bv_val > 0:
+            graham_num = round(math.sqrt(22.5 * eps_val * bv_val), 1)
         else:
-            graham_num = cur_price * 0.92
+            graham_num = None
             
-        # Debt to Equity
+        # Debt to Equity - DO NOT FABRICATE
         de_raw = inf.get("debtToEquity")
         if de_raw is not None:
-            de_val = float(de_raw) / 100 if float(de_raw) > 10 else float(de_raw)
+            raw_f = float(de_raw)
+            de_val = round(raw_f / 100 if raw_f > 10 else raw_f, 2)
         else:
-            de_val = 0.45
+            de_val = None
             
-        # Current Ratio
+        # Current Ratio - DO NOT FABRICATE
         cr_raw = inf.get("currentRatio")
-        cr_val = float(cr_raw) if cr_raw is not None else 1.85
+        cr_val = round(float(cr_raw), 2) if cr_raw is not None else None
         
-        # Market Cap to Sales
+        # Market Cap to Sales - DO NOT FABRICATE
         mc_to_sales_raw = inf.get("priceToSalesTrailing12Months")
-        mc_to_sales_val = float(mc_to_sales_raw) if mc_to_sales_raw is not None else (pe_val * (npm_pct / 100) if pe_val > 0 else 2.5)
+        mc_to_sales_val = round(float(mc_to_sales_raw), 2) if mc_to_sales_raw is not None else None
         
-        # Asset Turnover
+        # Asset Turnover - DO NOT FABRICATE
         tot_rev = float(inf.get("totalRevenue") or 0)
         tot_assets = float(inf.get("totalAssets") or 0)
         if tot_assets > 0 and tot_rev > 0:
             asset_turnover = round(tot_rev / tot_assets, 2)
         else:
-            asset_turnover = 0.75 if "bank" not in ticker_symbol.lower() else 0.08
+            asset_turnover = None
             
-        # Intrinsic Value (DCF / Graham model estimate)
-        intrinsic_val = round(graham_num * 1.12 if graham_num > 0 else cur_price * 1.05, 0)
+        # Intrinsic Value - DO NOT FABRICATE
+        intrinsic_val = graham_num if graham_num is not None else None
         
         # Promoter Holding
         prom_raw = inf.get("heldPercentInsiders")
-        promoter_pct = round(float(prom_raw) * 100, 2) if prom_raw is not None else 0.0
+        promoter_pct = round(float(prom_raw) * 100, 2) if prom_raw is not None else None
         
-        # Interest Coverage
+        # Interest Coverage - DO NOT FABRICATE
         int_cov_raw = inf.get("interestCoverage")
-        if int_cov_raw is not None and float(int_cov_raw) > 0:
-            int_coverage = round(float(int_cov_raw), 2)
-        else:
-            int_coverage = 8.50 if de_val < 1.0 else 2.15
+        int_coverage = round(float(int_cov_raw), 2) if int_cov_raw is not None and float(int_cov_raw) > 0 else None
             
-        # Total Debt in Crores
-        tot_debt_raw = float(inf.get("totalDebt") or 0)
-        if tot_debt_raw > 0:
-            debt_cr = round(tot_debt_raw / 1e7, 0)
-        else:
-            debt_cr = round(mcap_cr * (de_val if de_val < 3 else 0.4), 0)
+        # Total Debt in Crores - DO NOT FABRICATE
+        tot_debt_raw = inf.get("totalDebt")
+        debt_cr = round(float(tot_debt_raw) / 1e7, 1) if tot_debt_raw is not None and float(tot_debt_raw) > 0 else None
             
-        # 5Y Sales Growth
-        rev_growth_raw = float(inf.get("revenueGrowth") or 0)
-        sales_growth_5y = round(rev_growth_raw * 100 if 0 < rev_growth_raw < 1.0 else 14.5, 1)
+        # Revenue Growth - DO NOT FABRICATE
+        rev_growth_raw = inf.get("revenueGrowth")
+        sales_growth_5y = round(float(rev_growth_raw) * 100, 1) if rev_growth_raw is not None else None
         
-        # Free Cash Flow & CMP / FCF
-        fcf_raw = float(inf.get("freeCashflow") or 0)
-        if fcf_raw > 0:
-            cmp_to_fcf = round((mcap / fcf_raw), 1)
-            fcf_5y_cr = round((fcf_raw / 1e7) * 5, 0)
+        # Free Cash Flow & CMP / FCF - DO NOT FABRICATE
+        fcf_raw = inf.get("freeCashflow")
+        if fcf_raw is not None and float(fcf_raw) > 0:
+            fcf_float = float(fcf_raw)
+            cmp_to_fcf = round((mcap / fcf_float), 1) if mcap else None
+            fcf_5y_cr = round((fcf_float / 1e7) * 5, 0)
         else:
-            cmp_to_fcf = round(pe_val * 0.92 if pe_val > 0 else 16.5, 1)
-            fcf_5y_cr = round(mcap_cr * 0.22, 0)
+            cmp_to_fcf = None
+            fcf_5y_cr = None
             
-        # Earnings Yield = (EPS / CMP) * 100 or (1 / PE) * 100
-        if pe_val > 0:
+        # Earnings Yield = (1 / PE) * 100 or (EPS / CMP) * 100 - DO NOT FABRICATE
+        if pe_val is not None and pe_val > 0:
             earnings_yield = round((1.0 / pe_val) * 100, 2)
-        elif cur_price > 0 and eps_val > 0:
+        elif cur_price > 0 and eps_val is not None and eps_val > 0:
             earnings_yield = round((eps_val / cur_price) * 100, 2)
         else:
-            earnings_yield = 4.50
+            earnings_yield = None
             
-        # PEG Ratio
+        # PEG Ratio - DO NOT FABRICATE
         peg_raw = inf.get("pegRatio")
-        if peg_raw is not None and float(peg_raw) > 0:
-            peg_val = round(float(peg_raw), 2)
-        else:
-            peg_val = round(pe_val / max(sales_growth_5y, 8.0), 2) if pe_val > 0 else 1.15
+        peg_val = round(float(peg_raw), 2) if peg_raw is not None and float(peg_raw) > 0 else None
             
-        # EV / EBITDA
+        # EV / EBITDA - DO NOT FABRICATE
         evebitda_raw = inf.get("enterpriseToEbitda")
-        if evebitda_raw is not None and float(evebitda_raw) > 0:
-            evebitda_val = round(float(evebitda_raw), 1)
-        else:
-            evebitda_val = round(pe_val * 0.72 if pe_val > 0 else 13.5, 1)
+        evebitda_val = round(float(evebitda_raw), 1) if evebitda_raw is not None and float(evebitda_raw) > 0 else None
             
-        # Company Profile & Website
+        # Company Profile & Website - Truthful attribution
         website = inf.get("website", "")
-        if not website:
-            clean_sym = ticker_symbol.lower().replace("-", "").replace("_", "")
-            website = f"https://www.{clean_sym}.com"
-        website_display = website.replace("https://", "").replace("http://", "").replace("www.", "").rstrip("/")
+        website_display = website.replace("https://", "").replace("http://", "").replace("www.", "").rstrip("/") if website else "N/A"
         
         about_summary = inf.get("longBusinessSummary", "")
         if not about_summary:
-            about_summary = f"{ticker_symbol} is a leading constituent of the Nifty 500 index listed on the National Stock Exchange of India (NSE). It operates across domestic and institutional channels with established market presence."
+            about_summary = f"Constituent profile for {ticker_symbol} as listed on NSE/BSE."
             
-        price_date = datetime.now().strftime("%d %b - close price")
+        fetch_time = datetime.now(timezone.utc)
+        price_date = fetch_time.strftime("%d %b %Y %H:%M UTC")
         bse_code = BSE_SCRIP_CODES.get(ticker_symbol.upper(), ticker_symbol.upper())
         
-        # 27 Exact Screener Key Ratios
+        # Format high/low string truthfully
+        if high52 is not None and low52 is not None:
+            hl_str = f"₹ {high52:,.0f} / ₹ {low52:,.0f}"
+        elif high52 is not None:
+            hl_str = f"₹ {high52:,.0f} / N/A"
+        elif low52 is not None:
+            hl_str = f"N/A / ₹ {low52:,.0f}"
+        else:
+            hl_str = "N/A"
+
+        # 27 Canonical Screener Key Ratios — Missing values are explicitly "N/A"
         screener_metrics = {
-            "market_cap": f"₹ {mcap_cr:,.0f} Cr." if mcap_cr else "N/A",
-            "current_price": f"₹ {cur_price:,.0f}",
-            "high_low": f"₹ {high52:,.0f} / {low52:,.0f}",
-            "stock_pe": f"{pe_val:.1f}" if pe_val > 0 else "N/A",
-            "book_value": f"₹ {bv_val:,.0f}",
-            "dividend_yield": f"{dy_pct:.2f} %",
-            "roce": f"{roce_pct:.2f} %",
-            "roe": f"{roe_pct:.1f} %",
-            "face_value": f"₹ {face_val:.2f}",
-            "graham_number": f"₹ {graham_num:,.0f}",
-            "current_ratio": f"{cr_val:.2f}",
-            "debt_to_equity": f"{de_val:.2f}",
-            "market_cap_to_sales": f"{mc_to_sales_val:.2f}",
-            "asset_turnover": f"{asset_turnover:.2f}",
-            "intrinsic_value": f"₹ {intrinsic_val:,.0f}",
-            "promoter_holding": f"{promoter_pct:.2f} %",
-            "int_coverage": f"{int_coverage:.2f}",
-            "opm": f"{opm_pct:.1f} %",
-            "debt": f"₹ {debt_cr:,.0f} Cr.",
-            "sales_growth_5yr": f"{sales_growth_5y:.1f} %",
-            "roic": f"{roic_pct:.2f} %",
-            "npm_last_year": f"{npm_pct:.1f} %",
-            "cmp_to_fcf": f"{cmp_to_fcf:.1f}",
-            "earnings_yield": f"{earnings_yield:.2f} %",
-            "free_cash_flow_5yr": f"₹ {fcf_5y_cr:,.0f} Cr.",
-            "peg_ratio": f"{peg_val:.2f}",
-            "evebitda": f"{evebitda_val:.1f}"
+            "market_cap": f"₹ {mcap_cr:,.0f} Cr." if mcap_cr is not None else "N/A",
+            "current_price": f"₹ {cur_price:,.2f}",
+            "high_low": hl_str,
+            "stock_pe": f"{pe_val:.1f}" if pe_val is not None else "N/A",
+            "book_value": f"₹ {bv_val:,.1f}" if bv_val is not None else "N/A",
+            "dividend_yield": f"{dy_pct:.2f} %" if dy_pct is not None else "N/A",
+            "roce": f"{roce_pct:.2f} %" if roce_pct is not None else "N/A",
+            "roe": f"{roe_pct:.1f} %" if roe_pct is not None else "N/A",
+            "face_value": f"₹ {face_val:.2f}" if face_val is not None else "N/A",
+            "graham_number": f"₹ {graham_num:,.1f}" if graham_num is not None else "N/A",
+            "current_ratio": f"{cr_val:.2f}" if cr_val is not None else "N/A",
+            "debt_to_equity": f"{de_val:.2f}" if de_val is not None else "N/A",
+            "market_cap_to_sales": f"{mc_to_sales_val:.2f}" if mc_to_sales_val is not None else "N/A",
+            "asset_turnover": f"{asset_turnover:.2f}" if asset_turnover is not None else "N/A",
+            "intrinsic_value": f"₹ {intrinsic_val:,.1f}" if intrinsic_val is not None else "N/A",
+            "promoter_holding": f"{promoter_pct:.2f} %" if promoter_pct is not None else "N/A",
+            "int_coverage": f"{int_coverage:.2f}" if int_coverage is not None else "N/A",
+            "opm": f"{opm_pct:.1f} %" if opm_pct is not None else "N/A",
+            "debt": f"₹ {debt_cr:,.0f} Cr." if debt_cr is not None else "N/A",
+            "sales_growth_5yr": f"{sales_growth_5y:.1f} %" if sales_growth_5y is not None else "N/A",
+            "roic": f"{roic_pct:.2f} %" if roic_pct is not None else "N/A",
+            "npm_last_year": f"{npm_pct:.1f} %" if npm_pct is not None else "N/A",
+            "cmp_to_fcf": f"{cmp_to_fcf:.1f}" if cmp_to_fcf is not None else "N/A",
+            "earnings_yield": f"{earnings_yield:.2f} %" if earnings_yield is not None else "N/A",
+            "free_cash_flow_5yr": f"₹ {fcf_5y_cr:,.0f} Cr." if fcf_5y_cr is not None else "N/A",
+            "peg_ratio": f"{peg_val:.2f}" if peg_val is not None else "N/A",
+            "evebitda": f"{evebitda_val:.1f}" if evebitda_val is not None else "N/A"
         }
 
         return {
@@ -434,25 +469,29 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
             "change_val": change_val,
             "change_pct": change_pct,
             "market_cap_cr": mcap_cr,
-            "pe_ratio": pe_val if pe_val > 0 else "N/A",
-            "forward_pe": fwd_pe if fwd_pe > 0 else "N/A",
-            "price_to_book": pb_val if pb_val > 0 else "N/A",
+            "pe_ratio": pe_val if pe_val is not None else "N/A",
+            "forward_pe": fwd_pe if fwd_pe is not None else "N/A",
+            "price_to_book": pb_val if pb_val is not None else "N/A",
             "high_52w": high52,
             "low_52w": low52,
             "dma_50": dma50,
             "dma_200": dma200,
-            "dividend_yield": f"{dy_pct:.2f}%",
+            "dividend_yield": f"{dy_pct:.2f}%" if dy_pct is not None else "N/A",
             "debt_to_equity": de_val,
-            "roe": f"{roe_pct:.1f}%",
-            "profit_margin": f"{npm_pct:.1f}%",
+            "roe": f"{roe_pct:.1f}%" if roe_pct is not None else "N/A",
+            "profit_margin": f"{npm_pct:.1f}%" if npm_pct is not None else "N/A",
             "analyst_rating": "Tracked",
             "business_summary": about_summary,
-            "website_url": website,
+            "website_url": website or "",
             "website_display": website_display,
             "about_summary": about_summary,
             "bse_code": bse_code,
             "price_date": price_date,
-            "screener_metrics": screener_metrics
+            "screener_metrics": screener_metrics,
+            "data_provider": "Yahoo Finance (unverified third-party dataset / delayed)",
+            "is_delayed": True,
+            "fetched_at": fetch_time.isoformat(),
+            "source_disclaimer": "Third-party data via Yahoo Finance API. Not official exchange data or audited regulatory filings."
         }
     except Exception:
         return None

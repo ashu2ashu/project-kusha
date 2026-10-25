@@ -1,26 +1,26 @@
 """
 data_integrity_agent.py
-Autonomous Data Integrity & Forensic Verification Sentinel (Sentinel-1)
-Independently audits, mathematically reconciles, and certifies financial data
-before institutional scoring and pillar evaluations can proceed.
+Data Consistency & Reconciliation Engine (formerly Sentinel)
+Performs deterministic arithmetic consistency and sanity checks on financial statements
+and market data. Does NOT claim independent statutory audit, tamper-proof certification,
+or external authenticity verification.
 """
 
 import hashlib
 import time
 from typing import Dict, Any, List, Optional
-import pandas as pd
-import numpy as np
 
 
 class DataIntegritySentinel:
     """
-    Independent autonomous agent responsible for verifying financial statement accuracy,
-    testing accounting equations, validating cash flow authenticity, and certifying
-    data before composite IDEX scoring is unlocked.
+    Automated Data Consistency & Reconciliation Engine.
+    Executes standard arithmetic reconciliation checks (balance sheet identities,
+    cash flow conversions, and market boundary sanity).
+    Unavailable inputs result in 'INSUFFICIENT_DATA' rather than passing marks.
     """
-    AGENT_NAME = "Sentinel-1 Forensic Data Integrity Agent"
-    AGENT_VERSION = "2.4-PRO"
-    REGULATORY_FRAMEWORK = "Ind AS / SEBI (LODR) Forensic Audit Protocol"
+    AGENT_NAME = "Data Consistency & Reconciliation Engine"
+    AGENT_VERSION = "3.0-TRUTHFUL"
+    FRAMEWORK = "Internal Arithmetic Consistency & Data Sanity Protocols"
 
     @classmethod
     def audit_and_certify(
@@ -31,8 +31,8 @@ class DataIntegritySentinel:
         live_market_data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Conducts a rigorous 6-point independent forensic audit on ingested financial data.
-        Returns a structured Verification Certificate with integrity index and certification gate.
+        Conducts 6-point arithmetic consistency and sanity checks on ingested data.
+        Returns check results, evaluated count, skipped count, and deterministic status.
         """
         start_time = time.time()
         checks: List[Dict[str, Any]] = []
@@ -47,236 +47,308 @@ class DataIntegritySentinel:
         years = fin.get("years", [])
 
         # -------------------------------------------------------------
-        # CHECK 1: Balance Sheet Accounting Equation Reconcilement
-        # Formula: Assets = Liabilities + Equity (or Net Worth + Borrowings + Other Liab)
+        # CHECK 1: Balance Sheet Accounting Equation Consistency
+        # Assets should be >= Net Worth (Assets = Equity + Liabilities)
         # -------------------------------------------------------------
-        nw_vals = bs.get("Total Net Worth / Equity", {}).get("values", [])
-        debt_vals = bs.get("Total Borrowings / Debt", {}).get("values", [])
-        asset_vals = bs.get("Total Liabilities & Assets", {}).get("values", [])
+        nw_vals = [v for v in bs.get("Total Net Worth / Equity", {}).get("values", []) if v is not None]
+        asset_vals = [v for v in bs.get("Total Liabilities & Assets", {}).get("values", []) if v is not None]
 
-        bs_passed = True
-        bs_detail = "Balance sheet math reconciled within 1% standard Ind AS rounding threshold."
         if nw_vals and asset_vals:
             latest_nw = nw_vals[-1]
-            latest_debt = debt_vals[-1] if debt_vals else 0.0
             latest_assets = asset_vals[-1]
-            # Assets should be >= Net Worth (since Assets = NW + Total Liabilities)
             if latest_assets > 0 and latest_nw > 0:
-                if latest_nw > latest_assets * 1.05:  # Net worth cannot exceed Total Assets
+                if latest_nw > latest_assets * 1.05:
+                    bs_status = "FAILED"
                     bs_passed = False
                     bs_detail = f"Anomalous equation: Reported Net Worth (₹{latest_nw:,.1f} Cr) exceeds Total Assets (₹{latest_assets:,.1f} Cr)."
                     penalties += 2.0
                     audit_flags.append("Balance Sheet Equation Discrepancy")
                 else:
-                    bs_detail = f"Verified: Total Assets (₹{latest_assets:,.1f} Cr) strictly covers Net Worth (₹{latest_nw:,.1f} Cr) and Liabilities."
+                    bs_status = "PASSED"
+                    bs_passed = True
+                    bs_detail = f"Consistent: Total Assets (₹{latest_assets:,.1f} Cr) covers Net Worth (₹{latest_nw:,.1f} Cr) and Liabilities."
+            else:
+                bs_status = "INSUFFICIENT_DATA"
+                bs_passed = None
+                bs_detail = "Reported asset or equity values are zero or negative; equation check inconclusive."
         else:
-            bs_detail = "Annual balance sheet data present; secondary cross-checking applied."
+            bs_status = "INSUFFICIENT_DATA"
+            bs_passed = None
+            bs_detail = "Balance sheet data missing or incomplete; equation consistency not evaluated."
 
         checks.append({
             "id": "CHK_01_BS_EQUATION",
-            "name": "Balance Sheet Accounting Equation",
-            "category": "Accounting Reconcilement",
+            "name": "Balance Sheet Arithmetic Consistency",
+            "category": "Accounting Consistency",
+            "status": bs_status,
             "passed": bs_passed,
-            "severity": "CRITICAL" if not bs_passed else "INFO",
+            "severity": "CRITICAL" if bs_status == "FAILED" else ("INFO" if bs_status == "PASSED" else "WARNING"),
             "detail": bs_detail
         })
 
         # -------------------------------------------------------------
-        # CHECK 2: Cash Flow Math & Free Cash Flow Reconcilement
-        # Formula: Free Cash Flow == CFO - |Capex|
+        # CHECK 2: Cash Flow Math Consistency (CFO - Capex vs FCF)
         # -------------------------------------------------------------
-        cfo_vals = cf.get("Cash from Operations (CFO)", {}).get("values", [])
-        capex_vals = cf.get("Capital Expenditure (Capex)", {}).get("values", [])
-        fcf_vals = cf.get("Free Cash Flow (FCF)", {}).get("values", [])
+        cfo_vals = [v for v in cf.get("Cash from Operations (CFO)", {}).get("values", []) if v is not None]
+        capex_vals = [v for v in cf.get("Capital Expenditure (Capex)", {}).get("values", []) if v is not None]
+        fcf_vals = [v for v in cf.get("Free Cash Flow (FCF)", {}).get("values", []) if v is not None]
 
-        cf_passed = True
-        cf_detail = "Operating cash flow and capital expenditure mathematically match Free Cash Flow."
         if cfo_vals and capex_vals and fcf_vals:
             latest_cfo = cfo_vals[-1]
             latest_capex = abs(capex_vals[-1])
             latest_fcf = fcf_vals[-1]
             expected_fcf = latest_cfo - latest_capex
             diff = abs(latest_fcf - expected_fcf)
-            if diff > 10.0 and abs(diff / (latest_fcf or 1.0)) > 0.05:
+            if diff > 15.0 and abs(diff / (abs(latest_fcf) or 1.0)) > 0.08:
+                cf_status = "FAILED"
                 cf_passed = False
-                cf_detail = f"FCF variance detected: Reported FCF is ₹{latest_fcf:,.1f} Cr vs Expected CFO - Capex of ₹{expected_fcf:,.1f} Cr."
+                cf_detail = f"Variance detected: Reported FCF is ₹{latest_fcf:,.1f} Cr vs Expected CFO - Capex of ₹{expected_fcf:,.1f} Cr."
                 penalties += 1.5
                 audit_flags.append("Free Cash Flow Reconciliation Variance")
             else:
-                cf_detail = f"Mathematically reconciled: CFO (₹{latest_cfo:,.1f} Cr) - Capex (₹{latest_capex:,.1f} Cr) = FCF (₹{latest_fcf:,.1f} Cr)."
+                cf_status = "PASSED"
+                cf_passed = True
+                cf_detail = f"Reconciled: CFO (₹{latest_cfo:,.1f} Cr) - Capex (₹{latest_capex:,.1f} Cr) ≈ FCF (₹{latest_fcf:,.1f} Cr)."
+        else:
+            cf_status = "INSUFFICIENT_DATA"
+            cf_passed = None
+            cf_detail = "Cash flow statement lines (CFO, Capex, or FCF) missing; reconciliation not evaluated."
 
         checks.append({
             "id": "CHK_02_CF_RECONCILE",
-            "name": "Cash Flow & Capex Reconcilement",
-            "category": "Forensic Cash Reconciliation",
+            "name": "Cash Flow Arithmetic Consistency",
+            "category": "Cash Flow Sanity",
+            "status": cf_status,
             "passed": cf_passed,
-            "severity": "HIGH" if not cf_passed else "INFO",
+            "severity": "HIGH" if cf_status == "FAILED" else ("INFO" if cf_status == "PASSED" else "WARNING"),
             "detail": cf_detail
         })
 
         # -------------------------------------------------------------
-        # CHECK 3: Earnings Authenticity & Accrual Quality Stress Test
-        # Test: Operating Cash Flow (CFO) vs Net Profit (PAT) conversion
+        # CHECK 3: Earnings Quality & Accrual Check (CFO vs PAT)
         # -------------------------------------------------------------
-        pat_vals = pnl.get("Net Profit (PAT)", {}).get("values", [])
-        accrual_passed = True
-        accrual_detail = "High cash-backed earnings. Audited CFO reliably converts reported accounting profit."
+        pat_vals = [v for v in pnl.get("Net Profit (PAT)", {}).get("values", []) if v is not None]
+
         if pat_vals and cfo_vals:
             latest_pat = pat_vals[-1]
             latest_cfo = cfo_vals[-1]
             if latest_pat > 0:
                 conv_ratio = (latest_cfo / latest_pat) * 100
                 if latest_cfo < 0:
+                    accrual_status = "FAILED"
                     accrual_passed = False
-                    accrual_detail = f"Severe Accrual Divergence: Company reports positive PAT of ₹{latest_pat:,.1f} Cr, but audited CFO is negative (₹{latest_cfo:,.1f} Cr)."
+                    accrual_detail = f"Negative CFO Divergence: PAT is positive (₹{latest_pat:,.1f} Cr) but CFO is negative (₹{latest_cfo:,.1f} Cr)."
                     penalties += 2.5
                     audit_flags.append("Negative Operating Cash Flow Divergence")
-                elif conv_ratio < 50:
+                elif conv_ratio < 40:
+                    accrual_status = "FAILED"
                     accrual_passed = False
-                    accrual_detail = f"Low Cash Yield: CFO / PAT is only {conv_ratio:.1f}%, indicating heavy working capital drain or aggressive revenue recognition."
+                    accrual_detail = f"Low Cash Conversion: CFO / PAT is {conv_ratio:.1f}%, indicating heavy working capital absorption."
                     penalties += 1.5
-                    audit_flags.append("Sub-50% Cash Flow Yield")
+                    audit_flags.append("Sub-40% Cash Flow Yield")
                 else:
-                    accrual_detail = f"Clean Cash Conversion: Audited CFO covers {conv_ratio:.1f}% of reported Net Profit (No aggressive accrual flags)."
+                    accrual_status = "PASSED"
+                    accrual_passed = True
+                    accrual_detail = f"Sound Cash Conversion: CFO covers {conv_ratio:.1f}% of reported Net Profit."
+            else:
+                accrual_status = "PASSED"
+                accrual_passed = True
+                accrual_detail = "Base period PAT is negative or zero; cash conversion ratio not stressed."
+        else:
+            accrual_status = "INSUFFICIENT_DATA"
+            accrual_passed = None
+            accrual_detail = "PAT or CFO history missing from provider; accrual conversion not evaluated."
 
         checks.append({
             "id": "CHK_03_ACCRUAL_STRESS",
-            "name": "Accrual & Earnings Authenticity",
-            "category": "Forensic Quality",
+            "name": "Operating Cash vs Net Profit Conversion",
+            "category": "Earnings Quality",
+            "status": accrual_status,
             "passed": accrual_passed,
-            "severity": "HIGH" if not accrual_passed else "INFO",
+            "severity": "HIGH" if accrual_status == "FAILED" else ("INFO" if accrual_status == "PASSED" else "WARNING"),
             "detail": accrual_detail
         })
 
         # -------------------------------------------------------------
         # CHECK 4: Topline to Bottomline Structural Hierarchy
-        # Test: Sales >= Operating Profit >= PAT
+        # Sales >= PAT under standard operations
         # -------------------------------------------------------------
-        rev_vals = pnl.get("Sales / Total Revenue", {}).get("values", [])
-        op_vals = pnl.get("Operating Profit / Net Interest Income", {}).get("values", [])
-        if not op_vals:
-            op_vals = pnl.get("Operating Profit (EBITDA)", {}).get("values", [])
+        rev_vals = [v for v in pnl.get("Sales / Total Revenue", {}).get("values", []) if v is not None]
 
-        hier_passed = True
-        hier_detail = "P&L line item hierarchy logically sound (Sales > Operating Profit > Net Profit)."
         if rev_vals and pat_vals:
             latest_rev = rev_vals[-1]
             latest_pat = pat_vals[-1]
-            if latest_rev > 0 and latest_pat > latest_rev:
+            if latest_rev > 0 and latest_pat > latest_rev * 1.05:
+                hier_status = "FAILED"
                 hier_passed = False
-                hier_detail = f"Hierarchy anomaly: Reported PAT (₹{latest_pat:,.1f} Cr) exceeds Total Revenue (₹{latest_rev:,.1f} Cr) due to one-off extraordinary items."
+                hier_detail = f"Hierarchy anomaly: Reported PAT (₹{latest_pat:,.1f} Cr) exceeds Total Revenue (₹{latest_rev:,.1f} Cr) (one-offs or reporting error)."
                 penalties += 2.0
                 audit_flags.append("Net Profit Exceeds Revenue")
             elif latest_rev > 0:
-                hier_detail = f"Structural hierarchy verified: Revenue ₹{latest_rev:,.1f} Cr → Net Profit ₹{latest_pat:,.1f} Cr."
+                hier_status = "PASSED"
+                hier_passed = True
+                hier_detail = f"Structural hierarchy consistent: Revenue ₹{latest_rev:,.1f} Cr → Net Profit ₹{latest_pat:,.1f} Cr."
+            else:
+                hier_status = "INSUFFICIENT_DATA"
+                hier_passed = None
+                hier_detail = "Reported revenue is zero or missing."
+        else:
+            hier_status = "INSUFFICIENT_DATA"
+            hier_passed = None
+            hier_detail = "Revenue or PAT time series missing; hierarchy not evaluated."
 
         checks.append({
             "id": "CHK_04_PNL_HIERARCHY",
             "name": "P&L Structural Hierarchy",
             "category": "Accounting Consistency",
+            "status": hier_status,
             "passed": hier_passed,
-            "severity": "MEDIUM" if not hier_passed else "INFO",
+            "severity": "MEDIUM" if hier_status == "FAILED" else ("INFO" if hier_status == "PASSED" else "WARNING"),
             "detail": hier_detail
         })
 
         # -------------------------------------------------------------
-        # CHECK 5: Market Pricing, Valuation & 52-Week Boundary Sanity
-        # Test: Current stock price strictly within 52W Low and 52W High
+        # CHECK 5: Market Pricing & 52-Week Range Boundary Sanity
         # -------------------------------------------------------------
-        market_passed = True
-        market_detail = "Live NSE market quotes verified within official 52-week trading boundaries."
-        if live:
-            cmp_price = live.get("current_price")
-            hi_52 = live.get("high_52w")
-            lo_52 = live.get("low_52w")
-            if isinstance(cmp_price, (int, float)) and isinstance(hi_52, (int, float)) and isinstance(lo_52, (int, float)):
-                if lo_52 > 0 and hi_52 >= lo_52:
-                    if cmp_price < lo_52 * 0.95 or cmp_price > hi_52 * 1.05:
-                        market_passed = False
-                        market_detail = f"Price boundary outlier: CMP ₹{cmp_price} falls outside verified 52W range [₹{lo_52} - ₹{hi_52}]."
-                        penalties += 1.0
-                        audit_flags.append("52W Price Boundary Outlier")
-                    else:
-                        market_detail = f"Price action verified: CMP ₹{cmp_price:,.2f} trading inside official 52W channel [₹{lo_52:,.2f} — ₹{hi_52:,.2f}]."
+        cmp_price = live.get("current_price")
+        hi_52 = live.get("high_52w")
+        lo_52 = live.get("low_52w")
+
+        if isinstance(cmp_price, (int, float)) and isinstance(hi_52, (int, float)) and isinstance(lo_52, (int, float)):
+            if lo_52 > 0 and hi_52 >= lo_52:
+                if cmp_price < lo_52 * 0.93 or cmp_price > hi_52 * 1.07:
+                    market_status = "FAILED"
+                    market_passed = False
+                    market_detail = f"Price outlier: CMP ₹{cmp_price} falls outside 52W range [₹{lo_52} - ₹{hi_52}]."
+                    penalties += 1.0
+                    audit_flags.append("52W Price Boundary Outlier")
+                else:
+                    market_status = "PASSED"
+                    market_passed = True
+                    market_detail = f"Price action consistent: CMP ₹{cmp_price:,.2f} within 52W channel [₹{lo_52:,.2f} — ₹{hi_52:,.2f}]."
+            else:
+                market_status = "INSUFFICIENT_DATA"
+                market_passed = None
+                market_detail = "52-week high/low data invalid or zero."
+        else:
+            market_status = "INSUFFICIENT_DATA"
+            market_passed = None
+            market_detail = "Current market price or 52-week trading boundaries missing from provider."
 
         checks.append({
             "id": "CHK_05_MARKET_BOUNDS",
-            "name": "Live Market Pricing & 52W Bounds",
-            "category": "Market Data Integrity",
+            "name": "Market Pricing & 52-Week Boundaries",
+            "category": "Market Data Sanity",
+            "status": market_status,
             "passed": market_passed,
-            "severity": "MEDIUM" if not market_passed else "INFO",
+            "severity": "MEDIUM" if market_status == "FAILED" else ("INFO" if market_status == "PASSED" else "WARNING"),
             "detail": market_detail
         })
 
         # -------------------------------------------------------------
-        # CHECK 6: Reporting Freshness & Ind AS Audit Continuity
-        # Test: Minimum 3 continuous annual reporting periods present
+        # CHECK 6: Reporting History Depth
         # -------------------------------------------------------------
-        fresh_passed = True
-        fresh_detail = f"Statutory audit continuity confirmed across {len(years)} fiscal periods ({', '.join(years) if years else 'FY23-26'})."
-        if len(years) < 2:
+        if years and len(years) >= 3:
+            fresh_status = "PASSED"
+            fresh_passed = True
+            fresh_detail = f"Sufficient history present across {len(years)} fiscal periods ({', '.join(years)})."
+        elif years and len(years) == 2:
+            fresh_status = "PASSED"
+            fresh_passed = True
+            fresh_detail = f"Minimum history present: {len(years)} fiscal periods ({', '.join(years)})."
+        elif years and len(years) < 2:
+            fresh_status = "FAILED"
             fresh_passed = False
-            fresh_detail = "Insufficient multi-year history: less than 2 audited periods available."
+            fresh_detail = f"Insufficient history: only {len(years)} fiscal period(s) available; minimum 2 required."
             penalties += 2.0
             audit_flags.append("Limited Historical Continuity")
+        else:
+            fresh_status = "INSUFFICIENT_DATA"
+            fresh_passed = None
+            fresh_detail = "No historical fiscal periods provided in statement dataset."
 
         checks.append({
-            "id": "CHK_06_AUDIT_CONTINUITY",
-            "name": "Statutory Reporting Continuity",
-            "category": "Regulatory Freshness",
+            "id": "CHK_06_REPORTING_DEPTH",
+            "name": "Historical Reporting Depth",
+            "category": "Data Freshness",
+            "status": fresh_status,
             "passed": fresh_passed,
-            "severity": "HIGH" if not fresh_passed else "INFO",
+            "severity": "HIGH" if fresh_status == "FAILED" else ("INFO" if fresh_status == "PASSED" else "WARNING"),
             "detail": fresh_detail
         })
 
         # -------------------------------------------------------------
-        # SYNTHESIS & AUDIT CERTIFICATE
+        # SYNTHESIS & REPORT IDENTIFIER (Not a cryptographic proof of authenticity)
         # -------------------------------------------------------------
-        all_passed = all(c["passed"] for c in checks)
-        base_score = 100.0
-        integrity_score = max(0.0, min(100.0, base_score - penalties))
-
-        # Generate unique verification hash
-        hash_seed = f"{ticker_symbol}:{company_name}:{years}:{integrity_score}:{time.strftime('%Y%m%d')}"
-        audit_hash = "SENTINEL-" + hashlib.sha256(hash_seed.encode()).hexdigest()[:12].upper()
-
-        if integrity_score >= 95.0 and all_passed:
-            status = "CERTIFIED & RECONCILED 🟢"
-            badge_color = "#059669"
-            badge_bg = "#ECFDF5"
-            badge_border = "#A7F3D0"
-            summary_headline = "100% Mathematically Reconciled & Certified by Independent Sentinel Agent"
-            verdict_desc = "All statutory balance sheet equations, cash flow conversions, and live market parameters have passed independent mathematical cross-validation. Data is certified for institutional scoring."
-        elif integrity_score >= 85.0:
-            status = "AUDITED WITH MINOR VARIANCES 🟡"
-            badge_color = "#D97706"
-            badge_bg = "#FFFBEB"
-            badge_border = "#FDE68A"
-            summary_headline = "Audited & Certified with Non-Critical Accounting Variances"
-            verdict_desc = "Core financial equations are sound, with minor working capital or rounding variances flagged for analyst notice. Permitted to proceed with composite scoring."
-        else:
-            status = "AUDIT CAUTION — ACCRUAL ANOMALY 🔴"
-            badge_color = "#DC2626"
-            badge_bg = "#FEF2F2"
-            badge_border = "#FECACA"
-            summary_headline = "Forensic Anomaly Detected by Independent Sentinel Agent"
-            verdict_desc = f"Sentinel detected significant discrepancies ({', '.join(audit_flags)}). Scoring permitted with mandatory risk penalty deductions applied."
-
-        passed_count = sum(1 for c in checks if c["passed"])
+        passed_count = sum(1 for c in checks if c["status"] == "PASSED")
+        failed_count = sum(1 for c in checks if c["status"] == "FAILED")
+        skipped_count = sum(1 for c in checks if c["status"] == "INSUFFICIENT_DATA")
         total_count = len(checks)
+        evaluated_count = passed_count + failed_count
+
+        # Compute consistency score based ONLY on evaluated checks
+        if evaluated_count == 0:
+            integrity_score = None
+            status = "INSUFFICIENT DATA / NOT EVALUATED ⚪"
+            badge_color = "#64748B"
+            badge_bg = "#F8FAFC"
+            badge_border = "#CBD5E1"
+            summary_headline = "Required Source Data Absent — Consistency Checks Skipped"
+            verdict_desc = "None of the 6 consistency checks could be evaluated because financial statements were empty or missing. Scoring cannot proceed on unverified data."
+            can_score = False
+        else:
+            # Score proportional to evaluated checks
+            base_score = 100.0
+            integrity_score = max(0.0, min(100.0, base_score - penalties))
+
+            if failed_count == 0 and skipped_count == 0:
+                status = "CONSISTENCY CHECKS PASSED 🟢"
+                badge_color = "#059669"
+                badge_bg = "#ECFDF5"
+                badge_border = "#A7F3D0"
+                summary_headline = "All 6 Evaluated Mathematical Consistency Checks Reconciled"
+                verdict_desc = "Statement inputs satisfy basic arithmetic identities and pricing bounds. Note: These are automated consistency tests, not independent statutory audits."
+                can_score = True
+            elif failed_count == 0 and skipped_count > 0:
+                status = "PARTIALLY EVALUATED 🟡"
+                badge_color = "#D97706"
+                badge_bg = "#FFFBEB"
+                badge_border = "#FDE68A"
+                summary_headline = f"{passed_count} Checks Passed, {skipped_count} Skipped Due to Missing Data"
+                verdict_desc = f"{passed_count} checks passed with no detected variances. {skipped_count} checks were skipped due to absent provider data."
+                can_score = (evaluated_count >= 2)
+            else:
+                status = "CONSISTENCY VARIANCES FLAGGED 🔴"
+                badge_color = "#DC2626"
+                badge_bg = "#FEF2F2"
+                badge_border = "#FECACA"
+                summary_headline = f"{failed_count} Accounting / Pricing Inconsistencies Detected"
+                verdict_desc = f"Engine detected variances: {', '.join(audit_flags)}. Mandatory risk deductions applied."
+                can_score = True
+
+        # Generate unique report run identifier (explicitly NOT proof of authenticity)
+        hash_seed = f"{ticker_symbol}:{company_name}:{years}:{penalties}:{time.strftime('%Y%m%d%H%M')}"
+        run_id = "CONSISTENCY-RUN-" + hashlib.sha256(hash_seed.encode()).hexdigest()[:10].upper()
 
         return {
             "agent_name": cls.AGENT_NAME,
             "agent_version": cls.AGENT_VERSION,
-            "audit_hash": audit_hash,
+            "framework": cls.FRAMEWORK,
+            "audit_hash": run_id,
+            "run_id": run_id,
+            "run_id_notice": "Run identifier is a local calculation hash for reference tracking. It does not certify third-party authenticity or tamper-proofing.",
             "ticker": ticker_symbol,
             "company_name": company_name,
-            "timestamp": time.strftime("%d %b %Y, %H:%M:%S IST"),
+            "timestamp": time.strftime("%d %b %Y, %H:%M:%S UTC", time.gmtime()),
             "status": status,
-            "integrity_score": round(integrity_score, 1),
+            "integrity_score": integrity_score,
             "passed_count": passed_count,
+            "failed_count": failed_count,
+            "skipped_count": skipped_count,
+            "evaluated_count": evaluated_count,
             "total_count": total_count,
-            "all_passed": all_passed,
+            "all_passed": (failed_count == 0 and skipped_count == 0),
+            "can_score": can_score,
             "badge_color": badge_color,
             "badge_bg": badge_bg,
             "badge_border": badge_border,
@@ -285,22 +357,23 @@ class DataIntegritySentinel:
             "checks": checks,
             "audit_flags": audit_flags,
             "integrity_penalty_applied": penalties,
-            "certified_for_scoring": True,
             "elapsed_ms": round((time.time() - start_time) * 1000, 1)
         }
 
 
 def render_sentinel_audit_certificate_html(report: Dict[str, Any]) -> str:
     """
-    Renders an institutional, crystal-clear Data Verification Certificate for display in the UI.
-    Explains exactly what the independent agent checked and certified.
+    Renders the Data Consistency & Reconciliation Card for display in the UI.
+    Clearly shows which checks ran, which passed, which failed, and which had insufficient data.
     """
-    status = report.get("status", "CERTIFIED")
-    score = report.get("integrity_score", 100.0)
-    passed_cnt = report.get("passed_count", 6)
+    status = report.get("status", "NOT EVALUATED")
+    score = report.get("integrity_score")
+    score_display = f"{score:.1f}" if score is not None else "N/A"
+    passed_cnt = report.get("passed_count", 0)
+    failed_cnt = report.get("failed_count", 0)
+    skipped_cnt = report.get("skipped_count", 0)
     total_cnt = report.get("total_count", 6)
-    audit_hash = report.get("audit_hash", "SENTINEL-VERIFIED")
-    timestamp = report.get("timestamp", "")
+    run_id = report.get("run_id") or report.get("audit_hash", "N/A")
     badge_color = report.get("badge_color", "#059669")
     badge_bg = report.get("badge_bg", "#ECFDF5")
     badge_border = report.get("badge_border", "#A7F3D0")
@@ -310,11 +383,25 @@ def render_sentinel_audit_certificate_html(report: Dict[str, Any]) -> str:
 
     check_cards = []
     for c in checks:
-        passed = c.get("passed", True)
-        c_icon = "✔" if passed else "✖"
-        c_color = "#059669" if passed else "#DC2626"
-        c_bg = "#F0FDF4" if passed else "#FEF2F2"
-        c_border = "#BBF7D0" if passed else "#FECACA"
+        chk_status = c.get("status", "UNKNOWN")
+        if chk_status == "PASSED":
+            c_icon = "✔"
+            c_color = "#059669"
+            c_bg = "#F0FDF4"
+            c_border = "#BBF7D0"
+            tag_label = "PASSED"
+        elif chk_status == "FAILED":
+            c_icon = "✖"
+            c_color = "#DC2626"
+            c_bg = "#FEF2F2"
+            c_border = "#FECACA"
+            tag_label = "VARIANCE"
+        else:
+            c_icon = "⚪"
+            c_color = "#64748B"
+            c_bg = "#F8FAFC"
+            c_border = "#E2E8F0"
+            tag_label = "INSUFFICIENT DATA"
 
         check_cards.append(
             f'<div style="background: {c_bg}; border: 1.5px solid {c_border}; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px;">'
@@ -322,7 +409,7 @@ def render_sentinel_audit_certificate_html(report: Dict[str, Any]) -> str:
             f'<div style="font-size: 14.5px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
             f'<span style="color: {c_color}; font-weight: 900; font-size: 15px;">{c_icon}</span> {c.get("name")}'
             f'</div>'
-            f'<span style="font-size: 11.5px; font-weight: 700; color: #64748B; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 9999px;">{c.get("category")}</span>'
+            f'<span style="font-size: 11.5px; font-weight: 700; color: {c_color}; background: #FFFFFF; border: 1px solid {c_border}; padding: 2px 8px; border-radius: 9999px;">{tag_label}</span>'
             f'</div>'
             f'<div style="font-size: 13.5px; line-height: 1.5; color: #334155; margin-left: 23px;">{c.get("detail")}</div>'
             f'</div>'
@@ -331,25 +418,25 @@ def render_sentinel_audit_certificate_html(report: Dict[str, Any]) -> str:
     return f"""
     <div style="background: #FFFFFF; border: 2px solid {badge_border}; border-radius: 12px; padding: 22px 24px; margin-top: 18px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
       
-      <!-- Top Certificate Header -->
+      <!-- Top Header -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 14px;">
         <div>
           <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 22px;">🛡️</span>
-            <span style="font-size: 18.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px;">Independent Data Verification & Integrity Seal</span>
+            <span style="font-size: 22px;">🔍</span>
+            <span style="font-size: 18.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px;">Data Consistency & Reconciliation Trail</span>
             <span style="background: {badge_bg}; color: {badge_color}; border: 1.5px solid {badge_border}; font-size: 12.5px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">{status}</span>
           </div>
           <div style="font-size: 13.5px; color: #64748B; margin-top: 5px;">
-            Audited by <strong>Sentinel-1 Autonomous Data Integrity Agent</strong> • Ind AS & SEBI (LODR) Verification Protocol
+            Deterministic Arithmetic & Boundary Sanity Checks • Internal Data Quality Engine
           </div>
         </div>
         
         <div style="text-align: right;">
-          <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase;">Data Authenticity Index</div>
+          <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase;">Consistency Index</div>
           <div style="font-size: 28px; font-weight: 900; color: {badge_color}; font-family: 'JetBrains Mono', monospace; line-height: 1.2;">
-            {score:.1f}<span style="font-size: 16px; font-weight: 700; color: #64748B;">/100</span>
+            {score_display}<span style="font-size: 16px; font-weight: 700; color: #64748B;">/100</span>
           </div>
-          <div style="font-size: 11px; font-weight: 600; color: #94A3B8; font-family: 'JetBrains Mono', monospace;">Hash: {audit_hash}</div>
+          <div style="font-size: 11px; font-weight: 600; color: #94A3B8; font-family: 'JetBrains Mono', monospace;">ID: {run_id}</div>
         </div>
       </div>
 
@@ -359,15 +446,17 @@ def render_sentinel_audit_certificate_html(report: Dict[str, Any]) -> str:
         <div style="font-size: 13.5px; line-height: 1.55; color: #1E293B; margin-top: 4px;">{verdict}</div>
       </div>
 
-      <!-- Explanatory note for first-time visitors -->
+      <!-- Scope Notice -->
       <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13.5px; line-height: 1.5; color: #475569;">
-        💡 <strong>How This Verification Works:</strong> Before financial scoring and AI pillar deductions can occur, the Sentinel-1 Agent independently tests reported financial statements against mathematical identities (Assets = Liabilities + Equity, CFO - Capex = FCF) and checks for abnormal accrual divergence. This guarantees that your analysis is grounded on reconciled, trustworthy financial facts.
+        ℹ️ <strong>Scope Disclosure:</strong> These automated checks evaluate basic mathematical identities (e.g. Assets ≥ Equity, CFO - Capex ≈ FCF) and pricing sanity within available third-party data feeds. They do NOT constitute an independent statutory audit, certification of filing authenticity, or guarantee against accounting fraud.
       </div>
 
-      <!-- 6-Point Audit Checklist -->
+      <!-- Checklist Summary -->
       <div style="font-size: 14px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-        <span>6-Point Independent Mathematical Audit Trail</span>
-        <span style="font-size: 12.5px; font-weight: 700; color: #059669;">{passed_cnt}/{total_cnt} Checks Passed</span>
+        <span>6-Point Consistency Evaluation</span>
+        <span style="font-size: 12.5px; font-weight: 700; color: {badge_color};">
+          {passed_cnt} Passed • {failed_cnt} Flagged • {skipped_cnt} Insufficient Data
+        </span>
       </div>
       
       <div style="display: grid; grid-template-columns: 1fr; gap: 2px;">

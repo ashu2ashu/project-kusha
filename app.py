@@ -49,7 +49,7 @@ from financial_trends import (
     generate_forensic_cagr_insights
 )
 
-from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key
+from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key, SUPPORTED_MODELS, DEFAULT_MODEL
 from nifty_universe import (
     get_company_list, find_company_info, fetch_live_market_data, get_sector_list,
     fetch_live_indices_data, fetch_marquee_stocks_data, fetch_ticker_historical_data
@@ -640,6 +640,13 @@ with st.sidebar:
 
     active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
 
+    selected_gemini_model = st.selectbox(
+        "Gemini Model",
+        options=SUPPORTED_MODELS,
+        index=0,
+        help="Select supported Google Gemini model."
+    )
+
     if env_key:
         st.caption("Key auto-loaded from .env")
 
@@ -647,13 +654,16 @@ with st.sidebar:
     with col_btn1:
         if st.button("Test Key", width="stretch"):
             with st.spinner("Connecting to Google..."):
-                is_valid, msg = verify_gemini_api_key(active_api_key)
+                is_valid, msg = verify_gemini_api_key(active_api_key, model_name=selected_gemini_model)
                 if is_valid:
                     st.success(msg)
                 else:
                     st.error(msg)
     with col_btn2:
         demo_mode = st.toggle("Demo Mode", value=False if active_api_key else True)
+
+    if demo_mode:
+        st.caption("🧪 **Demo Mode Active**: Evaluating with synthetic demonstration parameters. No API calls or real audit assertions are made.")
 
     st.divider()
     
@@ -686,7 +696,7 @@ st.html("""
       <span style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 9999px;">IDEX-7.5SC HYBRID</span>
     </div>
     <div style="font-size: 13.5px; color: #D1FAE5; font-weight: 400; max-width: 680px; line-height: 1.5;">
-      Institutional Equity Intelligence & Forensic Audit Terminal • Real-Time NSE/BSE Market Grounding & 501 Nifty 500 Constituents
+      Institutional Equity Intelligence & Forensic Consistency Terminal • Yahoo Finance Grounding & 501 Nifty 500 Constituents
     </div>
   </div>
   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -699,18 +709,18 @@ st.html("""
       <div style="font-size: 15px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono', monospace;">24 Sectors</div>
     </div>
     <div style="background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.16); border-radius: 10px; padding: 6px 14px; text-align: center;">
-      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Feed</div>
-      <div style="font-size: 15px; font-weight: 800; color: #34D399; display: flex; align-items: center; justify-content: center;"><span class="live-pulse-dot"></span>LIVE</div>
+      <div style="font-size: 10.5px; color: #A7F3D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Market Feed</div>
+      <div style="font-size: 15px; font-weight: 800; color: #34D399; display: flex; align-items: center; justify-content: center;"><span class="live-pulse-dot"></span>ACTIVE</div>
     </div>
   </div>
 </div>
 """)
 
-# --- TERMINAL WORKSPACE NAVIGATION (Single-Stock Audit vs Nifty 50 Screener & Peer Index) ---
+# --- TERMINAL WORKSPACE NAVIGATION (Single-Stock Analysis vs Nifty 50 Screener & Peer Index) ---
 terminal_mode = st.segmented_control(
     "Terminal View Mode",
-    options=["🔬 Company Forensic Audit", "📊 Nifty 50 Screener & Peer Index"],
-    default=st.session_state.get("active_nav_mode", "🔬 Company Forensic Audit"),
+    options=["🔬 Company Forensic Analysis", "📊 Nifty 50 Screener & Peer Index"],
+    default=st.session_state.get("active_nav_mode", "🔬 Company Forensic Analysis"),
     key="active_nav_mode",
     label_visibility="collapsed"
 )
@@ -1235,7 +1245,7 @@ if live_data:
         f'<div style="margin-top: 8px; font-size: 13.5px; color: #64748B; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">'
         f'<span>🌐 <a href="{website_url}" target="_blank" style="color: #2563EB; font-weight: 600; text-decoration: none;">{website_display} ↗</a></span>'
         f'<span>• Constituent of Nifty 500</span>'
-        f'<span>• Ind AS Audited Statutory Disclosures</span>'
+        f'<span>• Reporting Standards: Ind AS</span>'
         f'</div>'
         f'</div>'
         f'</div>'
@@ -1244,7 +1254,7 @@ if live_data:
         f'<span style="font-size: 32px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1;">{cur_str}</span>'
         f'<span style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}40; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 800;">{delta_str}</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 6px;">Real-Time NSE/BSE Quote • {price_date}</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 6px;">Market Quote (Yahoo Finance feed) • {price_date}</div>'
         f'<div style="margin-top: 10px; width: 220px; margin-left: auto;">'
         f'<div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748B; font-weight: 700; margin-bottom: 4px;">'
         f'<span>52W L: ₹ {l52_num:,.0f}</span>'
@@ -1276,20 +1286,20 @@ if live_data:
         f'<ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-direction: column; gap: 9px;">'
         f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
         f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
-        f'<span><strong style="color: #0F172A; font-weight: 700;">Sector Benchmark:</strong> Verified constituent of {target_sector} peer index.</span>'
+        f'<span><strong style="color: #0F172A; font-weight: 700;">Sector Benchmark:</strong> Constituent of {target_sector} peer index.</span>'
         f'</li>'
         f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
         f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
-        f'<span><strong style="color: #0F172A; font-weight: 700;">Audit Standard:</strong> Statutory Ind AS governance & SEBI quarterly disclosures.</span>'
+        f'<span><strong style="color: #0F172A; font-weight: 700;">Accounting Framework:</strong> Reported under Ind AS & SEBI (LODR) guidelines.</span>'
         f'</li>'
         f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
         f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
-        f'<span><strong style="color: #0F172A; font-weight: 700;">Listing Exchanges:</strong> Active trading on NSE ({target_ticker}) and BSE ({bse_code}).</span>'
+        f'<span><strong style="color: #0F172A; font-weight: 700;">Listing Exchanges:</strong> Listed on NSE ({target_ticker}) and BSE ({bse_code}).</span>'
         f'</li>'
         f'</ul>'
         f'</div>'
         f'<div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">'
-        f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Ind AS Audit Tracking</span>'
+        f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Ind AS Standards</span>'
         f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Nifty 500 Constituent</span>'
         f'</div>'
         f'</div>'
@@ -1298,7 +1308,7 @@ if live_data:
     )
     st.html(facts_full_html)
 
-    # --- INDEPENDENT SENTINEL-1 FORENSIC DATA INTEGRITY & AUDIT SEAL (RUNS IN BACKGROUND) ---
+    # --- AUTOMATED DATA CONSISTENCY & RECONCILIATION ENGINE (RUNS IN BACKGROUND) ---
     fin_res = get_cached_financial_statements(target_ticker)
     sentinel_report = DataIntegritySentinel.audit_and_certify(
         ticker_symbol=target_ticker,
@@ -1308,11 +1318,15 @@ if live_data:
     )
     st.session_state["sentinel_report"] = sentinel_report
 
-    s_passed = sentinel_report.get("passed_count", 6)
-    s_total = sentinel_report.get("total_count", 6)
-    s_score = sentinel_report.get("integrity_score", 100.0)
-    s_hash = sentinel_report.get("audit_hash", "VERIFIED")
-    with st.expander(f"🛡️ Background Data Verification: Sentinel-1 Certified ({s_passed}/{s_total} Ind AS Checks Passed • Authenticity Index: {s_score:.0f}/100 • Hash: {s_hash})", expanded=False):
+    s_passed = sentinel_report.get("passed_count", 0)
+    s_failed = sentinel_report.get("failed_count", 0)
+    s_skipped = sentinel_report.get("skipped_count", 0)
+    s_score = sentinel_report.get("integrity_score")
+    s_score_str = f"{s_score:.0f}/100" if s_score is not None else "N/A"
+    s_run_id = sentinel_report.get("run_id") or sentinel_report.get("audit_hash", "RUN-ID")
+    s_status = sentinel_report.get("status", "PARTIALLY EVALUATED")
+
+    with st.expander(f"🔍 Automated Data Consistency Trail ({s_passed} Passed • {s_failed} Flagged • {s_skipped} Skipped • Score: {s_score_str} • ID: {s_run_id})", expanded=False):
         st.html(render_sentinel_audit_certificate_html(sentinel_report))
 
     # --- INTERACTIVE TICKER PRICE & TECHNICAL CHART ---
@@ -2126,14 +2140,14 @@ def render_graphical_forensic_architecture_html() -> str:
 
 # --- EXECUTION ENGINE ---
 if run_btn:
-    with st.status(f"Auditing {target_company_name} with IDEX-7.5SC...", expanded=True) as status:
-        st.write("Ingesting verified audited Ind AS financial tables & live market feeds...")
-        time.sleep(0.3)
-        st.write("Auditing statutory auditor qualifications & related-party schedules...")
-        time.sleep(0.3)
-        st.write("Testing Sector Receivable Health (DSO, Aging, Provision Coverage)...")
-        time.sleep(0.3)
-        st.write("Enforcing Promoter Integrity Override (PIO) & PPRM Guardrails...")
+    with st.status(f"Evaluating {target_company_name} with IDEX-7.5SC...", expanded=True) as status:
+        st.write("Ingesting financial statement tables & market feeds...")
+        time.sleep(0.2)
+        st.write("Evaluating statutory disclosures & related-party schedules...")
+        time.sleep(0.2)
+        st.write("Evaluating Sector Receivable Health (DSO, Aging, Provision Coverage)...")
+        time.sleep(0.2)
+        st.write("Enforcing deterministic Python scoring, PIO guardrails & penalty/bonus caps...")
         
         try:
             sentinel_rep = st.session_state.get("sentinel_report", None)
@@ -2148,32 +2162,54 @@ if run_btn:
                     pdf_bytes=pdf_bytes,
                     live_data=live_data,
                     custom_prompt=custom_prompt,
-                    sentinel_report=sentinel_rep
+                    sentinel_report=sentinel_rep,
+                    selected_model=selected_gemini_model
                 )
             st.session_state["idex_result"] = result
             status.update(label=f"Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
         except Exception as e:
             status.update(label="Evaluation Failed", state="error")
             st.error(f"Analysis Error: {str(e)}")
-            with st.expander("Technical Traceback"):
+            with st.expander("Technical Details"):
                 st.exception(e)
 
 # --- RESULTS DASHBOARD ---
 if "idex_result" in st.session_state:
     res = st.session_state["idex_result"]
+    is_demo = res.get("is_synthetic_demo", False) or demo_mode
     st.write("")
-    st.markdown("### Institutional Equity Research Scorecard")
 
-    # Sentinel Data Integrity Certification Seal in Dashboard (Background Verification)
+    if is_demo:
+        st.html(
+            f'<div style="background: #FFFBEB; border: 2px solid #F59E0B; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);">'
+            f'<span style="font-size: 26px;">⚠️</span>'
+            f'<div>'
+            f'<div style="font-size: 14.5px; font-weight: 800; color: #92400E; text-transform: uppercase; letter-spacing: 0.5px;">'
+            f'Synthetic Demo Mode — Not Investment Research'
+            f'</div>'
+            f'<div style="font-size: 13.5px; color: #B45309; margin-top: 2px; line-height: 1.4;">'
+            f'This evaluation was generated using synthetic demonstration data for UI illustration. '
+            f'No actual statutory audit or regulatory claims are made for {target_company_name}.'
+            f'</div>'
+            f'</div>'
+            f'</div>'
+        )
+
+    st.markdown("### Institutional Equity Research Scorecard" + (" [SYNTHETIC DEMO]" if is_demo else ""))
+
+    # Data Consistency & Reconciliation Trail in Dashboard
     sentinel_audit = res.get("sentinel_audit") or st.session_state.get("sentinel_report")
     if sentinel_audit:
-        with st.expander(f"🛡️ Background Data Verification: {sentinel_audit.get('status', 'CERTIFIED')} by {sentinel_audit.get('agent_name', 'Sentinel-1 Agent')} (Hash: {sentinel_audit.get('audit_hash', 'VERIFIED')})", expanded=False):
+        s_score = sentinel_audit.get('integrity_score')
+        s_score_text = f"{s_score:.0f}/100" if s_score is not None else "N/A"
+        s_run_id = sentinel_audit.get('run_id') or sentinel_audit.get('audit_hash', 'RUN-ID')
+        with st.expander(f"🔍 Data Consistency Trail: {sentinel_audit.get('status', 'EVALUATED')} (Score: {s_score_text} • ID: {s_run_id})", expanded=False):
             st.html(
-                f'<div style="background: {sentinel_audit.get("badge_bg", "#ECFDF5")}; border: 1.5px solid {sentinel_audit.get("badge_border", "#A7F3D0")}; border-left: 5px solid {sentinel_audit.get("badge_color", "#059669")}; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
-                f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15.5px;">🛡️ Evaluated on {sentinel_audit.get("agent_name", "Sentinel-1 Agent")} Certified Data</span>'
+                f'<div style="background: {sentinel_audit.get("badge_bg", "#F8FAFC")}; border: 1.5px solid {sentinel_audit.get("badge_border", "#CBD5E1")}; border-left: 5px solid {sentinel_audit.get("badge_color", "#059669")}; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
+                f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15.5px;">🔍 {sentinel_audit.get("agent_name", "Data Consistency Engine")}</span>'
                 f'<div style="font-size: 13.5px; color: #475569; margin-top: 3px;">{sentinel_audit.get("verdict_desc", "")}</div></div>'
-                f'<div style="text-align: right;"><span style="background: {sentinel_audit.get("badge_color", "#059669")}; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px;">{sentinel_audit.get("status", "CERTIFIED")}</span>'
-                f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Hash: {sentinel_audit.get("audit_hash", "VERIFIED")}</div></div>'
+                f'<div style="text-align: right;"><span style="background: {sentinel_audit.get("badge_color", "#059669")}; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px;">{sentinel_audit.get("status", "EVALUATED")}</span>'
+                f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Run ID: {s_run_id}</div></div>'
                 f'</div>'
             )
 
@@ -2915,7 +2951,15 @@ if "idex_result" in st.session_state:
             width="stretch"
         )
     with exp_col2:
-        md_text = f"""# StockSage | Institutional Research Memo: {res.get('company_name')}
+        is_demo_export = res.get("is_synthetic_demo", False)
+        demo_header = (
+            "> [!WARNING]\n"
+            "> **SYNTHETIC DEMO MODE — NOT INVESTMENT RESEARCH OR ADVICE**\n"
+            "> This document contains purely synthetic illustrative data generated for UI testing. "
+            "It does not represent an actual investment analysis, audited statement verification, or buy/sell recommendation.\n\n---\n\n"
+        ) if is_demo_export else ""
+
+        md_text = f"""{demo_header}# StockSage | Institutional Research Memo: {res.get('company_name')}
 
 ## Metadata
 - **Target Company:** {res.get('company_name')}
@@ -2950,6 +2994,12 @@ if "idex_result" in st.session_state:
 
     with exp_col3:
         # Printable Executive HTML Report for PDF generation via Browser Print
+        demo_html_banner = (
+            '<div style="background:#fef3c7; border:2px solid #f59e0b; padding:12px 16px; border-radius:6px; font-size:13.5px; font-weight:700; color:#92400e; margin-bottom:18px; text-align:center;">'
+            '⚠️ SYNTHETIC DEMO MODE — FOR TESTING ONLY. NOT INVESTMENT RESEARCH OR ADVICE.'
+            '</div>'
+        ) if is_demo_export else ""
+
         html_report = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -2969,6 +3019,7 @@ if "idex_result" in st.session_state:
 </style>
 </head>
 <body>
+    {demo_html_banner}
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
             <h1>StockSage • {res.get('company_name', 'Company')}</h1>

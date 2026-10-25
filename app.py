@@ -544,60 +544,6 @@ if terminal_mode == "📊 Nifty 50 Screener & Peer Index":
     render_nifty50_screener_view()
     st.stop()
 
-# --- FIRST-TIME VISITOR GUIDED ROADMAP & FORENSIC CHEAT SHEET ---
-is_first_time = not bool(st.session_state.get("selected_company_choice"))
-with st.expander("🧭 **New to StockSage? Click to view the 3-Minute Quick Guide & Forensic Framework**", expanded=is_first_time):
-    st.html("""
-    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #86EFAC; border-radius: 12px; padding: 22px 26px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-      <div style="font-size: 20px; font-weight: 800; color: #065F46; display: flex; align-items: center; gap: 10px;">
-        <span>🧭</span> How StockSage Evaluates Indian Equities (Guided Framework)
-      </div>
-      <div style="font-size: 15px; color: #334155; margin-top: 6px; line-height: 1.6;">
-        Welcome! StockSage is built for both retail investors and seasoned institutional analysts. We evaluate Indian listed stocks using a rigorous 4-step structural pattern to protect you from accounting traps and identify authentic compounders.
-      </div>
-
-      <!-- 4-Step Structural Architecture Grid -->
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 18px;">
-        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #059669; border-radius: 10px; padding: 16px 18px;">
-          <div style="font-size: 12.5px; font-weight: 800; color: #059669; text-transform: uppercase;">STEP 1 • SELECTION</div>
-          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">Search Any Stock</div>
-          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Pick from 501 Nifty 500 stocks or click a Marquee Giant chip to load live audited data.</div>
-        </div>
-        
-        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #2563EB; border-radius: 10px; padding: 16px 18px;">
-          <div style="font-size: 12.5px; font-weight: 800; color: #2563EB; text-transform: uppercase;">STEP 2 • VERIFICATION</div>
-          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">Sentinel-1 Audit</div>
-          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Autonomous agent cross-checks balance sheet equations, cash math & accrual authenticity.</div>
-        </div>
-
-        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #D97706; border-radius: 10px; padding: 16px 18px;">
-          <div style="font-size: 12.5px; font-weight: 800; color: #D97706; text-transform: uppercase;">STEP 3 • DEEP DIVE</div>
-          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">4-Year Trends & CAGR</div>
-          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Examine multi-year P&L, Balance Sheet, and Free Cash Flow charts in ₹ Crores.</div>
-        </div>
-
-        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #7C3AED; border-radius: 10px; padding: 16px 18px;">
-          <div style="font-size: 12.5px; font-weight: 800; color: #7C3AED; text-transform: uppercase;">STEP 4 • SCORING</div>
-          <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 4px;">8-Pillar AI Dossier</div>
-          <div style="font-size: 14px; color: #64748B; margin-top: 5px; line-height: 1.5;">Final 0–100 score, risk penalties, Big 4 auditor notes, and position sizing recommendation.</div>
-        </div>
-      </div>
-
-      <!-- Key Metrics Made Simple (Beginner Cheat Sheet) -->
-      <div style="margin-top: 20px; padding-top: 16px; border-top: 1.5px dashed #CBD5E1;">
-        <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
-          📖 Key Forensic Concepts (Explained in Plain English)
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; font-size: 14.5px; color: #334155; line-height: 1.55;">
-          <div>• <strong style="color: #065F46;">CFO / PAT Conversion:</strong> Compares actual cash banked from operations (CFO) against reported net profit (PAT). Over 95% is institutional grade; below 50% warns that profits may be artificial or tied up in unpaid invoices.</div>
-          <div>• <strong style="color: #1E40AF;">Debt to Equity (D/E):</strong> Measures how much loan money the company relies on. Below 0.2 means practically debt-free; above 1.0 indicates high financial distress risk.</div>
-          <div>• <strong style="color: #B45309;">Compounded Sales & Profit CAGR:</strong> Annualized growth rate of revenue and profits over 3–5 years to separate short-term spikes from durable long-term expansion.</div>
-          <div>• <strong style="color: #5B21B6;">IDEX Composite Score (0–100):</strong> ≥85 = High-Conviction Compounder, 70–84 = Quality Tracker, <50 = High Forensic or Governance Red Flags.</div>
-        </div>
-      </div>
-    </div>
-    """)
-
 # --- INTAKE CONSOLE ---
 with st.container(border=True):
     st.markdown("#### Company Search")
@@ -1861,6 +1807,148 @@ def render_valuation_compass_html(res, live_data):
     )
     return html
 
+def render_graphical_forensic_architecture_html() -> str:
+    """
+    Renders an innovative graphical pipeline and visual benchmark compass for the
+    StockSage Forensic Evaluation Architecture, replacing walls of text with intuitive infographics.
+    """
+    return """
+    <div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 16px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 22px;">🧭</span>
+            <span style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px;">StockSage Forensic Architecture & Evaluation Pipeline</span>
+          </div>
+          <div style="font-size: 13.5px; color: #64748B; margin-top: 3px;">
+            Institutional equity methodology for Indian listed equities — from raw NSE/BSE filings to forensic conviction calls.
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px;">Ind AS Aligned</span>
+          <span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px;">Sentinel-1 Verified</span>
+        </div>
+      </div>
+
+      <!-- Stage 1-4 Connected Pipeline Infographic -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative; margin-bottom: 24px;">
+        <!-- Step 1 -->
+        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #059669; border-radius: 12px; padding: 18px 20px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #059669; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">1</span>
+            <span style="font-size: 11px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 9999px;">DATA LAYER</span>
+          </div>
+          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">Universe Ingestion</div>
+          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Pulls 501 Nifty 500 equities, live NSE/BSE tick feeds, and multi-year statutory reports.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">501 Stocks</span>
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">Live Ticks</span>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #2563EB; border-radius: 12px; padding: 18px 20px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #2563EB; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">2</span>
+            <span style="font-size: 11px; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 9999px;">AUDIT LAYER</span>
+          </div>
+          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">Sentinel-1 Verification</div>
+          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Runs 6-point mathematical cross-check to verify balance equations, cash flows & zero hallucinations.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">6/6 Check</span>
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">SHA Seal</span>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #D97706; border-radius: 12px; padding: 18px 20px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #D97706; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(217,119,6,0.3);">3</span>
+            <span style="font-size: 11px; font-weight: 800; color: #D97706; background: #FFFBEB; border: 1px solid #FDE68A; padding: 2px 8px; border-radius: 9999px;">CAGR LAYER</span>
+          </div>
+          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">Multi-Year Trends</div>
+          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Computes 3–5 year compounded growth across Revenue, Profit, ROCE, and Free Cash Flow.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">5Y CAGR</span>
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">FCF Engine</span>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #7C3AED; border-radius: 12px; padding: 18px 20px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #7C3AED; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">4</span>
+            <span style="font-size: 11px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 8px; border-radius: 9999px;">SYNTHESIS</span>
+          </div>
+          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">8-Pillar AI Dossier</div>
+          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Synthesizes 0–100 score, forensic penalties, Big 4 auditor checks, and institutional position call.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">0-100 Score</span>
+            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">Position Call</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graphical Metric Benchmark Cards -->
+      <div style="border-top: 1.5px solid #F1F5F9; padding-top: 20px;">
+        <div style="font-size: 13px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+          <span>📊</span> Forensic Threshold Compass (Dalal Street Institutional Benchmarks)
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+          <!-- Benchmark 1 -->
+          <div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">CFO / PAT CONVERSION</span>
+              <span style="background: #059669; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≥ 95%</span>
+            </div>
+            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
+              <div style="background: #059669; width: 95%; height: 6px; border-radius: 9999px;"></div>
+            </div>
+            <div style="font-size: 12px; color: #064E3B; line-height: 1.4; font-weight: 600;">Real Cash in Bank: Over 95% confirms reported accounting profits actually turn into liquid cash.</div>
+          </div>
+
+          <!-- Benchmark 2 -->
+          <div style="background: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: 12px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: #1D4ED8; text-transform: uppercase;">DEBT TO EQUITY (D/E)</span>
+              <span style="background: #2563EB; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≤ 0.3x</span>
+            </div>
+            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
+              <div style="background: #2563EB; width: 30%; height: 6px; border-radius: 9999px;"></div>
+            </div>
+            <div style="font-size: 12px; color: #1E3A8A; line-height: 1.4; font-weight: 600;">Solvency Shield: Low debt prevents interest burden shocks during macro slowdowns.</div>
+          </div>
+
+          <!-- Benchmark 3 -->
+          <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 12px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: #B45309; text-transform: uppercase;">ROCE (CAPITAL RETURNS)</span>
+              <span style="background: #D97706; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≥ 20%</span>
+            </div>
+            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
+              <div style="background: #D97706; width: 80%; height: 6px; border-radius: 9999px;"></div>
+            </div>
+            <div style="font-size: 12px; color: #78350F; line-height: 1.4; font-weight: 600;">Elite Moat: Generates >₹20 operating profit per ₹100 of capital employed.</div>
+          </div>
+
+          <!-- Benchmark 4 -->
+          <div style="background: #FAF5FF; border: 1.5px solid #E9D5FF; border-radius: 12px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: #6D28D9; text-transform: uppercase;">IDEX COMPOSITE SCORE</span>
+              <span style="background: #7C3AED; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≥ 85 / 100</span>
+            </div>
+            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
+              <div style="background: #7C3AED; width: 85%; height: 6px; border-radius: 9999px;"></div>
+            </div>
+            <div style="font-size: 12px; color: #4C1D95; line-height: 1.4; font-weight: 600;">Potential Compounder: Top 15% quality tier with clean governance and moat endurance.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+
 # --- EXECUTION ENGINE ---
 if run_btn:
     with st.status(f"Auditing {target_company_name} with IDEX-7.5SC...", expanded=True) as status:
@@ -2749,3 +2837,8 @@ if "idex_result" in st.session_state:
             mime="text/html",
             width="stretch"
         )
+
+# --- INSTITUTIONAL FORENSIC ARCHITECTURE & METHODOLOGY PIPELINE (GRAPHICAL & BOTTOM-ANCHORED) ---
+st.markdown("<div style='margin-top: 36px; margin-bottom: 12px;'></div>", unsafe_allow_html=True)
+with st.expander("🧭 **StockSage Forensic Architecture & Evaluation Pipeline (Visual Methodology & Benchmarks)**", expanded=False):
+    st.html(render_graphical_forensic_architecture_html())

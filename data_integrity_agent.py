@@ -92,6 +92,7 @@ class DataIntegritySentinel:
         cfo_raw = cf.get("Cash from Operations (CFO)", {}).get("values", [])
         capex_raw = cf.get("Capital Expenditure (Capex)", {}).get("values", [])
         fcf_raw = cf.get("Free Cash Flow (FCF)", {}).get("values", [])
+        cfo_vals = [v for v in cfo_raw if v is not None]
         cf_triples = [(c, k, f) for c, k, f in zip(cfo_raw, capex_raw, fcf_raw) if c is not None and k is not None and f is not None]
 
         if cf_triples:
@@ -127,11 +128,12 @@ class DataIntegritySentinel:
         # -------------------------------------------------------------
         # CHECK 3: Earnings Quality & Accrual Check (CFO vs PAT)
         # -------------------------------------------------------------
-        pat_vals = [v for v in pnl.get("Net Profit (PAT)", {}).get("values", []) if v is not None]
+        pat_raw = pnl.get("Net Profit (PAT)", {}).get("values", [])
+        pat_vals = [v for v in pat_raw if v is not None]
+        cfo_pat_pairs = [(c, p) for c, p in zip(cfo_raw, pat_raw) if c is not None and p is not None]
 
-        if pat_vals and cfo_vals:
-            latest_pat = pat_vals[-1]
-            latest_cfo = cfo_vals[-1]
+        if cfo_pat_pairs:
+            latest_cfo, latest_pat = cfo_pat_pairs[-1]
             if latest_pat > 0:
                 conv_ratio = (latest_cfo / latest_pat) * 100
                 if latest_cfo < 0:
@@ -173,11 +175,12 @@ class DataIntegritySentinel:
         # CHECK 4: Topline to Bottomline Structural Hierarchy
         # Sales >= PAT under standard operations
         # -------------------------------------------------------------
-        rev_vals = [v for v in pnl.get("Sales / Total Revenue", {}).get("values", []) if v is not None]
+        rev_raw = pnl.get("Sales / Total Revenue", {}).get("values", [])
+        rev_vals = [v for v in rev_raw if v is not None]
+        rev_pat_pairs = [(r, p) for r, p in zip(rev_raw, pat_raw) if r is not None and p is not None]
 
-        if rev_vals and pat_vals:
-            latest_rev = rev_vals[-1]
-            latest_pat = pat_vals[-1]
+        if rev_pat_pairs:
+            latest_rev, latest_pat = rev_pat_pairs[-1]
             if latest_rev > 0 and latest_pat > latest_rev * 1.05:
                 hier_status = "FAILED"
                 hier_passed = False

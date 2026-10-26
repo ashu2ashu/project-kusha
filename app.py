@@ -1095,6 +1095,66 @@ if target_ticker and target_ticker != "CUSTOM":
 
 # Live market discovery is the dedicated Explore landing page.
 if terminal_mode == "🌐 Explore":
+    st.html("""
+    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 18px 22px; margin-top: 4px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="font-size: 20px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 10px; letter-spacing: -0.4px;">
+          <span>📈</span> Indian Market Snapshot
+        </div>
+        <div style="font-size: 13px; color: #475569; margin-top: 3px;">
+          Live market indices powered by Yahoo Finance. Review macro benchmark trends before selecting equities below.
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;">
+          Yahoo Finance · Live Quotes
+        </span>
+      </div>
+    </div>
+    """)
+    
+    # 4 Live Market Index Cards (Displayed openly at top of Explore)
+    indices_list = get_cached_market_indices()
+    idx_cols = st.columns(4)
+    for i, idx in enumerate(indices_list):
+        with idx_cols[i]:
+            is_pos = idx["pct"] >= 0
+            delta_col = "#047857" if is_pos else "#DC2626"
+            delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
+            delta_sign = "+" if is_pos else ""
+            delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
+
+            card_html = (
+                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 12px;">'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">'
+                f'<span style="font-size: 11.5px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
+                f'<span style="font-size: 10.5px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 6px; border-radius: 4px;">{delta_str}</span>'
+                f'</div>'
+                f'<div style="font-size: 20px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
+                f'<div style="font-size: 10.5px; color: #64748B; margin-top: 5px; display: flex; justify-content: space-between;">'
+                f'<span>L: {idx["lo"]:,.0f}</span>'
+                f'<span>H: {idx["hi"]:,.0f}</span>'
+                f'</div>'
+                f'</div>'
+            )
+            st.html(card_html)
+
+    with st.expander("📈 NIFTY 50 historical trend", expanded=False):
+        st.caption("Yahoo Finance historical market data · third-party provider.")
+        b_c1, b_c2 = st.columns([1.3, 1])
+        with b_c1:
+            nifty_tf = st.segmented_control("Range", options=["1M", "3M", "6M", "1Y"], default="6M", key="nifty_tf_ctrl")
+        with b_c2:
+            nifty_style = st.segmented_control("Chart style", options=["Area", "Candles"], default="Area", key="nifty_style_ctrl")
+
+        tf_map = {"1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y"}
+        nifty_period = tf_map.get(nifty_tf or "6M", "6mo")
+        nifty_df = get_cached_ticker_history("^NSEI", period=nifty_period)
+        if not nifty_df.empty:
+            nifty_fig = build_ticker_chart(nifty_df, "NIFTY 50", nifty_style or "Area", show_dma=True)
+            if nifty_fig:
+                st.plotly_chart(nifty_fig, width="stretch")
+
     with st.container(border=True):
         st.markdown("#### Find any tracked company")
         explore_search_col, explore_action_col = st.columns([4, 1])
@@ -1112,66 +1172,6 @@ if terminal_mode == "🌐 Explore":
                 st.session_state["selected_company_choice"] = explore_company
                 st.session_state["pending_nav_mode"] = "🔬 Company Analysis"
                 st.rerun()
-
-    st.html("""
-    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-      <div>
-        <div style="font-size: 21px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 10px; letter-spacing: -0.4px;">
-          <span>📈</span> Indian Market Snapshot
-        </div>
-        <div style="font-size: 13.5px; color: #475569; margin-top: 4px;">
-          Market quotes are supplied by Yahoo Finance, a third-party provider. Use the mover table below to open a company analysis with its research sources.
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;">
-          Yahoo Finance · Third-party quotes
-        </span>
-      </div>
-    </div>
-    """)
-    
-    indices_list = get_cached_market_indices()
-    with st.expander("Market indices", expanded=False):
-        idx_cols = st.columns(4)
-        for i, idx in enumerate(indices_list):
-            with idx_cols[i]:
-                is_pos = idx["pct"] >= 0
-                delta_col = "#047857" if is_pos else "#DC2626"
-                delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
-                delta_sign = "+" if is_pos else ""
-                delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
-
-                card_html = (
-                    f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
-                    f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
-                    f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
-                    f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 7px; border-radius: 4px;">{delta_str}</span>'
-                    f'</div>'
-                    f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
-                    f'<div style="font-size: 11px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between;">'
-                    f'<span>L: {idx["lo"]:,.0f}</span>'
-                    f'<span>H: {idx["hi"]:,.0f}</span>'
-                    f'</div>'
-                    f'</div>'
-                )
-                st.html(card_html)
-
-    with st.expander("📈 NIFTY 50 historical trend", expanded=False):
-        st.caption("Yahoo Finance historical market data · third-party provider.")
-        b_c1, b_c2 = st.columns([1.3, 1])
-        with b_c1:
-            nifty_tf = st.segmented_control("Range", options=["1M", "3M", "6M", "1Y"], default="6M", key="nifty_tf_ctrl")
-        with b_c2:
-            nifty_style = st.segmented_control("Chart style", options=["Area", "Candles"], default="Area", key="nifty_style_ctrl")
-
-        tf_map = {"1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y"}
-        nifty_period = tf_map.get(nifty_tf or "6M", "6mo")
-        nifty_df = get_cached_ticker_history("^NSEI", period=nifty_period)
-        if not nifty_df.empty:
-            nifty_fig = build_ticker_chart(nifty_df, "NIFTY 50", nifty_style or "Area", show_dma=True)
-            if nifty_fig:
-                st.plotly_chart(nifty_fig, width="stretch")
 
     st.markdown("""
     <div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 10px;">

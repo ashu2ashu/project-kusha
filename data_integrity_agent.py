@@ -89,14 +89,14 @@ class DataIntegritySentinel:
         # -------------------------------------------------------------
         # CHECK 2: Cash Flow Math Consistency (CFO - Capex vs FCF)
         # -------------------------------------------------------------
-        cfo_vals = [v for v in cf.get("Cash from Operations (CFO)", {}).get("values", []) if v is not None]
-        capex_vals = [v for v in cf.get("Capital Expenditure (Capex)", {}).get("values", []) if v is not None]
-        fcf_vals = [v for v in cf.get("Free Cash Flow (FCF)", {}).get("values", []) if v is not None]
+        cfo_raw = cf.get("Cash from Operations (CFO)", {}).get("values", [])
+        capex_raw = cf.get("Capital Expenditure (Capex)", {}).get("values", [])
+        fcf_raw = cf.get("Free Cash Flow (FCF)", {}).get("values", [])
+        cf_triples = [(c, k, f) for c, k, f in zip(cfo_raw, capex_raw, fcf_raw) if c is not None and k is not None and f is not None]
 
-        if cfo_vals and capex_vals and fcf_vals:
-            latest_cfo = cfo_vals[-1]
-            latest_capex = abs(capex_vals[-1])
-            latest_fcf = fcf_vals[-1]
+        if cf_triples:
+            latest_cfo, latest_capex_raw, latest_fcf = cf_triples[-1]
+            latest_capex = abs(latest_capex_raw)
             expected_fcf = latest_cfo - latest_capex
             diff = abs(latest_fcf - expected_fcf)
             if diff > 15.0 and abs(diff / (abs(latest_fcf) or 1.0)) > 0.08:

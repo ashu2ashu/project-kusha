@@ -110,6 +110,7 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
         ("Fixed Assets (Net PPE)", ["Net PPE", "Gross PPE"], False),
         ("Capital WIP", ["Construction In Progress"], False),
         ("Investments", ["Investments And Advances", "Other Investments"], False),
+        ("Trade Receivables", ["Accounts Receivable", "Gross Accounts Receivable", "Receivables"], False),
         ("Current & Other Assets", ["Current Assets", "Other Current Assets"], False),
         ("Current Liabilities", ["Current Liabilities", "Other Current Liabilities"], False),
         ("Cash & Equivalents", ["Cash And Cash Equivalents", "Cash Cash Equivalents And Short Term Investments"], True)
@@ -260,6 +261,21 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
     cl_last = cl_vals[-1] if (cl_vals and cl_vals[-1] is not None) else None
     latest_current_ratio = round(ca_last / cl_last, 2) if (ca_last and cl_last and cl_last > 0) else None
 
+    # CROIC = Free Cash Flow / Invested Capital * 100
+    fcf_vals = extracted_cf.get("Free Cash Flow (FCF)", {}).get("values", [])
+    fcf_last = fcf_vals[-1] if (fcf_vals and fcf_vals[-1] is not None) else None
+    latest_croic = round((fcf_last / inv_cap * 100), 2) if (fcf_last is not None and inv_cap is not None and inv_cap > 0) else None
+
+    # Receivables & DSO = Trade Receivables / Revenue * 365
+    rec_vals = extracted_bs.get("Trade Receivables", {}).get("values", [])
+    rec_last = rec_vals[-1] if (rec_vals and rec_vals[-1] is not None) else None
+    if rec_last is not None and rev_last is not None and rev_last > 0:
+        latest_dso = round((rec_last / rev_last) * 365, 0)
+        latest_rec_to_sales = round((rec_last / rev_last) * 100, 1)
+    else:
+        latest_dso = None
+        latest_rec_to_sales = None
+
     fetch_time = datetime.now(timezone.utc)
     return {
         "symbol": sym,
@@ -283,6 +299,9 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             "latest_de": latest_de,
             "latest_roce": latest_roce,
             "latest_roic": latest_roic,
+            "latest_croic": latest_croic,
+            "latest_dso": latest_dso,
+            "latest_rec_to_sales": latest_rec_to_sales,
             "latest_int_coverage": latest_int_coverage,
             "latest_asset_turnover": latest_asset_turnover,
             "latest_current_ratio": latest_current_ratio,

@@ -121,14 +121,17 @@ def validate_and_reconcile_idex_analysis(raw: Any, is_demo: bool = False) -> Dic
 
         clamped_score = max(0.0, min(max_pts, round(score_float, 1)))
 
-        reconciled_pillars.append({
+        p_entry = {
             "id": p_id,
             "name": c_name,
             "score": clamped_score,
             "max_score": max_pts,
             "justification": matched.get("justification") or matched.get("rationale") or "Insufficient evidence provided in statement.",
             "source_ids": matched.get("source_ids", [])
-        })
+        }
+        if matched.get("receivable_subscore"):
+            p_entry["receivable_subscore"] = str(matched["receivable_subscore"])
+        reconciled_pillars.append(p_entry)
 
     # 2. Check Promoter Integrity Override (PIO) triggers
     pio_triggered = bool(raw.get("pio_triggered", False))
@@ -159,19 +162,19 @@ def validate_and_reconcile_idex_analysis(raw: Any, is_demo: bool = False) -> Dic
                 pts = pen.get("points", 0.0)
                 try:
                     pts_float = float(pts)
-                    pts_neg = -abs(pts_float)
+                    pts_neg = -abs(pts_float) if abs(pts_float) > 1e-6 else 0.0
                 except (ValueError, TypeError):
                     pts_neg = 0.0
                 pen_sum += pts_neg
                 valid_penalties.append({
                     "penalty_name": pen.get("penalty_name", "Risk Penalty"),
-                    "points": round(pts_neg, 1),
+                    "points": round(pts_neg, 1) if abs(pts_neg) > 1e-6 else 0.0,
                     "reason": pen.get("reason", "Forensic variance detected."),
                     "source_ids": pen.get("source_ids", [])
                 })
 
     # Hard cap at -7.5 max
-    total_penalties = max(-7.5, round(pen_sum, 1))
+    total_penalties = max(-7.5, round(pen_sum, 1)) if abs(pen_sum) > 1e-6 else 0.0
     adjusted_pre_bonus_score = max(0.0, round(core_score + total_penalties, 1))
 
     # 5. Deterministic Bonuses with Hard Cap (+10% of core score max)
@@ -547,6 +550,7 @@ def get_demo_analysis(
                 "name": "Forensic Accounting & Cash Flow",
                 "score": 16.5,
                 "max_score": 20.0,
+                "receivable_subscore": "3.5 / 4.0 (DSO 28d vs sector ideal 15–30d; >90d = 1.4%)",
                 "justification": "[DEMO SAMPLE] Illustrative CFO/PAT conversion of 88%, conservative revenue recognition."
             },
             {

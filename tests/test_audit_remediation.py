@@ -266,6 +266,27 @@ class TestDeterministicScoringRules(unittest.TestCase):
         self.assertIn("FRAGILE", res["verdict"])
         self.assertEqual(res["position_sizing"], "0%")
 
+    def test_receivable_subscore_preservation(self):
+        """Verify that receivable_subscore in Pillar 2 is preserved across reconciliation."""
+        pillars = self._build_valid_pillars()
+        pillars[1]["receivable_subscore"] = "3.8 / 4.0 (DSO 28d vs sector ideal 30d)"
+        raw = {"pillars": pillars}
+        res = validate_and_reconcile_idex_analysis(raw)
+        self.assertIn("receivable_subscore", res["pillars"][1])
+        self.assertEqual(res["pillars"][1]["receivable_subscore"], "3.8 / 4.0 (DSO 28d vs sector ideal 30d)")
+
+    def test_zero_penalty_sign_hygiene(self):
+        """Verify that zero penalty points do not result in negative zero (-0.0)."""
+        pillars = self._build_valid_pillars()
+        raw = {
+            "pillars": pillars,
+            "penalties_breakdown": [{"penalty_name": "Zero Check", "points": 0.0, "reason": "No variance"}]
+        }
+        res = validate_and_reconcile_idex_analysis(raw)
+        self.assertEqual(res["total_penalties"], 0.0)
+        self.assertEqual(res["penalties_breakdown"][0]["points"], 0.0)
+        self.assertNotEqual(str(res["total_penalties"]), "-0.0")
+
 
 class TestSupportedModelsConfiguration(unittest.TestCase):
     """Priority 6: Supported Gemini models test."""

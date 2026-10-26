@@ -147,13 +147,14 @@ class ForensicRiskEngine:
         # =========================================================================
         # 1. CASH CONVERSION STRESS: 3-5 Year Cumulative CFO vs PAT
         # =========================================================================
-        cfo_vals = [v for v in cf.get("Cash from Operations (CFO)", {}).get("values", []) if v is not None]
-        pat_vals = [v for v in pnl.get("Net Profit (PAT)", {}).get("values", []) if v is not None]
+        cfo_raw = cf.get("Cash from Operations (CFO)", {}).get("values", [])
+        pat_raw = pnl.get("Net Profit (PAT)", {}).get("values", [])
+        aligned_pairs = [(c, p) for c, p in zip(cfo_raw, pat_raw) if c is not None and p is not None]
 
-        if cfo_vals and pat_vals and len(cfo_vals) >= 2 and len(pat_vals) >= 2:
-            n_eval = min(len(cfo_vals), len(pat_vals))
-            cum_cfo = sum(cfo_vals[-n_eval:])
-            cum_pat = sum(pat_vals[-n_eval:])
+        if len(aligned_pairs) >= 2:
+            n_eval = len(aligned_pairs)
+            cum_cfo = sum(c for c, p in aligned_pairs)
+            cum_pat = sum(p for c, p in aligned_pairs)
 
             if cum_pat > 0:
                 conv_ratio = (cum_cfo / cum_pat) * 100.0
@@ -187,9 +188,23 @@ class ForensicRiskEngine:
                         f"{conv_ratio:.1f}% of PAT (₹{cum_pat:,.1f} Cr). Reported profits represent real cash in the bank."
                     )
             else:
-                status = "PASS"
-                conv_ratio = 100.0
-                detail = f"Base PAT is negligible or negative (₹{cum_pat:,.1f} Cr); CFO is ₹{cum_cfo:,.1f} Cr."
+                if cum_cfo < 0:
+                    status = "CRITICAL"
+                    forensic_penalties += 20.0
+                    critical_red_flags.append("Dual Net Loss & Operating Cash Deficit")
+                    conv_ratio = None
+                    detail = (
+                        f"Severe Stress: {n_eval}-Year Cumulative PAT is negative (-₹{abs(cum_pat):,.1f} Cr) and "
+                        f"Operating Cash Flow is also negative (-₹{abs(cum_cfo):,.1f} Cr). High operational cash burn."
+                    )
+                else:
+                    status = "MONITOR"
+                    forensic_penalties += 5.0
+                    conv_ratio = None
+                    detail = (
+                        f"Loss-Making with Positive Cash: {n_eval}-Year Cumulative PAT is negative (-₹{abs(cum_pat):,.1f} Cr), "
+                        f"though Operating Cash Flow is positive (+₹{cum_cfo:,.1f} Cr) due to non-cash charges."
+                    )
         else:
             status = "INSUFFICIENT_DATA"
             conv_ratio = None
@@ -208,13 +223,14 @@ class ForensicRiskEngine:
         # =========================================================================
         # 2. REVENUE VS RECEIVABLES VELOCITY (Channel Stuffing Radar)
         # =========================================================================
-        rev_vals = [v for v in pnl.get("Sales / Total Revenue", {}).get("values", []) if v is not None]
-        rec_vals = [v for v in bs.get("Current & Other Assets", {}).get("values", []) if v is not None]
+        rev_raw = pnl.get("Sales / Total Revenue", {}).get("values", [])
+        rec_raw = bs.get("Trade Receivables", {}).get("values", []) or bs.get("Current & Other Assets", {}).get("values", [])
         sales_cagr = cagr.get("sales_cagr")
+        aligned_rec = [(r, c) for r, c in zip(rev_raw, rec_raw) if r is not None and c is not None]
 
-        if len(rev_vals) >= 2 and len(rec_vals) >= 2 and rev_vals[-2] > 0 and rec_vals[-2] > 0:
-            rev_yoy = ((rev_vals[-1] - rev_vals[-2]) / abs(rev_vals[-2])) * 100.0
-            rec_yoy = ((rec_vals[-1] - rec_vals[-2]) / abs(rec_vals[-2])) * 100.0
+        if len(aligned_rec) >= 2 and aligned_rec[-2][0] > 0 and aligned_rec[-2][1] > 0:
+            rev_yoy = ((aligned_rec[-1][0] - aligned_rec[-2][0]) / abs(aligned_rec[-2][0])) * 100.0
+            rec_yoy = ((aligned_rec[-1][1] - aligned_rec[-2][1]) / abs(aligned_rec[-2][1])) * 100.0
             velocity_spread = rec_yoy - rev_yoy
 
             if velocity_spread > 18.0 and rec_yoy > 20.0:
@@ -256,15 +272,16 @@ class ForensicRiskEngine:
         # =========================================================================
         # 3. CAPITAL WORK-IN-PROGRESS (CWIP) AGING (Expense Capitalization)
         # =========================================================================
-        cwip_vals = [v for v in bs.get("Capital WIP", {}).get("values", []) if v is not None]
-        ppe_vals = [v for v in bs.get("Fixed Assets (Net PPE)", {}).get("values", []) if v is not None]
+        cwip_raw = bs.get("Capital WIP", {}).get("values", [])
+        ppe_raw = bs.get("Fixed Assets (Net PPE)", {}).get("values", [])
+        aligned_cwip = [(c, p) for c, p in zip(cwip_raw, ppe_raw) if c is not None and p is not None]
 
-        if cwip_vals and ppe_vals and ppe_vals[-1] > 0:
-            latest_cwip = cwip_vals[-1]
-            latest_ppe = ppe_vals[-1]
+        if aligned_cwip and aligned_cwip[-1][1] > 0:
+            latest_cwip = aligned_cwip[-1][0]
+            latest_ppe = aligned_cwip[-1][1]
             cwip_ratio = (latest_cwip / latest_ppe) * 100.0
 
-            if cwip_ratio > 35.0 and len(cwip_vals) >= 2 and cwip_vals[-2] > 0 and (latest_cwip / cwip_vals[-2]) > 1.25:
+            if cwip_ratio > 35.0 and len(aligned_cwip) >= 2 and aligned_cwip[-2][0] > 0 and (latest_cwip / aligned_cwip[-2][0]) > 1.25:
                 cwip_status = "CRITICAL"
                 forensic_penalties += 14.0
                 critical_red_flags.append("Bloated CWIP / Uncommercialized Capex Hoarding")
@@ -297,12 +314,13 @@ class ForensicRiskEngine:
         # =========================================================================
         # 4. CASH TAX PAID VS P&L TAX (Phantom Profit & Tax Leakage)
         # =========================================================================
-        pbt_vals = [v for v in pnl.get("Profit Before Tax (PBT)", {}).get("values", []) if v is not None]
-        tax_vals = [v for v in pnl.get("Tax Provision", {}).get("values", []) if v is not None]
+        pbt_raw = pnl.get("Profit Before Tax (PBT)", {}).get("values", [])
+        tax_raw = pnl.get("Tax Provision", {}).get("values", [])
+        aligned_tax = [(p, t) for p, t in zip(pbt_raw, tax_raw) if p is not None and t is not None]
 
-        if pbt_vals and pbt_vals[-1] > 0 and tax_vals:
-            latest_pbt = pbt_vals[-1]
-            latest_tax = abs(tax_vals[-1])
+        if aligned_tax and aligned_tax[-1][0] > 0:
+            latest_pbt = aligned_tax[-1][0]
+            latest_tax = abs(aligned_tax[-1][1])
             effective_tax_rate = (latest_tax / latest_pbt) * 100.0
 
             if effective_tax_rate < 12.0:
@@ -342,11 +360,12 @@ class ForensicRiskEngine:
         # =========================================================================
         # 5. OTHER INCOME DEPENDENCY (Core Operating Strength)
         # =========================================================================
-        other_inc_vals = [v for v in pnl.get("Other Income", {}).get("values", []) if v is not None]
+        oth_raw = pnl.get("Other Income", {}).get("values", [])
+        aligned_oth = [(p, o) for p, o in zip(pbt_raw, oth_raw) if p is not None and o is not None]
 
-        if pbt_vals and pbt_vals[-1] > 0 and other_inc_vals:
-            latest_pbt = pbt_vals[-1]
-            latest_oth = other_inc_vals[-1]
+        if aligned_oth and aligned_oth[-1][0] > 0:
+            latest_pbt = aligned_oth[-1][0]
+            latest_oth = aligned_oth[-1][1]
             other_inc_pct = (latest_oth / latest_pbt) * 100.0
 
             if other_inc_pct > 30.0:

@@ -114,6 +114,26 @@ class TestForensicRiskEngine(unittest.TestCase):
         tax_check = next(c for c in rep["checks"] if c["id"] == "FOR_04_TAX_DIVERGENCE")
         self.assertEqual(tax_check["status"], "CRITICAL")
 
+    def test_detects_loss_making_cash_burn(self):
+        """Verify that negative cumulative PAT with negative CFO flags dual deficit, not a passing grade."""
+        burn_fin = dict(self.healthy_fin)
+        burn_fin["pnl"] = dict(self.healthy_fin["pnl"])
+        burn_fin["pnl"]["Net Profit (PAT)"] = {"values": [-500.0, -600.0, -700.0, -800.0]}
+        burn_fin["cf"] = dict(self.healthy_fin["cf"])
+        burn_fin["cf"]["Cash from Operations (CFO)"] = {"values": [-200.0, -300.0, -400.0, -500.0]}
+
+        rep = ForensicRiskEngine.audit_company_forensics(
+            ticker_symbol="BURNCO",
+            company_name="Cash Burner Corp",
+            sector="Technology",
+            financial_statements=burn_fin,
+            live_market_data=self.healthy_live
+        )
+        self.assertTrue(any("Dual Net Loss & Operating Cash Deficit" in f for f in rep["critical_red_flags"]))
+        cfo_check = next(c for c in rep["checks"] if c["id"] == "FOR_01_CASH_CONVERSION")
+        self.assertEqual(cfo_check["status"], "CRITICAL")
+        self.assertEqual(cfo_check["metric"], "N/A")
+
     def test_render_forensic_dossier_html(self):
         """Verify HTML rendering contains all institutional badges and checks."""
         rep = ForensicRiskEngine.audit_company_forensics(

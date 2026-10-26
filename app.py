@@ -1818,17 +1818,29 @@ def build_radar_chart(pillars):
 def parse_dcf_estimate(dcf_str):
     if not dcf_str:
         return None, None, None
-    raw = re.findall(r"(?:INR|₹|Rs\.?)?\s*([\d,]+(?:\.\d+)?)", str(dcf_str), re.IGNORECASE)
+    s = str(dcf_str)
+    curr_matches = re.findall(r"(?:INR|₹|Rs\.?)\s*([\d,]+(?:\.\d+)?)", s, re.IGNORECASE)
     nums = []
-    for item in raw:
+    for item in curr_matches:
         clean = item.replace(",", "").strip()
         if clean:
             try:
                 v = float(clean)
-                if v >= 50:
+                if v > 0:
                     nums.append(v)
             except ValueError:
                 pass
+    if not nums:
+        fallback = re.findall(r"\b([\d,]+(?:\.\d+)?)\b(?!\s*(?:%|bps|percent))", s, re.IGNORECASE)
+        for item in fallback:
+            clean = item.replace(",", "").strip()
+            if clean:
+                try:
+                    v = float(clean)
+                    if v > 0:
+                        nums.append(v)
+                except ValueError:
+                    pass
     if len(nums) >= 2:
         l, h = sorted([nums[0], nums[1]])
         return l, h, (l + h) / 2.0
@@ -3251,13 +3263,18 @@ if "idex_result" in st.session_state:
 
     # --- SECTION A: RISK DEDUCTIONS & GROWTH BONUSES ---
     if show_all or dossier_tab == "🛡️ Risk Deductions & Bonuses":
+        if res.get("pio_triggered", False) and (core_score + total_penalties) > 49.0:
+            bridge_math_summary = f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → PIO Red Zone Cap (≤49.0) → Final IDEX ({final_score:.1f})'
+        else:
+            bridge_math_summary = f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f} pts) → Final IDEX ({final_score:.1f})'
+
         st.markdown(
             f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
             f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
             f'<span>🛡️</span> Forensic Score Bridge: Risk Deductions & Applied Bonuses'
             f'</div>'
             f'<span style="font-size: 12px; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 6px; font-weight: 600;">'
-            f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f} pts) → Final IDEX ({final_score:.1f})'
+            f'{bridge_math_summary}'
             f'</span>'
             f'</div>',
             unsafe_allow_html=True
@@ -3276,11 +3293,12 @@ if "idex_result" in st.session_state:
                 if penalties:
                     pen_html = []
                     for pen in penalties:
+                        pts_val = abs(float(pen.get("points", 0)))
                         pen_html.append(
                             f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #DC2626; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px;">'
                             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">'
                             f'<span style="font-size: 14.5px; font-weight: 800; color: #991B1B;">{pen.get("penalty_name")}</span>'
-                            f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-{pen.get("points")} pts</span>'
+                            f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-{pts_val:.1f} pts</span>'
                             f'</div>'
                             f'<div style="font-size: 13.5px; color: #7F1D1D; line-height: 1.5;">{pen.get("reason")}</div>'
                             f'</div>'
@@ -3299,7 +3317,7 @@ if "idex_result" in st.session_state:
                 st.markdown(
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
                     '<span style="font-size: 13.5px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Applied Growth Bonuses</span>'
-                    '<span style="background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">+10.0% Max Cap</span>'
+                    '<span style="background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">+10% Core Max Cap</span>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -3307,20 +3325,20 @@ if "idex_result" in st.session_state:
                     f'<div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">'
                     f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
                     f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">COOL++ PRO Bonus</span><div style="font-size: 12px; color: #6D28D9;">Capital-Light Operating Leverage Outperformance</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{bb.get("cool_pro_bonus", 0):.1f}%</span>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{float(bb.get("cool_pro_bonus", 0)):.1f} pts</span>'
                     f'</div>'
                     f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
                     f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">Trajectory Bonus</span><div style="font-size: 12px; color: #6D28D9;">Sustained Margin Expansion & FCF Compounding</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{bb.get("trajectory_bonus", 0):.1f}%</span>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{float(bb.get("trajectory_bonus", 0)):.1f} pts</span>'
                     f'</div>'
                     f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
                     f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">Resilience Bonus</span><div style="font-size: 12px; color: #6D28D9;">Balance Sheet Solvency & Counter-Cyclical Endurance</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{bb.get("resilience_bonus", 0):.1f}%</span>'
+                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{float(bb.get("resilience_bonus", 0)):.1f} pts</span>'
                     f'</div>'
                     f'</div>'
                     f'<div style="background: #EDE9FE; border: 1.5px solid #A78BFA; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
                     f'<span style="font-size: 13px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Total Growth Bonus Applied</span>'
-                    f'<span style="font-size: 20px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace;">+{bb.get("total_bonus_applied", 0):.1f}%</span>'
+                    f'<span style="font-size: 20px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace;">+{float(bb.get("total_bonus_applied", 0)):.1f} pts</span>'
                     f'</div>'
                 )
 

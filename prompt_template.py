@@ -37,7 +37,7 @@ ENFORCE MANDATORY PROMOTER INTEGRITY GUARDRAILS (PIO Hard Triggers):
 - Material misrepresentation in statutory filings.
 IF ANY PIO TRIGGERS:
 1. Cap Pillar 1 (Governance) <= 6.0 / 20.
-2. Apply CZP logic: force final score into Red Zone (<70).
+2. Apply CZP logic: force final score into Red Zone (<50.0).
 3. Block all bonuses (No COOL++, Trajectory, or Resilience bonus).
 4. Guardrail Tag = "GOV-RED 🔴".
 5. Require explicit Forensic Appendix A entries.
@@ -54,12 +54,12 @@ RECEIVABLE HEALTH & SECTOR BENCHMARK LAYER:
 - Check against sector benchmark. Apply penalties or trajectory bonus accordingly.
 
 PENALTIES & BONUSES:
-- Penalties (Pre-bonus): Stagnation (-2 to -6), Innovation Decay (-2 to -4), CZP Red Flag (-10), Other Income Trap (-2), Narrative Inflation (-2 to -3), Subsidy Dependence (-2 to -5), Geopolitical Fragility (-1 to -5), Execution Complexity (-1 to -3), Valuation Distortion (-1 to -3).
-- Total penalties capped at -7.5% of final score (except CZP which forces red zone).
-- Bonuses (Cumulative cap +10%):
-  - COOL++ PRO (Max +8%): 8/12 key traits met, 3Y CAGR >=25% (Rev & PAT), clean forensic filters.
-  - Trajectory Bonus (Max +4%): Inflection, improving OCF/PAT gap, rising R&D, better receivables.
-  - Resilience Bonus (Max +2%): Steady compounders (10-25% CAGR, clean governance).
+- Penalties (Pre-bonus): Stagnation (-2 to -6), Innovation Decay (-2 to -4), Other Income Trap (-2), Narrative Inflation (-2 to -3), Subsidy Dependence (-2 to -5), Geopolitical Fragility (-1 to -5), Execution Complexity (-1 to -3), Valuation Distortion (-1 to -3).
+- Total penalties capped at -7.5 points maximum (promoter integrity red flags trigger PIO which forces final score <50.0).
+- Bonuses (Cumulative cap +10% of Core Score, max 10.0 pts):
+  - COOL++ PRO (Max +8.0 pts): 8/12 key traits met, 3Y CAGR >=25% (Rev & PAT), clean forensic filters.
+  - Trajectory Bonus (Max +4.0 pts): Inflection, improving OCF/PAT gap, rising R&D, better receivables.
+  - Resilience Bonus (Max +2.0 pts): Steady compounders (10-25% CAGR, clean governance).
 
 VERDICT MAPPING:
 - OCGC (>=90) — Outstanding Capital Allocator & Governance Compounder (Position size: 10-15%)

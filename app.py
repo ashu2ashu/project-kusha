@@ -724,6 +724,27 @@ company_options = get_company_list()
 tracked_equity_count = sum(1 for item in company_options if find_company_info(item).get("ticker") != "CUSTOM")
 sector_count = len(get_sector_list())
 
+# Fetch Live Online Market Data (Cached for snappy performance)
+@st.cache_data(ttl=180, show_spinner=False)
+def get_cached_live_data(ticker_sym: str):
+    return fetch_live_market_data(ticker_sym)
+
+@st.cache_data(ttl=60, show_spinner=False)
+def get_cached_market_indices():
+    return fetch_live_indices_data()
+
+@st.cache_data(ttl=60, show_spinner=False)
+def get_cached_marquee_stocks():
+    return fetch_marquee_stocks_data()
+
+@st.cache_data(ttl=300, show_spinner=False)
+def get_cached_ticker_history(ticker_sym: str, period: str = "1y"):
+    return fetch_ticker_historical_data(ticker_sym, period=period)
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_cached_financial_statements(ticker_sym: str):
+    return fetch_financial_statements(ticker_sym)
+
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
     st.markdown("### StockSage")
@@ -796,6 +817,50 @@ with st.sidebar:
     - **Receivable Layer:** Embedded 4.0 pt subscore
     - **Bonus Cap:** Cumulative +10% max
     """)
+
+# --- TOP-OF-PAGE LIVE INDIAN MARKET SNAPSHOT ---
+st.html("""
+<div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 14px 20px; margin-top: 2px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+  <div>
+    <div style="font-size: 18px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px;">
+      <span>📈</span> Indian Market Snapshot
+    </div>
+    <div style="font-size: 12.5px; color: #475569; margin-top: 2px;">
+      Live benchmark indices powered by Yahoo Finance · Instant macro sentiment
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 3px 11px; border-radius: 9999px; display: flex; align-items: center; gap: 5px;">
+      Yahoo Finance · Live Quotes
+    </span>
+  </div>
+</div>
+""")
+
+indices_list = get_cached_market_indices()
+idx_cols = st.columns(4)
+for i, idx in enumerate(indices_list):
+    with idx_cols[i]:
+        is_pos = idx["pct"] >= 0
+        delta_col = "#047857" if is_pos else "#DC2626"
+        delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
+        delta_sign = "+" if is_pos else ""
+        delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
+
+        card_html = (
+            f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 14px;">'
+            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">'
+            f'<span style="font-size: 11.5px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
+            f'<span style="font-size: 10.5px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 6px; border-radius: 4px;">{delta_str}</span>'
+            f'</div>'
+            f'<div style="font-size: 20px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
+            f'<div style="font-size: 10.5px; color: #64748B; margin-top: 5px; display: flex; justify-content: space-between;">'
+            f'<span>L: {idx["lo"]:,.0f}</span>'
+            f'<span>H: {idx["hi"]:,.0f}</span>'
+            f'</div>'
+            f'</div>'
+        )
+        st.html(card_html)
 
 # Top hero: product promise and transparent source attribution.
 st.html(f"""
@@ -970,27 +1035,6 @@ if terminal_mode == "🔬 Company Analysis":
         if "idex_result" in st.session_state:
             del st.session_state["idex_result"]
 
-# Fetch Live Online Market Data (Cached for snappy performance)
-@st.cache_data(ttl=180, show_spinner=False)
-def get_cached_live_data(ticker_sym: str):
-    return fetch_live_market_data(ticker_sym)
-
-@st.cache_data(ttl=60, show_spinner=False)
-def get_cached_market_indices():
-    return fetch_live_indices_data()
-
-@st.cache_data(ttl=60, show_spinner=False)
-def get_cached_marquee_stocks():
-    return fetch_marquee_stocks_data()
-
-@st.cache_data(ttl=300, show_spinner=False)
-def get_cached_ticker_history(ticker_sym: str, period: str = "1y"):
-    return fetch_ticker_historical_data(ticker_sym, period=period)
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def get_cached_financial_statements(ticker_sym: str):
-    return fetch_financial_statements(ticker_sym)
-
 def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "Area", show_dma: bool = True):
     if df.empty or len(df) < 2:
         return None
@@ -1095,49 +1139,14 @@ if target_ticker and target_ticker != "CUSTOM":
 
 # Live market discovery is the dedicated Explore landing page.
 if terminal_mode == "🌐 Explore":
-    st.html("""
-    <div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 18px 22px; margin-top: 4px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-      <div>
-        <div style="font-size: 20px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 10px; letter-spacing: -0.4px;">
-          <span>📈</span> Indian Market Snapshot
-        </div>
-        <div style="font-size: 13px; color: #475569; margin-top: 3px;">
-          Live market indices powered by Yahoo Finance. Review macro benchmark trends before selecting equities below.
-        </div>
+    st.markdown("""
+    <div style="margin-top: 4px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 10px;">
+      <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+        <span>🌐</span> Explore Tracked Equities & Benchmarks
       </div>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px;">
-          Yahoo Finance · Live Quotes
-        </span>
-      </div>
+      <span style="font-size: 12px; color: #64748B;">Macro trends & company screening</span>
     </div>
-    """)
-    
-    # 4 Live Market Index Cards (Displayed openly at top of Explore)
-    indices_list = get_cached_market_indices()
-    idx_cols = st.columns(4)
-    for i, idx in enumerate(indices_list):
-        with idx_cols[i]:
-            is_pos = idx["pct"] >= 0
-            delta_col = "#047857" if is_pos else "#DC2626"
-            delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
-            delta_sign = "+" if is_pos else ""
-            delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
-
-            card_html = (
-                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 12px;">'
-                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">'
-                f'<span style="font-size: 11.5px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
-                f'<span style="font-size: 10.5px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 6px; border-radius: 4px;">{delta_str}</span>'
-                f'</div>'
-                f'<div style="font-size: 20px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
-                f'<div style="font-size: 10.5px; color: #64748B; margin-top: 5px; display: flex; justify-content: space-between;">'
-                f'<span>L: {idx["lo"]:,.0f}</span>'
-                f'<span>H: {idx["hi"]:,.0f}</span>'
-                f'</div>'
-                f'</div>'
-            )
-            st.html(card_html)
+    """, unsafe_allow_html=True)
 
     with st.expander("📈 NIFTY 50 historical trend", expanded=False):
         st.caption("Yahoo Finance historical market data · third-party provider.")

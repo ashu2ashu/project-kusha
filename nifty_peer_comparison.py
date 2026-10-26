@@ -1359,14 +1359,17 @@ def render_head_to_head_comparison_html(
     ]
 
     # Build Header Columns
-    header_th = ['<th style="background:#0F172A; color:#00E5FF; padding:12px 14px; text-align:left; font-size:13px; font-weight:800; border:none; width:28%;">METRIC</th>']
+    header_th = ['<th style="background:#F8FAFC; color:#0F172A; padding:12px 14px; text-align:left; font-size:13px; font-weight:800; border-bottom:2px solid #E2E8F0; width:28%;">METRIC</th>']
     for idx, p in enumerate(peers):
         is_target = (idx == 0)
-        bg = "#064E3B" if is_target else "#0F172A"
-        crown = ' <span style="background:#00F5A0; color:#080C14; font-size:10px; font-weight:800; padding:2px 6px; border-radius:9999px;">TARGET</span>' if is_target else ''
+        bg = "#ECFDF5" if is_target else "#F8FAFC"
+        text_color = "#059669" if is_target else "#0F172A"
+        sym_color = "#059669" if is_target else "#64748B"
+        border_b = "2px solid #A7F3D0" if is_target else "2px solid #E2E8F0"
+        crown = ' <span style="background:#059669; color:#FFFFFF; font-size:10px; font-weight:800; padding:2px 6px; border-radius:9999px;">TARGET</span>' if is_target else ''
         header_th.append(
-            f'<th style="background:{bg}; color:#FFFFFF; padding:12px 14px; text-align:right; font-size:13px; font-weight:800; border:none;">'
-            f'{p["company"]}<br><span style="font-size:11px; color:#A7F3D0; font-family:monospace;">{p["symbol"]}</span>{crown}'
+            f'<th style="background:{bg}; color:{text_color}; padding:12px 14px; text-align:right; font-size:13px; font-weight:800; border-bottom:{border_b};">'
+            f'{p["company"]}<br><span style="font-size:11px; color:{sym_color}; font-family:monospace;">{p["symbol"]}</span>{crown}'
             f'</th>'
         )
     header_row = "".join(header_th)
@@ -1382,7 +1385,7 @@ def render_head_to_head_comparison_html(
         if valid_vals:
             leader_val = min(valid_vals) if lower_better else max(valid_vals)
 
-        td_cells = [f'<td style="padding:10px 14px; font-weight:700; color:#F8FAFC; font-size:13px; background:#0B111E; border-bottom:1px solid rgba(255,255,255,0.06); position:sticky; left:0; z-index:2; transition:background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);">{m_label}</td>']
+        td_cells = [f'<td style="padding:10px 14px; font-weight:700; color:#0F172A; font-size:13px; background:#FFFFFF; border-bottom:1px solid #F1F5F9; position:sticky; left:0; z-index:2; transition:background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);">{m_label}</td>']
         for p in peers:
             v = p.get(m_key, 0.0)
             is_leader = (leader_val is not None and v == leader_val and len(valid_vals) > 1)
@@ -1400,10 +1403,10 @@ def render_head_to_head_comparison_html(
                 fmt_str = str(v)
 
             if is_leader:
-                cell_style = "background:rgba(0, 245, 160, 0.12); color:#00F5A0; font-weight:800; border-bottom:1px solid rgba(0, 245, 160, 0.3);"
-                badge = ' <span style="color:#00F5A0; font-size:12px;">★</span>'
+                cell_style = "background:#ECFDF5; color:#059669; font-weight:800; border-bottom:1px solid #A7F3D0;"
+                badge = ' <span style="color:#059669; font-size:12px;">★</span>'
             else:
-                cell_style = "color:#CBD5E1; font-weight:600; border-bottom:1px solid rgba(255,255,255,0.06);"
+                cell_style = "color:#334155; font-weight:600; border-bottom:1px solid #F1F5F9;"
                 badge = ''
 
             td_cells.append(f'<td style="padding:10px 14px; text-align:right; font-size:13.5px; font-family:\'JetBrains Mono\', monospace; transition:background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1); {cell_style}">{fmt_str}{badge}</td>')
@@ -1415,29 +1418,29 @@ def render_head_to_head_comparison_html(
     html = (
         f'<style>'
         f'.peer-matrix-row {{ transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1); }}'
-        f'.peer-matrix-row:hover td {{ background-color: rgba(0, 245, 160, 0.08) !important; }}'
-        f'.peer-matrix-row:hover td:first-child {{ background-color: rgba(0, 245, 160, 0.12) !important; }}'
+        f'.peer-matrix-row:hover td {{ background-color: #F8FAFC !important; }}'
+        f'.peer-matrix-row:hover td:first-child {{ background-color: #EFF6FF !important; }}'
         f'</style>'
-        f'<div style="background:rgba(15, 23, 42, 0.75); border:1.5px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px 26px; margin-top:22px; margin-bottom:24px; box-shadow:0 4px 20px -2px rgba(0,0,0,0.4); backdrop-filter:blur(14px);">'
+        f'<div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-radius:16px; padding:24px 26px; margin-top:22px; margin-bottom:24px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">'
         f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">'
         f'<div>'
         f'<div style="display:flex; align-items:center; gap:8px;">'
         f'<span style="font-size:20px;">⚔️</span>'
-        f'<span style="font-size:15px; font-weight:800; color:#F8FAFC; text-transform:uppercase; letter-spacing:0.5px;">Head-to-Head Sector Peer Comparison (Dalal Street Benchmark)</span>'
+        f'<span style="font-size:15px; font-weight:800; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px;">Head-to-Head Sector Peer Comparison (Dalal Street Benchmark)</span>'
         f'</div>'
-        f'<div style="font-size:12px; color:#94A3B8; margin-top:3px;">Benchmarking {target_company_name} ({target_ticker}) against top {target_sector} peers on the 16 canonical Screener metrics</div>'
+        f'<div style="font-size:12px; color:#64748B; margin-top:3px;">Benchmarking {target_company_name} ({target_ticker}) against top {target_sector} peers on the 16 canonical Screener metrics</div>'
         f'</div>'
-        f'<span style="background:rgba(0, 245, 160, 0.12); color:#00F5A0; border:1px solid rgba(0, 245, 160, 0.35); font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:9999px;">★ Leader Highlighted</span>'
+        f'<span style="background:#ECFDF5; color:#059669; border:1px solid #A7F3D0; font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:9999px;">★ Leader Highlighted</span>'
         f'</div>'
-        f'<div style="overflow-x:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.08); box-shadow:0 1px 3px rgba(0,0,0,0.3);">'
-        f'<table style="width:100%; border-collapse:collapse; background:#080C14;">'
+        f'<div style="overflow-x:auto; border-radius:10px; border:1.5px solid #E2E8F0;">'
+        f'<table style="width:100%; border-collapse:collapse; background:#FFFFFF;">'
         f'<thead><tr>{header_row}</tr></thead>'
         f'<tbody>{table_body}</tbody>'
         f'</table>'
         f'</div>'
-        f'<div style="font-size:12px; color:#94A3B8; margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">'
+        f'<div style="font-size:12px; color:#64748B; margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">'
         f'<span>Source: Screener.in institutional 16-metric framework & BSE/NSE audited filings</span>'
-        f'<span style="font-weight:600; color:#00F5A0;">★ Indicates sector category leader</span>'
+        f'<span style="font-weight:600; color:#059669;">★ Indicates sector category leader</span>'
         f'</div>'
         f'</div>'
     )
@@ -1450,21 +1453,21 @@ def render_nifty50_screener_view():
     the user's template with all 16 metrics, sector filtering, searching, and CSV export.
     """
     st.html("""
-    <div style="background:rgba(15, 23, 42, 0.75); border:1px solid rgba(0, 229, 255, 0.2); border-radius:12px; padding:18px 24px; margin-bottom:18px; box-shadow:0 4px 16px rgba(0,0,0,0.3); backdrop-filter:blur(12px);">
+    <div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-radius:12px; padding:18px 24px; margin-bottom:18px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
-          <div style="font-size:20px; font-weight:800; color:#F8FAFC; letter-spacing:-0.4px; display:flex; align-items:center; gap:8px;">
+          <div style="font-size:20px; font-weight:800; color:#0F172A; letter-spacing:-0.4px; display:flex; align-items:center; gap:8px;">
             <span>⚡</span> Quantum Nifty 50 Screener Matrix
           </div>
-          <div style="font-size:12.5px; color:#94A3B8; margin-top:2px;">
+          <div style="font-size:12.5px; color:#64748B; margin-top:2px;">
             50 Dalal Street Bluechips • 16 Canonical Institutional Factors • Historical FY24 Reference Basis
           </div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <span style="background:rgba(255, 214, 10, 0.12); color:#FFD60A; border:1px solid rgba(255, 214, 10, 0.3); font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace;">
+          <span style="background:#FFFBEB; color:#D97706; border:1px solid #FDE68A; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace;">
             📅 FY24 Audited Basis
           </span>
-          <span style="background:rgba(0, 245, 160, 0.12); color:#00F5A0; border:1px solid rgba(0, 245, 160, 0.35); font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace;">
+          <span style="background:#ECFDF5; color:#059669; border:1px solid #A7F3D0; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace;">
             16 Canonical Metrics
           </span>
         </div>
@@ -1513,39 +1516,39 @@ def render_nifty50_screener_view():
         kpi_strip_html = f"""
         <style>
         .nifty50-screener-row {{
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid #F1F5F9;
             transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }}
         .nifty50-screener-row td {{
             transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }}
         .nifty50-screener-row:hover td {{
-            background-color: rgba(0, 245, 160, 0.08) !important;
+            background-color: #F8FAFC !important;
         }}
         .nifty50-screener-row:hover td:first-child {{
-            background-color: rgba(0, 245, 160, 0.12) !important;
+            background-color: #EFF6FF !important;
         }}
         </style>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:18px;">
-          <div style="background:rgba(15, 23, 42, 0.75); border:1px solid rgba(255, 255, 255, 0.08); border-radius:10px; padding:14px 16px; backdrop-filter:blur(10px);">
-            <div style="font-size:10.5px; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px;">TOTAL MARKET CAP</div>
-            <div style="font-size:18px; font-weight:800; color:#F8FAFC; margin-top:3px; font-family:'JetBrains Mono', monospace;">₹{total_mc:,.0f} Cr</div>
-            <div style="font-size:11px; color:#00F5A0; margin-top:2px; font-family:'JetBrains Mono', monospace;">{len(df_export)} Companies Displayed</div>
+          <div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-top:4px solid #059669; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+            <div style="font-size:10.5px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">TOTAL MARKET CAP</div>
+            <div style="font-size:18px; font-weight:800; color:#0F172A; margin-top:3px; font-family:'JetBrains Mono', monospace;">₹{total_mc:,.0f} Cr</div>
+            <div style="font-size:11px; color:#059669; margin-top:2px; font-family:'JetBrains Mono', monospace;">{len(df_export)} Companies Displayed</div>
           </div>
-          <div style="background:rgba(15, 23, 42, 0.75); border:1px solid rgba(255, 255, 255, 0.08); border-radius:10px; padding:14px 16px; backdrop-filter:blur(10px);">
-            <div style="font-size:10.5px; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px;">MEDIAN P/E</div>
-            <div style="font-size:18px; font-weight:800; color:#00E5FF; margin-top:3px; font-family:'JetBrains Mono', monospace;">{med_pe:.2f}x</div>
-            <div style="font-size:11px; color:#94A3B8; margin-top:2px;">Index Valuation Median</div>
+          <div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-top:4px solid #2563EB; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+            <div style="font-size:10.5px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">MEDIAN P/E</div>
+            <div style="font-size:18px; font-weight:800; color:#2563EB; margin-top:3px; font-family:'JetBrains Mono', monospace;">{med_pe:.2f}x</div>
+            <div style="font-size:11px; color:#64748B; margin-top:2px;">Index Valuation Median</div>
           </div>
-          <div style="background:rgba(15, 23, 42, 0.75); border:1px solid rgba(255, 255, 255, 0.08); border-radius:10px; padding:14px 16px; backdrop-filter:blur(10px);">
-            <div style="font-size:10.5px; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px;">MEDIAN ROCE</div>
-            <div style="font-size:18px; font-weight:800; color:#00F5A0; margin-top:3px; font-family:'JetBrains Mono', monospace;">{med_roce:.2f}%</div>
-            <div style="font-size:11px; color:#00F5A0; margin-top:2px;">Capital Efficiency Benchmark</div>
+          <div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-top:4px solid #059669; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+            <div style="font-size:10.5px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">MEDIAN ROCE</div>
+            <div style="font-size:18px; font-weight:800; color:#059669; margin-top:3px; font-family:'JetBrains Mono', monospace;">{med_roce:.2f}%</div>
+            <div style="font-size:11px; color:#059669; margin-top:2px;">Capital Efficiency Benchmark</div>
           </div>
-          <div style="background:rgba(15, 23, 42, 0.75); border:1px solid rgba(255, 255, 255, 0.08); border-radius:10px; padding:14px 16px; backdrop-filter:blur(10px);">
-            <div style="font-size:10.5px; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:0.5px;">MEDIAN CROIC</div>
-            <div style="font-size:18px; font-weight:800; color:#BF5AF2; margin-top:3px; font-family:'JetBrains Mono', monospace;">{med_croic:.2f}%</div>
-            <div style="font-size:11px; color:#BF5AF2; margin-top:2px;">Cash Return on Capital</div>
+          <div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-top:4px solid #7C3AED; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+            <div style="font-size:10.5px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">MEDIAN CROIC</div>
+            <div style="font-size:18px; font-weight:800; color:#7C3AED; margin-top:3px; font-family:'JetBrains Mono', monospace;">{med_croic:.2f}%</div>
+            <div style="font-size:11px; color:#7C3AED; margin-top:2px;">Cash Return on Capital</div>
           </div>
         </div>
         """

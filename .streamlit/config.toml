@@ -1,4 +1,4 @@
-# StockSage - Cyber-Dark Institutional HUD Theme (Future of Stock Screeners)
+# StockSage - Crisp Institutional White & Emerald Theme (Dalal Street Terminal)
 
 [server]
 port = 8501
@@ -11,18 +11,18 @@ runOnSave = true
 gatherUsageStats = false
 
 [theme]
-base = "dark"
-primaryColor = "#00F5A0"             # Cyber Neon Emerald / Dalal Street Alpha
-backgroundColor = "#080C14"          # Deep Obsidian Space
-secondaryBackgroundColor = "#0F172A" # Cyber Slate Glass Surface
-codeBackgroundColor = "#0B111E"
-textColor = "#F1F5F9"                # High-contrast Crisp Typography
-linkColor = "#00E5FF"                # Cyber Cyan Hologram
-borderColor = "#1E293B"              # Subtle Cyber Outline
-codeTextColor = "#38BDF8"
+base = "light"
+primaryColor = "#059669"             # Institutional Emerald / Dalal Street Alpha
+backgroundColor = "#FFFFFF"          # Pure Clean White
+secondaryBackgroundColor = "#F8FAFC" # Crisp Light Slate Surface
+codeBackgroundColor = "#F1F5F9"
+textColor = "#0F172A"                # Deep Obsidian Navy Typography
+linkColor = "#059669"                # Emerald Accent Links
+borderColor = "#E2E8F0"              # Subtle Crisp Border
+codeTextColor = "#0F172A"
 showWidgetBorder = true
 showSidebarBorder = true
-baseRadius = "10px"                  # Modern Glass Radius
+baseRadius = "10px"
 buttonRadius = "10px"
 
 # Typography - Ultra-clean High-Density Financial Fonts
@@ -37,50 +37,50 @@ headingFontWeights = [800, 700, 600, 600, 500, 500]
 linkUnderline = false
 
 # Semantic colors for financial indicators
-greenColor = "#00F5A0"  # Gains / Positive Telemetry
-redColor = "#FF453A"    # Losses / Red Flags
-yellowColor = "#FFD60A" # Warnings / Cautions
-orangeColor = "#FF9F0A" # Watchlist Alerts
-blueColor = "#00E5FF"   # Cyber Cyan Hologram
-violetColor = "#BF5AF2" # Quantum Accents
-grayColor = "#94A3B8"   # High-Tech Neutral
+greenColor = "#059669"  # Gains / Positive Telemetry
+redColor = "#DC2626"    # Losses / Red Flags
+yellowColor = "#D97706" # Warnings / Cautions
+orangeColor = "#EA580C" # Watchlist Alerts
+blueColor = "#2563EB"   # Institutional Blue
+violetColor = "#7C3AED" # Premium Purple
+grayColor = "#64748B"   # Neutral Slate
 
-# Chart colors - Neon Multi-Factor Palettes
+# Chart colors - Institutional Multi-Factor Palettes
 chartCategoricalColors = [
-    "#00F5A0",
-    "#00E5FF",
-    "#BF5AF2",
-    "#FF9F0A",
-    "#FF453A",
-    "#64D2FF",
-    "#30D158",
-    "#94A3B8",
+    "#059669",
+    "#2563EB",
+    "#7C3AED",
+    "#D97706",
+    "#DC2626",
+    "#0D9488",
+    "#4F46E5",
+    "#64748B",
 ]
 
-# Sequential colors for financial heatmaps (Cyan to Emerald)
+# Sequential colors for financial heatmaps (Light to Deep Emerald)
 chartSequentialColors = [
-    "#042F2E",
-    "#064E3B",
-    "#065F46",
-    "#047857",
-    "#059669",
-    "#10B981",
-    "#34D399",
+    "#ECFDF5",
+    "#D1FAE5",
+    "#A7F3D0",
     "#6EE7B7",
-    "#00E5FF",
-    "#00F5A0",
+    "#34D399",
+    "#10B981",
+    "#059669",
+    "#047857",
+    "#065F46",
+    "#064E3B",
 ]
 
 # Dataframe styling
-dataframeBorderColor = "#1E293B"
-dataframeHeaderBackgroundColor = "#0F172A"
-dataframeHeaderTextColor = "#F8FAFC"
+dataframeBorderColor = "#E2E8F0"
+dataframeHeaderBackgroundColor = "#F8FAFC"
+dataframeHeaderTextColor = "#0F172A"
 
-# Sidebar - Deep Obsidian Terminal
+# Sidebar - Clean White / Slate Terminal
 [theme.sidebar]
-backgroundColor = "#06090F"
-secondaryBackgroundColor = "#0B111E"
-codeBackgroundColor = "#080C14"
-textColor = "#F1F5F9"
-borderColor = "#1E293B"
-primaryColor = "#00F5A0"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#FFFFFF"
+codeBackgroundColor = "#F1F5F9"
+textColor = "#0F172A"
+borderColor = "#E2E8F0"
+primaryColor = "#059669"

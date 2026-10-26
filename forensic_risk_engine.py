@@ -548,17 +548,17 @@ def render_forensic_dossier_html(report: Dict[str, Any]) -> str:
     v_badge = report.get("verdict_badge", "PRISTINE")
     
     if v_badge == "PRISTINE":
-        v_color = "#00F5A0"
-        v_bg = "rgba(0, 245, 160, 0.12)"
-        v_border = "rgba(0, 245, 160, 0.35)"
+        v_color = "#059669"
+        v_bg = "#ECFDF5"
+        v_border = "#A7F3D0"
     elif "ALERT" in v_badge or "WATCH" in v_badge:
-        v_color = "#FFD60A"
-        v_bg = "rgba(255, 214, 10, 0.12)"
-        v_border = "rgba(255, 214, 10, 0.35)"
+        v_color = "#D97706"
+        v_bg = "#FFFBEB"
+        v_border = "#FDE68A"
     else:
-        v_color = "#FF453A"
-        v_bg = "rgba(255, 69, 58, 0.12)"
-        v_border = "rgba(255, 69, 58, 0.35)"
+        v_color = "#DC2626"
+        v_bg = "#FEF2F2"
+        v_border = "#FECACA"
 
     v_desc = report.get("verdict_desc", "")
     checks = report.get("checks", [])
@@ -569,27 +569,27 @@ def render_forensic_dossier_html(report: Dict[str, Any]) -> str:
         st = c["status"]
         if st == "PASS":
             icon = "🟢"
-            bg = "rgba(0, 245, 160, 0.06)"
-            border = "rgba(0, 245, 160, 0.22)"
-            color = "#00F5A0"
+            bg = "#F8FAFC"
+            border = "#E2E8F0"
+            color = "#059669"
             badge = "PASSED"
         elif st == "MONITOR":
             icon = "🟡"
-            bg = "rgba(255, 214, 10, 0.06)"
-            border = "rgba(255, 214, 10, 0.22)"
-            color = "#FFD60A"
+            bg = "#FFFBEB"
+            border = "#FDE68A"
+            color = "#D97706"
             badge = "MONITOR"
         elif st == "CRITICAL":
             icon = "🔴"
-            bg = "rgba(255, 69, 58, 0.06)"
-            border = "rgba(255, 69, 58, 0.22)"
-            color = "#FF453A"
+            bg = "#FEF2F2"
+            border = "#FECACA"
+            color = "#DC2626"
             badge = "RED FLAG"
         else:
             icon = "⚪"
-            bg = "rgba(255, 255, 255, 0.04)"
-            border = "rgba(255, 255, 255, 0.08)"
-            color = "#94A3B8"
+            bg = "#F8FAFC"
+            border = "#E2E8F0"
+            color = "#64748B"
             badge = "N/A"
 
         check_rows.append(
@@ -597,10 +597,10 @@ def render_forensic_dossier_html(report: Dict[str, Any]) -> str:
             f'<div style="flex:1;">'
             f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">'
             f'<span style="font-size:16px;">{icon}</span>'
-            f'<span style="font-size:13.5px; font-weight:800; color:#F8FAFC;">{c["title"]}</span>'
-            f'<span style="background:rgba(255,255,255,0.06); color:{color}; border:1px solid {border}; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:9999px;">{c["category"]}</span>'
+            f'<span style="font-size:13.5px; font-weight:800; color:#0F172A;">{c["title"]}</span>'
+            f'<span style="background:#FFFFFF; color:{color}; border:1px solid {border}; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:9999px;">{c["category"]}</span>'
             f'</div>'
-            f'<div style="font-size:12.5px; line-height:1.5; color:#94A3B8; margin-top:4px;">{c["detail"]}</div>'
+            f'<div style="font-size:12.5px; line-height:1.5; color:#475569; margin-top:4px;">{c["detail"]}</div>'
             f'</div>'
             f'<div style="text-align:right; min-width:110px;">'
             f'<div style="font-size:13.5px; font-weight:900; color:{color}; font-family:\'JetBrains Mono\', monospace;">{c["metric"]}</div>'
@@ -615,40 +615,40 @@ def render_forensic_dossier_html(report: Dict[str, Any]) -> str:
     cra_headroom = cra.get("headroom", "Adequate liquidity buffer and unencumbered banking lines.")
 
     html = (
-        f'<div style="background:rgba(15, 23, 42, 0.75); border:1.5px solid {v_border}; border-radius:16px; padding:24px 26px; margin-bottom:24px; box-shadow:0 4px 20px -2px rgba(0, 0, 0, 0.4); backdrop-filter:blur(14px);">'
-        f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px;">'
+        f'<div style="background:#FFFFFF; border:1.5px solid {v_border}; border-radius:16px; padding:24px 26px; margin-bottom:24px; box-shadow:0 1px 4px rgba(0, 0, 0, 0.04);">'
+        f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px; border-bottom:1px solid #E2E8F0; padding-bottom:14px;">'
         f'<div>'
         f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">'
         f'<span style="font-size:20px;">🕵️</span>'
-        f'<span style="font-size:15px; font-weight:900; color:#F8FAFC; text-transform:uppercase; letter-spacing:0.5px;">Institutional Forensic Due Diligence & Concealed Risk Audit</span>'
+        f'<span style="font-size:15px; font-weight:900; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px;">Institutional Forensic Due Diligence & Concealed Risk Audit</span>'
         f'</div>'
-        f'<div style="font-size:12px; color:#94A3B8;">Multi-year accrual stress, channel stuffing radar, CWIP bloat, tax discrepancy & credit rating surveillance</div>'
+        f'<div style="font-size:12px; color:#64748B;">Multi-year accrual stress, channel stuffing radar, CWIP bloat, tax discrepancy & credit rating surveillance</div>'
         f'</div>'
         f'<div style="display:flex; align-items:center; gap:10px;">'
         f'<div style="background:{v_bg}; border:1px solid {v_border}; border-radius:10px; padding:6px 14px; text-align:right;">'
         f'<div style="font-size:9.5px; font-weight:800; color:{v_color}; text-transform:uppercase;">Forensic Quality Index</div>'
         f'<div style="font-size:18px; font-weight:900; color:{v_color}; font-family:\'JetBrains Mono\', monospace;">{fqi:.1f} / 100</div>'
         f'</div>'
-        f'<span style="background:{v_color}; color:#080C14; font-size:12px; font-weight:900; padding:8px 14px; border-radius:9999px; letter-spacing:0.5px; font-family:\'JetBrains Mono\', monospace;">{v_badge}</span>'
+        f'<span style="background:{v_color}; color:#FFFFFF; font-size:12px; font-weight:900; padding:8px 14px; border-radius:9999px; letter-spacing:0.5px; font-family:\'JetBrains Mono\', monospace;">{v_badge}</span>'
         f'</div>'
         f'</div>'
         f'<div style="background:{v_bg}; border:1px solid {v_border}; border-radius:10px; padding:12px 18px; margin-bottom:16px; font-size:13px; color:{v_color}; font-weight:600; line-height:1.5;">'
         f'<strong>Audit Verdict:</strong> {v_desc}'
         f'</div>'
         f'<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">'
-        f'<div style="background:rgba(11, 17, 30, 0.7); border:1px solid rgba(255, 255, 255, 0.06); border-radius:8px; padding:12px 16px;">'
-        f'<div style="font-size:10.5px; font-weight:800; color:#00E5FF; text-transform:uppercase; margin-bottom:4px;">🏛️ Credit Rating Agency Surveillance</div>'
-        f'<div style="font-size:14px; font-weight:800; color:#F8FAFC;">{cra_rating} ({cra_agency})</div>'
-        f'<div style="font-size:11.5px; color:#94A3B8; margin-top:2px;">Outlook: {cra_outlook} • {cra_headroom}</div>'
+        f'<div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:8px; padding:12px 16px;">'
+        f'<div style="font-size:10.5px; font-weight:800; color:#2563EB; text-transform:uppercase; margin-bottom:4px;">🏛️ Credit Rating Agency Surveillance</div>'
+        f'<div style="font-size:14px; font-weight:800; color:#0F172A;">{cra_rating} ({cra_agency})</div>'
+        f'<div style="font-size:11.5px; color:#64748B; margin-top:2px;">Outlook: {cra_outlook} • {cra_headroom}</div>'
         f'</div>'
-        f'<div style="background:rgba(11, 17, 30, 0.7); border:1px solid rgba(255, 255, 255, 0.06); border-radius:8px; padding:12px 16px;">'
-        f'<div style="font-size:10.5px; font-weight:800; color:#00F5A0; text-transform:uppercase; margin-bottom:4px;">🛡️ Governance & Integrity Defense</div>'
-        f'<div style="font-size:14px; font-weight:800; color:#00F5A0;">Clean Audit • 0.0% Pledged</div>'
-        f'<div style="font-size:11.5px; color:#94A3B8; margin-top:2px;">Zero auditor resignations, zero NCLT actions, unencumbered promoter shares.</div>'
+        f'<div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:8px; padding:12px 16px;">'
+        f'<div style="font-size:10.5px; font-weight:800; color:#059669; text-transform:uppercase; margin-bottom:4px;">🛡️ Governance & Integrity Defense</div>'
+        f'<div style="font-size:14px; font-weight:800; color:#059669;">Clean Audit • 0.0% Pledged</div>'
+        f'<div style="font-size:11.5px; color:#64748B; margin-top:2px;">Zero auditor resignations, zero NCLT actions, unencumbered promoter shares.</div>'
         f'</div>'
         f'</div>'
         f'<div style="margin-top:14px;">'
-        f'<div style="font-size:11.5px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:8px; letter-spacing:0.4px;">8-Pillar Forensic Stress Test Matrix</div>'
+        f'<div style="font-size:11.5px; font-weight:800; color:#64748B; text-transform:uppercase; margin-bottom:8px; letter-spacing:0.4px;">8-Pillar Forensic Stress Test Matrix</div>'
         f'{"".join(check_rows)}'
         f'</div>'
         f'</div>'

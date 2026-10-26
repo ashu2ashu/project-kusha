@@ -332,7 +332,7 @@ def build_revenue_profit_chart(fin_data: Dict[str, Any], company_name: str) -> g
             x=years,
             y=rev,
             name="Sales (₹ Cr)",
-            marker_color="#00F5A0",
+            marker_color="#059669",
             opacity=0.90,
             hovertemplate="Sales: ₹%{y:,.0f} Cr<extra></extra>"
         ),
@@ -343,7 +343,7 @@ def build_revenue_profit_chart(fin_data: Dict[str, Any], company_name: str) -> g
             x=years,
             y=pat,
             name="Net Profit (₹ Cr)",
-            marker_color="#00E5FF",
+            marker_color="#2563EB",
             opacity=0.92,
             hovertemplate="PAT: ₹%{y:,.0f} Cr<extra></extra>"
         ),
@@ -358,8 +358,8 @@ def build_revenue_profit_chart(fin_data: Dict[str, Any], company_name: str) -> g
                 y=opm,
                 name="OPM %",
                 mode="lines+markers",
-                line=dict(color="#FFD60A", width=2.8),
-                marker=dict(size=7, color="#FFD60A"),
+                line=dict(color="#D97706", width=2.8),
+                marker=dict(size=7, color="#D97706"),
                 hovertemplate="OPM: %{y:.1f}%<extra></extra>"
             ),
             secondary_y=True
@@ -371,15 +371,15 @@ def build_revenue_profit_chart(fin_data: Dict[str, Any], company_name: str) -> g
                 y=npm,
                 name="NPM %",
                 mode="lines+markers",
-                line=dict(color="#BF5AF2", width=2.2, dash="dot"),
-                marker=dict(size=6, color="#BF5AF2"),
+                line=dict(color="#7C3AED", width=2.2, dash="dot"),
+                marker=dict(size=6, color="#7C3AED"),
                 hovertemplate="NPM: %{y:.1f}%<extra></extra>"
             ),
             secondary_y=True
         )
 
     fig.update_layout(
-        template="plotly_dark",
+        template="plotly_white",
         height=360,
         margin=dict(l=10, r=10, t=25, b=10),
         legend=dict(
@@ -388,26 +388,26 @@ def build_revenue_profit_chart(fin_data: Dict[str, Any], company_name: str) -> g
             y=1.02,
             xanchor="right",
             x=1,
-            font=dict(size=11, family="Inter, sans-serif")
+            font=dict(size=11, color="#0F172A", family="Inter, sans-serif")
         ),
         barmode="group",
         hovermode="x unified",
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(15, 23, 42, 0.45)"
+        plot_bgcolor="rgba(0,0,0,0)"
     )
     fig.update_yaxes(
         title_text="Amount (₹ Crores)",
         secondary_y=False,
-        gridcolor="rgba(255, 255, 255, 0.06)",
-        tickfont=dict(size=11, family="JetBrains Mono, monospace")
+        gridcolor="#F1F5F9",
+        tickfont=dict(size=11, color="#64748B", family="JetBrains Mono, monospace")
     )
     fig.update_yaxes(
         title_text="Margin (%)",
         secondary_y=True,
         showgrid=False,
-        tickfont=dict(size=11, family="JetBrains Mono, monospace")
+        tickfont=dict(size=11, color="#64748B", family="JetBrains Mono, monospace")
     )
-    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(size=11))
+    fig.update_xaxes(gridcolor="#F1F5F9", tickfont=dict(size=11, color="#64748B"))
     return fig
 
 
@@ -429,7 +429,7 @@ def build_cashflow_health_chart(fin_data: Dict[str, Any], company_name: str) -> 
             x=cf_years,
             y=cfo,
             name="Operating Cash Flow (CFO)",
-            marker_color="#00F5A0",
+            marker_color="#059669",
             hovertemplate="CFO: ₹%{y:,.0f} Cr<extra></extra>"
         )
     )
@@ -438,7 +438,7 @@ def build_cashflow_health_chart(fin_data: Dict[str, Any], company_name: str) -> 
             x=cf_years,
             y=capex,
             name="Capex",
-            marker_color="#FF453A",
+            marker_color="#DC2626",
             hovertemplate="Capex: ₹%{y:,.0f} Cr<extra></extra>"
         )
     )
@@ -447,7 +447,7 @@ def build_cashflow_health_chart(fin_data: Dict[str, Any], company_name: str) -> 
             x=cf_years,
             y=fcf,
             name="Free Cash Flow (FCF)",
-            marker_color="#00E5FF",
+            marker_color="#2563EB",
             hovertemplate="FCF: ₹%{y:,.0f} Cr<extra></extra>"
         )
     )
@@ -459,14 +459,14 @@ def build_cashflow_health_chart(fin_data: Dict[str, Any], company_name: str) -> 
                 y=pat,
                 name="Net Profit (PAT Benchmark)",
                 mode="lines+markers",
-                line=dict(color="#94A3B8", width=2.2, dash="dash"),
+                line=dict(color="#64748B", width=2.2, dash="dash"),
                 marker=dict(size=6, symbol="diamond"),
                 hovertemplate="PAT Benchmark: ₹%{y:,.0f} Cr<extra></extra>"
             )
         )
 
     fig.update_layout(
-        template="plotly_dark",
+        template="plotly_white",
         height=360,
         margin=dict(l=10, r=10, t=25, b=10),
         legend=dict(
@@ -475,19 +475,19 @@ def build_cashflow_health_chart(fin_data: Dict[str, Any], company_name: str) -> 
             y=1.02,
             xanchor="right",
             x=1,
-            font=dict(size=11, family="Inter, sans-serif")
+            font=dict(size=11, color="#0F172A", family="Inter, sans-serif")
         ),
         barmode="group",
         hovermode="x unified",
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(15, 23, 42, 0.45)"
+        plot_bgcolor="rgba(0,0,0,0)"
     )
     fig.update_yaxes(
         title_text="Cash Flow (₹ Crores)",
-        gridcolor="rgba(255, 255, 255, 0.06)",
-        tickfont=dict(size=11, family="JetBrains Mono, monospace")
+        gridcolor="#F1F5F9",
+        tickfont=dict(size=11, color="#64748B", family="JetBrains Mono, monospace")
     )
-    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(size=11))
+    fig.update_xaxes(gridcolor="#F1F5F9", tickfont=dict(size=11, color="#64748B"))
     return fig
 
 
@@ -507,7 +507,7 @@ def build_balance_sheet_chart(fin_data: Dict[str, Any], company_name: str) -> go
             x=bs_years,
             y=nw,
             name="Net Worth (Equity)",
-            marker_color="#00F5A0",
+            marker_color="#059669",
             hovertemplate="Net Worth: ₹%{y:,.0f} Cr<extra></extra>"
         ),
         secondary_y=False
@@ -517,7 +517,7 @@ def build_balance_sheet_chart(fin_data: Dict[str, Any], company_name: str) -> go
             x=bs_years,
             y=debt,
             name="Total Borrowings (Debt)",
-            marker_color="#FF453A",
+            marker_color="#DC2626",
             hovertemplate="Debt: ₹%{y:,.0f} Cr<extra></extra>"
         ),
         secondary_y=False
@@ -530,7 +530,7 @@ def build_balance_sheet_chart(fin_data: Dict[str, Any], company_name: str) -> go
             y=de_ratio,
             name="Debt-to-Equity",
             mode="lines+markers",
-            line=dict(color="#00E5FF", width=2.5),
+            line=dict(color="#2563EB", width=2.5),
             marker=dict(size=6),
             hovertemplate="D/E: %{y:.2f}x<extra></extra>"
         ),
@@ -538,7 +538,7 @@ def build_balance_sheet_chart(fin_data: Dict[str, Any], company_name: str) -> go
     )
 
     fig.update_layout(
-        template="plotly_dark",
+        template="plotly_white",
         height=360,
         margin=dict(l=10, r=10, t=25, b=10),
         legend=dict(
@@ -547,26 +547,26 @@ def build_balance_sheet_chart(fin_data: Dict[str, Any], company_name: str) -> go
             y=1.02,
             xanchor="right",
             x=1,
-            font=dict(size=11, family="Inter, sans-serif")
+            font=dict(size=11, color="#0F172A", family="Inter, sans-serif")
         ),
         barmode="group",
         hovermode="x unified",
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(15, 23, 42, 0.45)"
+        plot_bgcolor="rgba(0,0,0,0)"
     )
     fig.update_yaxes(
         title_text="Amount (₹ Crores)",
         secondary_y=False,
-        gridcolor="rgba(255, 255, 255, 0.06)",
-        tickfont=dict(size=11, family="JetBrains Mono, monospace")
+        gridcolor="#F1F5F9",
+        tickfont=dict(size=11, color="#64748B", family="JetBrains Mono, monospace")
     )
     fig.update_yaxes(
         title_text="Debt / Equity (x)",
         secondary_y=True,
         showgrid=False,
-        tickfont=dict(size=11, family="JetBrains Mono, monospace")
+        tickfont=dict(size=11, color="#64748B", family="JetBrains Mono, monospace")
     )
-    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(size=11))
+    fig.update_xaxes(gridcolor="#F1F5F9", tickfont=dict(size=11, color="#64748B"))
     return fig
 
 
@@ -586,37 +586,37 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
     # Cash conversion forensic tag
     if avg_cfo_pat is not None:
         if avg_cfo_pat >= 100:
-            cfo_badge = '<span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1.5px solid rgba(0, 245, 160, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟢 Institutional Grade</span>'
+            cfo_badge = '<span style="background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟢 Institutional Grade</span>'
         elif avg_cfo_pat >= 75:
-            cfo_badge = '<span style="background: rgba(0, 229, 255, 0.12); color: #00E5FF; border: 1.5px solid rgba(0, 229, 255, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔵 Sound Accruals</span>'
+            cfo_badge = '<span style="background: #EFF6FF; color: #2563EB; border: 1.5px solid #BFDBFE; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔵 Sound Accruals</span>'
         elif avg_cfo_pat >= 50:
-            cfo_badge = '<span style="background: rgba(255, 214, 10, 0.12); color: #FFD60A; border: 1.5px solid rgba(255, 214, 10, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟡 Working Capital Drag</span>'
+            cfo_badge = '<span style="background: #FFFBEB; color: #D97706; border: 1.5px solid #FDE68A; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟡 Working Capital Drag</span>'
         else:
-            cfo_badge = '<span style="background: rgba(255, 69, 58, 0.12); color: #FF453A; border: 1.5px solid rgba(255, 69, 58, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔴 Accrual Divergence</span>'
+            cfo_badge = '<span style="background: #FEF2F2; color: #DC2626; border: 1.5px solid #FECACA; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔴 Accrual Divergence</span>'
     else:
-        cfo_badge = '<span style="background: rgba(255, 255, 255, 0.05); color: #94A3B8; border: 1.5px solid rgba(255, 255, 255, 0.12); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">⚪ Data Unavailable</span>'
+        cfo_badge = '<span style="background: #F1F5F9; color: #64748B; border: 1.5px solid #E2E8F0; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">⚪ Data Unavailable</span>'
 
     # Debt tag
     if latest_de is not None:
         if latest_de <= 0.1:
-            de_badge = '<span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1.5px solid rgba(0, 245, 160, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Practically Debt Free</span>'
+            de_badge = '<span style="background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Practically Debt Free</span>'
         elif latest_de <= 0.5:
-            de_badge = '<span style="background: rgba(0, 229, 255, 0.12); color: #00E5FF; border: 1.5px solid rgba(0, 229, 255, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Conservative Leverage</span>'
+            de_badge = '<span style="background: #EFF6FF; color: #2563EB; border: 1.5px solid #BFDBFE; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Conservative Leverage</span>'
         elif latest_de <= 1.0:
-            de_badge = '<span style="background: rgba(255, 214, 10, 0.12); color: #FFD60A; border: 1.5px solid rgba(255, 214, 10, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Moderate Debt</span>'
+            de_badge = '<span style="background: #FFFBEB; color: #D97706; border: 1.5px solid #FDE68A; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">Moderate Debt</span>'
         else:
-            de_badge = '<span style="background: rgba(255, 69, 58, 0.12); color: #FF453A; border: 1.5px solid rgba(255, 69, 58, 0.35); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">High Leverage</span>'
+            de_badge = '<span style="background: #FEF2F2; color: #DC2626; border: 1.5px solid #FECACA; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">High Leverage</span>'
     else:
-        de_badge = '<span style="background: rgba(255, 255, 255, 0.05); color: #94A3B8; border: 1.5px solid rgba(255, 255, 255, 0.12); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">⚪ Data Unavailable</span>'
+        de_badge = '<span style="background: #F1F5F9; color: #64748B; border: 1.5px solid #E2E8F0; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">⚪ Data Unavailable</span>'
 
     sales_cagr_str = f"{sales_cagr:.1f}%" if sales_cagr is not None else "N/A"
     pat_cagr_str = f"{pat_cagr:.1f}%" if pat_cagr is not None else "N/A"
     sales_yoy_str = f"{sales_yoy:+.1f}%" if sales_yoy is not None else "N/A"
-    sales_yoy_color = ("#00F5A0" if sales_yoy >= 0 else "#FF453A") if sales_yoy is not None else "#94A3B8"
+    sales_yoy_color = ("#059669" if sales_yoy >= 0 else "#DC2626") if sales_yoy is not None else "#64748B"
     pat_yoy_str = f"{pat_yoy:+.1f}%" if pat_yoy is not None else "N/A"
-    pat_yoy_color = ("#00F5A0" if pat_yoy >= 0 else "#FF453A") if pat_yoy is not None else "#94A3B8"
+    pat_yoy_color = ("#059669" if pat_yoy >= 0 else "#DC2626") if pat_yoy is not None else "#64748B"
     opm_exp_str = (f"+{opm_exp:.1f}%" if opm_exp >= 0 else f"{opm_exp:.1f}%") if opm_exp is not None else "N/A"
-    opm_color = ("#00F5A0" if opm_exp >= 0 else "#FF453A") if opm_exp is not None else "#94A3B8"
+    opm_color = ("#059669" if opm_exp >= 0 else "#DC2626") if opm_exp is not None else "#64748B"
     avg_cfo_pat_str = f"{avg_cfo_pat:.1f}%" if avg_cfo_pat is not None else "N/A"
     latest_roe_str = f"{latest_roe:.1f}%" if latest_roe is not None else "N/A"
     latest_de_str = f"{latest_de:.2f}x" if latest_de is not None else "N/A"
@@ -625,60 +625,60 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 12px; margin-bottom: 22px;">
       
       <!-- Card 1: Sales Growth -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(255, 255, 255, 0.08); border-top: 4.5px solid #00F5A0; border-radius: 12px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(12px);">
-        <div style="font-size: 12.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">Compounded Sales Growth</div>
+      <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #059669; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+        <div style="font-size: 12.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Compounded Sales Growth</div>
         <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 8px;">
-          <span style="font-size: 28px; font-weight: 900; color: #F8FAFC; font-family: 'JetBrains Mono', monospace;">{sales_cagr_str}</span>
-          <span style="font-size: 13px; font-weight: 700; color: #00F5A0;">{n_years}Y CAGR</span>
+          <span style="font-size: 28px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{sales_cagr_str}</span>
+          <span style="font-size: 13px; font-weight: 700; color: #059669;">{n_years}Y CAGR</span>
         </div>
-        <div style="margin-top: 10px; font-size: 13px; color: #94A3B8; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+        <div style="margin-top: 10px; font-size: 13px; color: #64748B; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 8px;">
           <span>Latest Fiscal YoY:</span>
           <span style="font-weight: 800; font-size: 14px; color: {sales_yoy_color}; font-family: 'JetBrains Mono', monospace;">{sales_yoy_str}</span>
         </div>
       </div>
 
       <!-- Card 2: Profit Growth -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(255, 255, 255, 0.08); border-top: 4.5px solid #00E5FF; border-radius: 12px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(12px);">
-        <div style="font-size: 12.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">Compounded Profit Growth</div>
+      <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #2563EB; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+        <div style="font-size: 12.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Compounded Profit Growth</div>
         <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 8px;">
-          <span style="font-size: 28px; font-weight: 900; color: #F8FAFC; font-family: 'JetBrains Mono', monospace;">{pat_cagr_str}</span>
-          <span style="font-size: 13px; font-weight: 700; color: #00E5FF;">{n_years}Y PAT CAGR</span>
+          <span style="font-size: 28px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{pat_cagr_str}</span>
+          <span style="font-size: 13px; font-weight: 700; color: #2563EB;">{n_years}Y PAT CAGR</span>
         </div>
-        <div style="margin-top: 10px; font-size: 13px; color: #94A3B8; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+        <div style="margin-top: 10px; font-size: 13px; color: #64748B; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 8px;">
           <span>Latest Fiscal YoY:</span>
           <span style="font-weight: 800; font-size: 14px; color: {pat_yoy_color}; font-family: 'JetBrains Mono', monospace;">{pat_yoy_str}</span>
         </div>
       </div>
 
       <!-- Card 3: Forensic Cash Conversion -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(255, 255, 255, 0.08); border-top: 4.5px solid #FFD60A; border-radius: 12px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(12px);">
+      <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #D97706; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 12.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">CFO / PAT Conversion</span>
+          <span style="font-size: 12.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">CFO / PAT Conversion</span>
           {cfo_badge}
         </div>
         <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 8px;">
-          <span style="font-size: 28px; font-weight: 900; color: #F8FAFC; font-family: 'JetBrains Mono', monospace;">{avg_cfo_pat_str}</span>
-          <span style="font-size: 13px; font-weight: 700; color: #FFD60A;">Avg Cash Yield</span>
+          <span style="font-size: 28px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{avg_cfo_pat_str}</span>
+          <span style="font-size: 13px; font-weight: 700; color: #D97706;">Avg Cash Yield</span>
         </div>
-        <div style="margin-top: 10px; font-size: 13px; color: #94A3B8; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+        <div style="margin-top: 10px; font-size: 13px; color: #64748B; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 8px;">
           <span>OPM Expansion ({n_years}Y):</span>
           <span style="font-weight: 800; font-size: 14px; color: {opm_color}; font-family: 'JetBrains Mono', monospace;">{opm_exp_str}</span>
         </div>
       </div>
 
       <!-- Card 4: Capital Return & Leverage -->
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(255, 255, 255, 0.08); border-top: 4.5px solid #BF5AF2; border-radius: 12px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(12px);">
+      <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #7C3AED; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 12.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">Return on Equity & D/E</span>
+          <span style="font-size: 12.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Return on Equity & D/E</span>
           {de_badge}
         </div>
         <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 8px;">
-          <span style="font-size: 28px; font-weight: 900; color: #F8FAFC; font-family: 'JetBrains Mono', monospace;">{latest_roe_str}</span>
-          <span style="font-size: 13px; font-weight: 700; color: #BF5AF2;">ROE</span>
+          <span style="font-size: 28px; font-weight: 900; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{latest_roe_str}</span>
+          <span style="font-size: 13px; font-weight: 700; color: #7C3AED;">ROE</span>
         </div>
-        <div style="margin-top: 10px; font-size: 13px; color: #94A3B8; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+        <div style="margin-top: 10px; font-size: 13px; color: #64748B; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 8px;">
           <span>Debt / Equity:</span>
-          <span style="font-weight: 800; font-size: 14px; color: #00E5FF; font-family: 'JetBrains Mono', monospace;">{latest_de_str}</span>
+          <span style="font-weight: 800; font-size: 14px; color: #2563EB; font-family: 'JetBrains Mono', monospace;">{latest_de_str}</span>
         </div>
       </div>
 
@@ -690,10 +690,10 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
 def render_financial_table_html(statement_dict: Dict[str, Any], years: List[str], statement_name: str) -> str:
     """Renders an institutional Screener.in multi-year tabular financial statement with generous legible typography."""
     if not statement_dict or not years:
-        return "<div style='color: #94A3B8; padding: 18px; font-size: 15px;'>No statement data available.</div>"
+        return "<div style='color: #64748B; padding: 18px; font-size: 15px;'>No statement data available.</div>"
 
     header_cols = "".join([
-        f'<th style="text-align: right; padding: 12px 18px; font-size: 13.5px; font-weight: 800; color: #00E5FF; border-bottom: 2px solid #1E293B; background: #0F172A; white-space: nowrap; font-family: \'JetBrains Mono\', monospace;">{yr}</th>'
+        f'<th style="text-align: right; padding: 12px 18px; font-size: 13.5px; font-weight: 800; color: #0F172A; border-bottom: 2px solid #E2E8F0; background: #F8FAFC; white-space: nowrap; font-family: \'JetBrains Mono\', monospace;">{yr}</th>'
         for yr in years
     ])
 
@@ -704,9 +704,9 @@ def render_financial_table_html(statement_dict: Dict[str, Any], years: List[str]
         is_pct = meta.get("is_pct", False)
         is_eps = meta.get("is_eps", False)
 
-        row_bg = "rgba(15, 23, 42, 0.75)" if is_highlight else "rgba(8, 12, 20, 0.6)"
+        row_bg = "#F8FAFC" if is_highlight else "#FFFFFF"
         font_weight = "800" if is_highlight else "500"
-        label_color = "#F8FAFC" if is_highlight else "#CBD5E1"
+        label_color = "#0F172A" if is_highlight else "#334155"
 
         val_cells = []
         for v in vals:
@@ -715,39 +715,39 @@ def render_financial_table_html(statement_dict: Dict[str, Any], years: List[str]
                 val_color = "#64748B"
             elif is_pct:
                 formatted_val = f"{v:.1f}%"
-                val_color = "#00F5A0" if v >= 0 else "#FF453A"
+                val_color = "#059669" if v >= 0 else "#DC2626"
             elif is_eps:
                 formatted_val = f"₹{v:.2f}"
-                val_color = "#00E5FF" if is_highlight else "#F1F5F9"
+                val_color = "#2563EB" if is_highlight else "#0F172A"
             else:
                 if v == 0:
                     formatted_val = "-"
                     val_color = "#64748B"
                 elif v > 0:
                     formatted_val = f"₹{v:,.1f}"
-                    val_color = "#00F5A0" if is_highlight else "#F1F5F9"
+                    val_color = "#059669" if is_highlight else "#0F172A"
                 else:
                     formatted_val = f"-₹{abs(v):,.1f}"
-                    val_color = "#FF453A"
+                    val_color = "#DC2626"
 
             val_cells.append(
                 f'<td style="text-align: right; padding: 12px 18px; font-family: \'JetBrains Mono\', monospace; font-size: 14px; font-weight: {font_weight}; color: {val_color}; white-space: nowrap;">{formatted_val}</td>'
             )
 
         rows_html.append(
-            f'<tr style="background: {row_bg}; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">'
+            f'<tr style="background: {row_bg}; border-bottom: 1px solid #F1F5F9;">'
             f'<td style="padding: 12px 20px; font-size: 14px; font-weight: {font_weight}; color: {label_color}; white-space: nowrap;">{label}</td>'
             f'{"".join(val_cells)}'
             f'</tr>'
         )
 
     return f"""
-    <div style="background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.3); margin-top: 12px; margin-bottom: 20px; backdrop-filter: blur(12px);">
+    <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; overflow-x: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-top: 12px; margin-bottom: 20px;">
       <table style="width: 100%; border-collapse: collapse; font-family: 'Inter', -apple-system, sans-serif;">
         <thead>
-          <tr style="background: #0F172A;">
-            <th style="text-align: left; padding: 12px 20px; font-size: 13.5px; font-weight: 800; color: #00E5FF; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #1E293B; white-space: nowrap;">
-              {statement_name} <span style="font-size: 12px; font-weight: 600; color: #94A3B8;">(₹ Crores)</span>
+          <tr style="background: #F8FAFC;">
+            <th style="text-align: left; padding: 12px 20px; font-size: 13.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #E2E8F0; white-space: nowrap;">
+              {statement_name} <span style="font-size: 12px; font-weight: 600; color: #64748B;">(₹ Crores)</span>
             </th>
             {header_cols}
           </tr>

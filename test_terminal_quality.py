@@ -366,7 +366,7 @@ class TestForensicLensSafety(unittest.TestCase):
         # CMP 6140 - 4637.5 = ~1502.5. So CMP fill width is ~45% of 52W range, strictly less than 52W range width
         import re
         # Find active valuation bar width
-        bar_match = re.search(r'background:\s*linear-gradient\(90deg,\s*#60A5FA\s*0%,\s*#2563EB\s*100%\);', html)
+        bar_match = re.search(r'background:\s*linear-gradient\(90deg,\s*(?:#60A5FA|#00E5FF)\s*0%,\s*(?:#2563EB|#00F5A0)\s*100%\);', html)
         self.assertIsNotNone(bar_match, "Valuation CMP bar not found in HTML!")
 
         # Case 2: Undervalued scenario (CMP 4500, DCF 5850)

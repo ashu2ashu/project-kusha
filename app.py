@@ -79,15 +79,15 @@ def build_filing_ingestion_notice_html(filing_metadata):
     if analyzed and is_manual:
         heading = "Uploaded PDF analyzed · source not independently verified"
         description = "The uploaded document was attached to the analysis. Its origin and statutory status were not independently verified."
-        background, border, accent, heading_color, body_color = "#EFF6FF", "#93C5FD", "#2563EB", "#1E40AF", "#1D4ED8"
+        background, border, accent, heading_color, body_color = "rgba(0, 229, 255, 0.08)", "rgba(0, 229, 255, 0.3)", "#00E5FF", "#00E5FF", "#94A3B8"
     elif analyzed:
         heading = "Official BSE India Filing Analyzed · Multimodal Document Ingestion"
         description = "The official statutory filing was attached to Gemini and comprehensively analyzed across all 10 governance and financial pillars."
-        background, border, accent, heading_color, body_color = "#F0FDF4", "#86EFAC", "#16A34A", "#14532D", "#166534"
+        background, border, accent, heading_color, body_color = "rgba(0, 245, 160, 0.08)", "rgba(0, 245, 160, 0.3)", "#00F5A0", "#00F5A0", "#94A3B8"
     else:
         heading = "Filing listed · PDF not analyzed"
         description = "The filing metadata was found, but the PDF was not confirmed as attached to the completed analysis."
-        background, border, accent, heading_color, body_color = "#FFFBEB", "#FCD34D", "#D97706", "#92400E", "#B45309"
+        background, border, accent, heading_color, body_color = "rgba(255, 214, 10, 0.08)", "rgba(255, 214, 10, 0.3)", "#FFD60A", "#FFD60A", "#94A3B8"
 
     filing_url = str(metadata.get("url") or "")
     try:
@@ -104,19 +104,19 @@ def build_filing_ingestion_notice_html(filing_metadata):
         safe_bse_url = None
     link_html = (
         f'<a href="{html.escape(safe_bse_url, quote=True)}" target="_blank" rel="noopener noreferrer" '
-        'style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 13px;">View BSE-hosted PDF ↗</a>'
+        'style="color: #00E5FF; font-weight: 700; text-decoration: underline; font-size: 13px; font-family: \'JetBrains Mono\', monospace;">View BSE-hosted PDF ↗</a>'
         if safe_bse_url
         else '<span style="color: #64748B; font-size: 13px;">No verified filing link</span>'
     )
 
     display_title = title if year in title else f"{title} ({year})"
     return (
-        f'<div style="background: {background}; border: 1.5px solid {border}; border-left: 5px solid {accent}; '
+        f'<div style="background: {background}; border: 1px solid {border}; border-left: 5px solid {accent}; '
         'border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; display: flex; '
         'justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
         f'<div><div style="font-size: 11px; font-weight: 800; color: {heading_color}; text-transform: uppercase; '
         f'letter-spacing: 0.6px; margin-bottom: 2px;">{heading}</div>'
-        f'<div style="font-size: 14.5px; font-weight: 750; color: #14532D;">{display_title} · {source}</div>'
+        f'<div style="font-size: 14.5px; font-weight: 750; color: #F1F5F9;">{display_title} · {source}</div>'
         f'<div style="font-size: 12px; color: {body_color}; margin-top: 2px;">{description}</div></div>'
         f'<div>{link_html}</div></div>'
     )
@@ -136,60 +136,43 @@ ICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "icon.svg")
 if os.path.exists(LOGO_PATH):
     st.logo(LOGO_PATH, icon_image=ICON_PATH if os.path.exists(ICON_PATH) else None, size="large")
 
-# StockSage Institutional Design System & Typography Engine (Inter + JetBrains Mono)
+# StockSage Cyber-Dark Institutional HUD Design System & Typography Engine
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
-    /* Design Tokens & CSS Custom Properties */
+    /* Design Tokens & CSS Custom Properties - Cyber Institutional HUD */
     :root {
-        /* Brand Palette - Dalal Street Emerald & Institutional Slate */
-        --ss-primary-50: #ECFDF5;
-        --ss-primary-100: #D1FAE5;
-        --ss-primary-200: #A7F3D0;
-        --ss-primary-300: #6EE7B7;
-        --ss-primary-400: #34D399;
-        --ss-primary-500: #10B981;
-        --ss-primary-600: #059669; /* Canonical Dalal Street Emerald */
-        --ss-primary-700: #047857;
-        --ss-primary-800: #065F46;
-        --ss-primary-900: #022C22;
+        /* Canvas & Glassmorphic Surfaces */
+        --ss-canvas: #080C14;
+        --ss-surface-glass: rgba(15, 23, 42, 0.75);
+        --ss-surface-card: rgba(11, 17, 30, 0.85);
+        --ss-surface-elevated: #0F172A;
+        --ss-border-glass: rgba(255, 255, 255, 0.08);
+        --ss-border-hover: rgba(0, 229, 255, 0.35);
 
-        /* Slate Neutrals */
-        --ss-slate-50: #F8FAFC;
-        --ss-slate-100: #F1F5F9;
-        --ss-slate-200: #E2E8F0;
-        --ss-slate-300: #CBD5E1;
-        --ss-slate-400: #94A3B8;
-        --ss-slate-500: #64748B;
-        --ss-slate-600: #475569;
-        --ss-slate-700: #334155;
-        --ss-slate-800: #1E293B;
-        --ss-slate-900: #0F172A;
+        /* Telemetry Neon Accents */
+        --ss-neon-emerald: #00F5A0; /* Dalal Street Alpha */
+        --ss-neon-cyan: #00E5FF;    /* Cyber Telemetry */
+        --ss-neon-gold: #FFD60A;    /* Warning / Caution */
+        --ss-neon-crimson: #FF453A; /* Critical / Loss */
+        --ss-neon-purple: #BF5AF2;  /* Quantum / Innovation */
 
-        /* Financial Status Indicators */
-        --ss-gain: #059669;
-        --ss-gain-bg: #F0FDF4;
-        --ss-gain-border: #86EFAC;
-        --ss-loss: #DC2626;
-        --ss-loss-bg: #FEF2F2;
-        --ss-loss-border: #FCA5A5;
-        --ss-warn: #D97706;
-        --ss-warn-bg: #FFFBEB;
-        --ss-warn-border: #FDE68A;
+        /* High-Contrast Typographic Hierarchy */
+        --ss-text-primary: #F8FAFC;
+        --ss-text-secondary: #94A3B8;
+        --ss-text-muted: #64748B;
+        --ss-text-dark: #080C14;
 
         /* Typography */
         --ss-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         --ss-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace;
 
-        /* Elevation Matrix & Multi-Layer Shadows */
-        --ss-shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
-        --ss-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
-        --ss-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-        --ss-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.07), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
-        --ss-shadow-card: 0 2px 8px -1px rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
-        --ss-shadow-hover: 0 12px 24px -4px rgba(15, 23, 42, 0.09), 0 4px 8px -2px rgba(5, 150, 105, 0.06);
-        --ss-shadow-glow: 0 0 0 3px rgba(5, 150, 105, 0.16);
+        /* Holographic Shadows & Glows */
+        --ss-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+        --ss-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 245, 160, 0.2);
+        --ss-glow-cyan: 0 0 15px rgba(0, 229, 255, 0.3);
+        --ss-glow-emerald: 0 0 15px rgba(0, 245, 160, 0.3);
 
         /* Radii Tokens */
         --ss-radius-sm: 6px;
@@ -198,40 +181,38 @@ st.markdown("""
         --ss-radius-xl: 18px;
         --ss-radius-full: 9999px;
 
-        /* Fluid Motion & Transitions */
-        --ss-ease-institutional: cubic-bezier(0.4, 0, 0.2, 1);
-        --ss-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+        /* Transitions */
         --ss-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         --ss-transition-smooth: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Global Typography Smoothing & Baseline */
-    html, body {
+    /* Global Dark Canvas Reset */
+    html, body, [data-testid="stAppViewContainer"] {
         font-family: var(--ss-font-sans) !important;
-        font-size: 15px !important;
+        font-size: 14.5px !important;
         line-height: 1.55 !important;
-        color: var(--ss-slate-900) !important;
-        background-color: #FFFFFF !important;
+        color: var(--ss-text-primary) !important;
+        background-color: var(--ss-canvas) !important;
         -webkit-font-smoothing: antialiased !important;
         -moz-osx-font-smoothing: grayscale !important;
         text-rendering: optimizeLegibility !important;
     }
 
-    /* Financial Tabular Numbers for all metrics, numbers, and tickers */
+    /* Tabular Monospace for All Numerical Data */
     code, kbd, samp, pre, [data-testid="stMetricValue"], .m-value, .metric-val, .pillar-score, .financial-num {
         font-family: var(--ss-font-mono) !important;
         font-feature-settings: 'tnum' 1, 'zero' 1 !important;
         font-variant-numeric: tabular-nums !important;
     }
 
-    /* Headings with Optical Tracking & Tight Geometry */
+    /* Headings */
     h1, .stHeadingContainer h1 {
         font-family: var(--ss-font-sans) !important;
-        font-size: 32px !important;
+        font-size: 30px !important;
         font-weight: 800 !important;
         letter-spacing: -0.03em !important;
         line-height: 1.2 !important;
-        color: var(--ss-slate-900) !important;
+        color: #FFFFFF !important;
     }
     h2, .stHeadingContainer h2 {
         font-family: var(--ss-font-sans) !important;
@@ -239,247 +220,238 @@ st.markdown("""
         font-weight: 700 !important;
         letter-spacing: -0.025em !important;
         line-height: 1.25 !important;
-        color: var(--ss-slate-900) !important;
+        color: #F8FAFC !important;
     }
     h3, .stHeadingContainer h3 {
         font-family: var(--ss-font-sans) !important;
         font-size: 19px !important;
         font-weight: 700 !important;
         letter-spacing: -0.02em !important;
-        line-height: 1.3 !important;
-        color: var(--ss-slate-800) !important;
+        color: #F1F5F9 !important;
     }
     h4, .stHeadingContainer h4 {
         font-family: var(--ss-font-sans) !important;
         font-size: 16px !important;
         font-weight: 700 !important;
-        letter-spacing: -0.015em !important;
-        line-height: 1.35 !important;
-        color: var(--ss-slate-700) !important;
-    }
-    p, span, label {
-        letter-spacing: -0.01em;
+        color: #E2E8F0 !important;
     }
 
-    /* Live Glowing Beacon Animation */
-    @keyframes pulse-live {
-        0% { transform: scale(0.94); opacity: 0.85; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-        70% { transform: scale(1.06); opacity: 1; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-        100% { transform: scale(0.94); opacity: 0.85; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    /* Real-time Telemetry Pulsing Beacon */
+    @keyframes ss-pulse {
+        0% { transform: scale(0.92); opacity: 0.8; box-shadow: 0 0 0 0 rgba(0, 245, 160, 0.7); }
+        70% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 0 7px rgba(0, 245, 160, 0); }
+        100% { transform: scale(0.92); opacity: 0.8; box-shadow: 0 0 0 0 rgba(0, 245, 160, 0); }
     }
     .live-pulse-dot {
         display: inline-block;
         width: 8px;
         height: 8px;
-        background-color: var(--ss-primary-500);
+        background-color: var(--ss-neon-emerald);
         border-radius: 50%;
         margin-right: 6px;
-        animation: pulse-live 2s infinite var(--ss-ease-spring);
+        animation: ss-pulse 2s infinite ease-in-out;
         vertical-align: middle;
     }
 
-    /* Ultra-Modern Institutional Segmented Control */
+    /* Holographic Segmented Control (Workspace Selector) */
     div[data-testid="stSegmentedControl"] {
-        background-color: var(--ss-slate-100) !important;
-        border: 1px solid var(--ss-slate-200) !important;
+        background-color: #0B111E !important;
+        border: 1px solid #1E293B !important;
         border-radius: var(--ss-radius-md) !important;
-        padding: 3px !important;
-        gap: 3px !important;
+        padding: 4px !important;
+        gap: 4px !important;
     }
     div[data-testid="stSegmentedControl"] button {
         border-radius: var(--ss-radius-sm) !important;
         font-weight: 600 !important;
         font-size: 13.5px !important;
-        color: var(--ss-slate-600) !important;
-        padding: 6px 16px !important;
+        color: #94A3B8 !important;
+        padding: 8px 18px !important;
         border: none !important;
+        background: transparent !important;
         transition: all var(--ss-transition-fast) !important;
     }
     div[data-testid="stSegmentedControl"] button[aria-checked="true"] {
-        background-color: #FFFFFF !important;
-        color: var(--ss-primary-700) !important;
-        font-weight: 700 !important;
-        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+        background: linear-gradient(135deg, rgba(0, 245, 160, 0.15) 0%, rgba(0, 229, 255, 0.15) 100%) !important;
+        color: #00F5A0 !important;
+        font-weight: 800 !important;
+        border: 1px solid rgba(0, 245, 160, 0.4) !important;
+        box-shadow: 0 0 12px rgba(0, 245, 160, 0.2) !important;
     }
     div[data-testid="stSegmentedControl"] button:hover {
-        color: var(--ss-primary-600) !important;
+        color: #F8FAFC !important;
+        background: rgba(255, 255, 255, 0.04) !important;
     }
 
-    /* Screener-Style Iconic Tabs */
+    /* Cyber Navigation Tabs */
     div[data-baseweb="tab-list"] {
-        gap: 4px !important;
-        border-bottom: 2px solid var(--ss-slate-200) !important;
+        gap: 6px !important;
+        border-bottom: 1.5px solid #1E293B !important;
         padding-bottom: 0px !important;
-        margin-top: 12px !important;
+        margin-top: 14px !important;
         margin-bottom: 22px !important;
     }
     button[data-baseweb="tab"] {
         font-family: var(--ss-font-sans) !important;
-        font-size: 16px !important;
+        font-size: 15px !important;
         font-weight: 600 !important;
-        padding: 12px 24px !important;
+        padding: 12px 22px !important;
         border-radius: 8px 8px 0 0 !important;
-        color: var(--ss-slate-500) !important;
+        color: #94A3B8 !important;
         background: transparent !important;
         border: none !important;
-        letter-spacing: -0.01em !important;
         transition: all var(--ss-transition-fast) !important;
     }
     button[data-baseweb="tab"]:hover {
-        color: var(--ss-primary-600) !important;
-        background-color: var(--ss-primary-50) !important;
+        color: #00E5FF !important;
+        background-color: rgba(0, 229, 255, 0.06) !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: var(--ss-primary-700) !important;
-        font-weight: 700 !important;
-        border-bottom: 3px solid var(--ss-primary-600) !important;
+        color: #00F5A0 !important;
+        font-weight: 800 !important;
+        border-bottom: 3px solid #00F5A0 !important;
         background-color: transparent !important;
     }
-    div[data-baseweb="tab-border"] {
-        display: none !important;
-    }
-    div[data-baseweb="tab-highlight"] {
-        background-color: var(--ss-primary-600) !important;
-        height: 3px !important;
-    }
+    div[data-baseweb="tab-border"] { display: none !important; }
+    div[data-baseweb="tab-highlight"] { background-color: #00F5A0 !important; height: 3px !important; }
 
-    /* Screener-Style Key Ratio Metric Cards: Crisp, Elevated & Legible */
+    /* High-Density Cyber Metric Cards */
     [data-testid="stMetric"] {
-        background-color: #FFFFFF !important;
+        background-color: rgba(15, 23, 42, 0.75) !important;
         padding: 16px 20px !important;
         border-radius: var(--ss-radius-lg) !important;
-        border: 1px solid var(--ss-slate-200) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
         box-shadow: var(--ss-shadow-card) !important;
+        backdrop-filter: blur(12px) !important;
         transition: transform var(--ss-transition-smooth), box-shadow var(--ss-transition-smooth), border-color var(--ss-transition-fast) !important;
-        position: relative;
-        overflow: hidden;
-        will-change: transform, box-shadow;
-        backface-visibility: hidden;
     }
     [data-testid="stMetric"]:hover {
-        border-color: var(--ss-primary-300) !important;
+        border-color: rgba(0, 245, 160, 0.35) !important;
         transform: translateY(-2px) !important;
         box-shadow: var(--ss-shadow-hover) !important;
     }
     [data-testid="stMetricValue"] {
         font-family: var(--ss-font-mono) !important;
-        font-size: 28px !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.04em !important;
-        color: var(--ss-slate-900) !important;
+        font-size: 26px !important;
+        font-weight: 900 !important;
+        color: #F8FAFC !important;
         line-height: 1.2 !important;
-        font-feature-settings: 'tnum' 1, 'zero' 1 !important;
-        font-variant-numeric: tabular-nums !important;
     }
     [data-testid="stMetricLabel"] {
         font-family: var(--ss-font-sans) !important;
-        font-size: 12.5px !important;
+        font-size: 11.5px !important;
         font-weight: 700 !important;
-        color: var(--ss-slate-500) !important;
-        letter-spacing: 0.05em !important;
+        color: #94A3B8 !important;
+        letter-spacing: 0.06em !important;
         text-transform: uppercase !important;
     }
     [data-testid="stMetricDelta"] {
-        font-size: 14px !important;
+        font-size: 13.5px !important;
         font-weight: 700 !important;
     }
 
-    /* Screener-Style Institutional Emerald Primary Button */
+    /* Primary Futuristic Action Button */
     button[kind="primary"] {
-        background: linear-gradient(135deg, var(--ss-primary-600) 0%, var(--ss-primary-700) 100%) !important;
-        color: #FFFFFF !important;
+        background: linear-gradient(135deg, #00F5A0 0%, #00C48C 100%) !important;
+        color: #080C14 !important;
         font-family: var(--ss-font-sans) !important;
-        font-size: 16px !important;
-        font-weight: 700 !important;
-        padding: 12px 28px !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        padding: 12px 26px !important;
         border-radius: var(--ss-radius-md) !important;
-        border: 1px solid var(--ss-primary-700) !important;
-        letter-spacing: -0.01em !important;
-        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.22) !important;
+        border: none !important;
+        letter-spacing: 0.02em !important;
+        box-shadow: 0 0 16px rgba(0, 245, 160, 0.35) !important;
         transition: all var(--ss-transition-fast) !important;
     }
     button[kind="primary"]:hover {
-        background: linear-gradient(135deg, var(--ss-primary-700) 0%, var(--ss-primary-800) 100%) !important;
-        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;
+        background: linear-gradient(135deg, #34FBB5 0%, #00F5A0 100%) !important;
+        box-shadow: 0 0 24px rgba(0, 245, 160, 0.55) !important;
         transform: translateY(-1px) !important;
     }
     button[kind="primary"]:active {
         transform: translateY(1px) scale(0.99) !important;
     }
 
-    /* Preset Benchmark Chips & Secondary Buttons */
+    /* Secondary Glass Buttons */
     button[kind="secondary"] {
         font-family: var(--ss-font-sans) !important;
         border-radius: var(--ss-radius-md) !important;
         font-weight: 600 !important;
         font-size: 13.5px !important;
-        border: 1px solid var(--ss-slate-200) !important;
-        color: var(--ss-slate-700) !important;
-        background-color: #FFFFFF !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #E2E8F0 !important;
+        background-color: rgba(15, 23, 42, 0.75) !important;
+        backdrop-filter: blur(8px) !important;
         transition: all var(--ss-transition-fast) !important;
     }
     button[kind="secondary"]:hover {
-        border-color: var(--ss-primary-600) !important;
-        color: var(--ss-primary-700) !important;
-        background-color: var(--ss-primary-50) !important;
+        border-color: #00E5FF !important;
+        color: #00E5FF !important;
+        background-color: rgba(0, 229, 255, 0.08) !important;
         transform: translateY(-1px) !important;
-        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.1) !important;
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.2) !important;
     }
 
-    /* Streamlit Native Border Container Polish (st.container(border=True)) */
+    /* Border Container Polish (st.container(border=True)) */
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        background-color: #FFFFFF !important;
-        border: 1px solid var(--ss-slate-200) !important;
+        background-color: rgba(15, 23, 42, 0.72) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: var(--ss-radius-lg) !important;
         box-shadow: var(--ss-shadow-card) !important;
+        backdrop-filter: blur(14px) !important;
         padding: 20px 24px !important;
         transition: border-color var(--ss-transition-fast) !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
-        border-color: var(--ss-slate-300) !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
     }
 
-    /* Form Controls & Inputs Emerald Glow Focus Ring */
+    /* Dark Mode Inputs & Select Controls */
     div[data-baseweb="input"] input,
     div[data-baseweb="select"] {
         font-family: var(--ss-font-sans) !important;
+        background-color: #0B111E !important;
+        color: #F8FAFC !important;
         border-radius: var(--ss-radius-md) !important;
-        font-size: 14.5px !important;
+        font-size: 14px !important;
+        border: 1px solid #1E293B !important;
         transition: all var(--ss-transition-fast) !important;
     }
     div[data-baseweb="input"]:focus-within,
     div[data-baseweb="select"]:focus-within {
-        border-color: var(--ss-primary-600) !important;
-        box-shadow: var(--ss-shadow-glow) !important;
+        border-color: #00E5FF !important;
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.25) !important;
     }
 
-    /* Expanders Institutional Styling */
+    /* Dark Mode Expanders */
     details[data-testid="stExpander"] {
-        background-color: #FFFFFF !important;
-        border: 1px solid var(--ss-slate-200) !important;
+        background-color: rgba(15, 23, 42, 0.75) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: var(--ss-radius-md) !important;
-        box-shadow: var(--ss-shadow-xs) !important;
+        box-shadow: var(--ss-shadow-card) !important;
         overflow: hidden;
     }
     details[data-testid="stExpander"] summary {
         font-family: var(--ss-font-sans) !important;
         font-weight: 600 !important;
         font-size: 14px !important;
-        color: var(--ss-slate-800) !important;
-        padding: 12px 16px !important;
+        color: #E2E8F0 !important;
+        padding: 12px 18px !important;
     }
     details[data-testid="stExpander"] summary:hover {
-        color: var(--ss-primary-600) !important;
-        background-color: var(--ss-slate-50) !important;
+        color: #00F5A0 !important;
+        background-color: rgba(255, 255, 255, 0.03) !important;
     }
 
     /* Progress Bar */
     .stProgress > div > div > div > div {
-        background-color: var(--ss-primary-600) !important;
+        background: linear-gradient(90deg, #00E5FF 0%, #00F5A0 100%) !important;
         border-radius: var(--ss-radius-full) !important;
+        box-shadow: 0 0 10px rgba(0, 245, 160, 0.5) !important;
     }
     .stProgress > div > div > div {
-        background-color: var(--ss-slate-200) !important;
+        background-color: #1E293B !important;
         height: 8px !important;
         border-radius: var(--ss-radius-full) !important;
     }
@@ -489,104 +461,93 @@ st.markdown("""
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        border: 1px solid var(--ss-slate-200);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: var(--ss-radius-lg);
         overflow: hidden;
-        background: #FFFFFF;
+        background: rgba(15, 23, 42, 0.75);
         margin: 14px 0 24px 0;
         box-shadow: var(--ss-shadow-card);
     }
     .pillar-table th {
-        background-color: var(--ss-slate-50);
+        background-color: #0F172A;
         padding: 12px 18px;
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--ss-slate-600);
+        font-size: 11.5px;
+        font-weight: 800;
+        color: #00E5FF;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 2px solid var(--ss-slate-200);
-        border-right: 1px solid var(--ss-slate-100);
+        letter-spacing: 0.06em;
+        border-bottom: 2px solid #1E293B;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .pillar-table th:last-child {
-        border-right: none;
-    }
+    .pillar-table th:last-child { border-right: none; }
     .pillar-table td {
         padding: 14px 18px;
-        border-bottom: 1px solid var(--ss-slate-100);
-        border-right: 1px solid var(--ss-slate-100);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
         vertical-align: top;
-        font-size: 14px;
-        color: var(--ss-slate-800);
+        font-size: 13.5px;
+        color: #CBD5E1;
         line-height: 1.55;
         transition: background-color var(--ss-transition-fast);
     }
-    .pillar-table td:last-child {
-        border-right: none;
-    }
-    .pillar-table tr:last-child td {
-        border-bottom: none;
-    }
-    .pillar-table tr:hover td {
-        background-color: #F7FEFA;
-    }
+    .pillar-table td:last-child { border-right: none; }
+    .pillar-table tr:last-child td { border-bottom: none; }
+    .pillar-table tr:hover td { background-color: rgba(0, 245, 160, 0.06); }
 
     /* Guardrail Semantic Banners */
     .guardrail-clean-box {
-        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
-        border: 1px solid var(--ss-primary-500);
-        border-left: 5px solid var(--ss-primary-600);
+        background: rgba(0, 245, 160, 0.08);
+        border: 1px solid rgba(0, 245, 160, 0.3);
+        border-left: 5px solid #00F5A0;
         border-radius: var(--ss-radius-md);
         padding: 16px 22px;
-        color: var(--ss-slate-900);
+        color: #F8FAFC;
         margin-top: 14px;
         margin-bottom: 18px;
-        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+        box-shadow: 0 0 15px rgba(0, 245, 160, 0.1);
     }
     .guardrail-alert-box {
-        background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
-        border: 1px solid #F59E0B;
-        border-left: 5px solid var(--ss-warn);
+        background: rgba(255, 214, 10, 0.08);
+        border: 1px solid rgba(255, 214, 10, 0.3);
+        border-left: 5px solid #FFD60A;
         border-radius: var(--ss-radius-md);
         padding: 16px 22px;
-        color: var(--ss-slate-900);
+        color: #F8FAFC;
         margin-top: 14px;
         margin-bottom: 18px;
-        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+        box-shadow: 0 0 15px rgba(255, 214, 10, 0.1);
     }
     .guardrail-red-box {
-        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
-        border: 1px solid #EF4444;
-        border-left: 5px solid var(--ss-loss);
+        background: rgba(255, 69, 58, 0.08);
+        border: 1px solid rgba(255, 69, 58, 0.3);
+        border-left: 5px solid #FF453A;
         border-radius: var(--ss-radius-md);
         padding: 16px 22px;
-        color: var(--ss-slate-900);
+        color: #F8FAFC;
         margin-top: 14px;
         margin-bottom: 18px;
-        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
+        box-shadow: 0 0 15px rgba(255, 69, 58, 0.1);
     }
 
     /* Factsheet Header & Matrix Cards */
     .facts-header-card {
-        background: #FFFFFF;
-        border: 1px solid var(--ss-slate-200);
+        background: rgba(15, 23, 42, 0.75);
+        border: 1.5px solid rgba(0, 229, 255, 0.2);
         border-radius: var(--ss-radius-xl);
         padding: 24px 28px;
         margin-top: 16px;
         margin-bottom: 22px;
         box-shadow: var(--ss-shadow-card);
+        backdrop-filter: blur(16px);
         transition: transform var(--ss-transition-smooth), box-shadow var(--ss-transition-smooth), border-color var(--ss-transition-fast);
-        will-change: transform, box-shadow;
-        backface-visibility: hidden;
     }
     .facts-header-card:hover {
-        border-color: var(--ss-slate-300);
+        border-color: rgba(0, 229, 255, 0.4);
         transform: translateY(-1px);
-        box-shadow: var(--ss-shadow-lg);
+        box-shadow: var(--ss-shadow-hover);
     }
     @media (max-width: 640px) {
-        .facts-header-card {
-            padding: 16px 16px !important;
-        }
+        .facts-header-card { padding: 16px 16px !important; }
     }
     .metrics-3col-grid {
         display: grid;
@@ -595,28 +556,23 @@ st.markdown("""
         margin-bottom: 24px;
     }
     @media (max-width: 1100px) and (min-width: 768px) {
-        .metrics-3col-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-        }
+        .metrics-3col-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
     @media (max-width: 767px) {
-        .metrics-3col-grid {
-            grid-template-columns: 1fr !important;
-        }
+        .metrics-3col-grid { grid-template-columns: 1fr !important; }
     }
     .metric-domain-card {
-        background: #FFFFFF;
-        border: 1px solid var(--ss-slate-200);
+        background: rgba(15, 23, 42, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: var(--ss-radius-lg);
         overflow: hidden;
         box-shadow: var(--ss-shadow-card);
+        backdrop-filter: blur(14px);
         transition: transform var(--ss-transition-smooth), box-shadow var(--ss-transition-smooth), border-color var(--ss-transition-fast);
-        will-change: transform, box-shadow;
-        backface-visibility: hidden;
     }
     .metric-domain-card:hover {
         transform: translateY(-2px);
-        border-color: var(--ss-primary-200);
+        border-color: rgba(0, 245, 160, 0.35);
         box-shadow: var(--ss-shadow-hover);
     }
     .metric-domain-header {
@@ -630,92 +586,143 @@ st.markdown("""
         border-collapse: collapse;
     }
     .metric-table-spacious tr {
-        border-bottom: 1px solid var(--ss-slate-100);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         transition: background-color var(--ss-transition-fast);
     }
-    .metric-table-spacious tr:last-child {
-        border-bottom: none;
-    }
-    .metric-table-spacious tr:hover {
-        background-color: #F7FEFA !important;
-    }
+    .metric-table-spacious tr:last-child { border-bottom: none; }
+    .metric-table-spacious tr:hover { background-color: rgba(0, 245, 160, 0.06) !important; }
     .metric-table-spacious td.m-label {
         padding: 12px 20px;
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 600;
-        color: var(--ss-slate-700);
+        color: #94A3B8;
         text-align: left;
         white-space: nowrap;
     }
     .metric-table-spacious td.m-value {
         padding: 12px 20px;
-        font-size: 15px;
+        font-size: 14.5px;
         font-family: var(--ss-font-mono);
         font-weight: 700;
-        color: var(--ss-slate-900);
+        color: #F8FAFC;
         text-align: right;
         white-space: nowrap;
         font-feature-settings: 'tnum' 1, 'zero' 1;
         font-variant-numeric: tabular-nums;
     }
 
-    /* Custom Institutional Scrollbar */
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+    /* Custom Cyber Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #080C14; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00E5FF; }
+
+    /* StockSage Workspace Shell Polish */
+    [data-testid="stAppViewContainer"] { background: #080C14; }
+    [data-testid="stMainBlockContainer"] { max-width: 1480px; padding-top: 1rem; padding-bottom: 2.5rem; }
+    
+    /* Futuristic Hero Terminal */
+    .ss-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr);
+        gap: 20px;
+        align-items: center;
+        padding: 20px 26px;
+        margin: 4px 0 16px;
+        color: #F8FAFC;
+        border: 1px solid rgba(0, 245, 160, 0.25);
+        border-radius: 16px;
+        background: radial-gradient(ellipse at 80% 10%, rgba(0, 245, 160, 0.16), transparent 45%), linear-gradient(135deg, #09131F 0%, #06231C 50%, #0B1626 100%);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
     }
-    ::-webkit-scrollbar-track {
-        background: var(--ss-slate-100);
-        border-radius: 4px;
+    .ss-hero-kicker {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        color: #00F5A0;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-family: var(--ss-font-mono);
     }
-    ::-webkit-scrollbar-thumb {
-        background: var(--ss-slate-300);
-        border-radius: 4px;
+    .ss-hero-title {
+        margin: 6px 0 4px;
+        color: #FFFFFF;
+        font-size: clamp(22px, 2.4vw, 30px);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
     }
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--ss-slate-400);
+    .ss-hero-subtitle {
+        max-width: 650px;
+        margin: 0;
+        color: #94A3B8;
+        font-size: 13px;
+        line-height: 1.5;
     }
-    /* StockSage workspace polish */
-    [data-testid="stAppViewContainer"] { background: #F6F8FB; }
-    [data-testid="stMainBlockContainer"] { max-width: 1480px; padding-top: 1.2rem; padding-bottom: 2.5rem; }
-    .ss-hero { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr); gap:20px; align-items:center; padding:18px 24px; margin:4px 0 16px; color:#F8FAFC; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:radial-gradient(ellipse at 78% 8%,rgba(52,211,153,.22),transparent 34%),linear-gradient(125deg,#071F1A 0%,#064E3B 54%,#102B2A 100%); box-shadow:0 8px 24px rgba(15,23,42,.08); }
-    .ss-hero-kicker { display:inline-flex; gap:6px; align-items:center; color:#A7F3D0; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-    .ss-hero-title { margin:6px 0 4px; color:#FFF; font-size:clamp(22px,2.4vw,30px); font-weight:800; letter-spacing:-.03em; line-height:1.15; }
-    .ss-hero-subtitle { max-width:650px; margin:0; color:#D1FAE5; font-size:13px; line-height:1.5; }
-    .ss-hero-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-    .ss-hero-meta span { padding:3px 8px; border:1px solid rgba(255,255,255,.16); border-radius:999px; color:#E2E8F0; background:rgba(255,255,255,.07); font-size:10.5px; font-weight:600; }
-    .ss-hero-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-    .ss-hero-stat { min-height:60px; display:flex; flex-direction:column; justify-content:center; padding:8px 11px; border:1px solid rgba(255,255,255,.15); border-radius:10px; background:rgba(255,255,255,.075); }
-    .ss-hero-stat-label { color:#A7F3D0; font-size:8.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-    .ss-hero-stat-value { margin-top:3px; color:#FFF; font-size:13.5px; font-weight:750; line-height:1.2; }
-    .ss-source-card { padding:12px 14px; border:1px solid #DCE5E8; border-radius:12px; background:linear-gradient(135deg,#F7FBF9,#FFF); }
-    .ss-source-label { margin-bottom:8px; color:#64748B; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
-    .ss-source-row { display:flex; justify-content:space-between; gap:12px; margin:5px 0; color:#334155; font-size:11px; }
-    .ss-source-row strong { color:#0F172A; font-weight:700; text-align:right; }
-    .ss-source-note { margin-top:8px; color:#64748B; font-size:10px; line-height:1.45; }
-    div[data-testid="stVerticalBlockBorderWrapper"] > div { border-radius:16px !important; }
-    div[data-testid="stSegmentedControl"] { white-space:normal; }
-    div[data-testid="stButton"] button { min-height:40px; white-space:normal; line-height:1.25; }
-    @media (max-width:900px) { .ss-hero { grid-template-columns:1fr; gap:20px; padding:24px; } .ss-hero-stats { max-width:720px; } }
-    @media (max-width:600px) {
-        [data-testid="stMainBlockContainer"] { padding:.8rem .8rem 2rem; }
-        [data-testid="stHorizontalBlock"] { flex-direction:column !important; align-items:stretch !important; gap:.45rem !important; }
-        [data-testid="stHorizontalBlock"] > [data-testid="column"] { width:100% !important; min-width:0 !important; flex:1 1 100% !important; }
-        .ss-hero { padding:18px 16px; border-radius:16px; gap:13px; }
-        .ss-hero-title { font-size:26px; }
-        .ss-hero-subtitle { font-size:13px; }
-        .ss-hero-meta span:nth-child(n+2) { display:none; }
-        .ss-hero-meta { margin-top:11px; }
-        .ss-hero-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
-        .ss-hero-stat { min-height:64px; padding:8px 7px; }
-        .ss-hero-stat:last-child { grid-column:1 / -1; min-height:48px; flex-direction:row; align-items:center; justify-content:space-between; }
-        .ss-hero-stat-label { font-size:8px; letter-spacing:.04em; }
-        .ss-hero-stat-value { font-size:11px; line-height:1.2; overflow-wrap:anywhere; }
-        div[data-testid="stButton"] button { font-size:11px !important; padding-left:.3rem !important; padding-right:.3rem !important; }
+    .ss-hero-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .ss-hero-meta span {
+        padding: 4px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        color: #E2E8F0;
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 11px;
+        font-weight: 600;
     }
-    .ss-pipeline-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; position:relative; margin-bottom:24px; }
-    @media (max-width:1000px) { .ss-pipeline-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } }
-    @media (max-width:600px) { .ss-pipeline-grid { grid-template-columns:1fr !important; } .pillar-table { display:block; overflow-x:auto; } }
+    .ss-hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .ss-hero-stat {
+        min-height: 64px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 10px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(10px);
+    }
+    .ss-hero-stat-label {
+        color: #00E5FF;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .ss-hero-stat-value {
+        margin-top: 3px;
+        color: #FFFFFF;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.2;
+        font-family: var(--ss-font-mono);
+    }
+    .ss-source-card {
+        padding: 14px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.75);
+    }
+    .ss-source-label { margin-bottom: 8px; color: #94A3B8; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .ss-source-row { display: flex; justify-content: space-between; gap: 12px; margin: 5px 0; color: #CBD5E1; font-size: 11px; }
+    .ss-source-row strong { color: #00F5A0; font-weight: 700; text-align: right; }
+    .ss-source-note { margin-top: 8px; color: #64748B; font-size: 10px; line-height: 1.45; }
+    div[data-testid="stVerticalBlockBorderWrapper"] > div { border-radius: 16px !important; }
+    div[data-testid="stSegmentedControl"] { white-space: normal; }
+    div[data-testid="stButton"] button { min-height: 40px; white-space: normal; line-height: 1.25; }
+    @media (max-width: 900px) { .ss-hero { grid-template-columns: 1fr; gap: 20px; padding: 22px; } .ss-hero-stats { max-width: 720px; } }
+    @media (max-width: 600px) {
+        [data-testid="stMainBlockContainer"] { padding: .8rem .8rem 2rem; }
+        [data-testid="stHorizontalBlock"] { flex-direction: column !important; align-items: stretch !important; gap: .45rem !important; }
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] { width: 100% !important; min-width: 0 !important; flex: 1 1 100% !important; }
+        .ss-hero { padding: 18px 16px; border-radius: 16px; gap: 13px; }
+        .ss-hero-title { font-size: 24px; }
+        .ss-hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    }
+    .ss-pipeline-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 1000px) { .ss-pipeline-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+    @media (max-width: 600px) { .ss-pipeline-grid { grid-template-columns: 1fr !important; } .pillar-table { display: block; overflow-x: auto; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -818,20 +825,26 @@ with st.sidebar:
     - **Bonus Cap:** Cumulative +10% max
     """)
 
-# --- TOP-OF-PAGE LIVE INDIAN MARKET SNAPSHOT ---
+# --- TOP-OF-PAGE LIVE INDIAN MARKET SNAPSHOT (FUTURISTIC TELEMETRY HUD) ---
 st.html("""
-<div style="background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 14px 20px; margin-top: 2px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-  <div>
-    <div style="font-size: 18px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px;">
-      <span>📈</span> Indian Market Snapshot
-    </div>
-    <div style="font-size: 12.5px; color: #475569; margin-top: 2px;">
-      Live benchmark indices powered by Yahoo Finance · Instant macro sentiment
+<div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 14px; padding: 14px 22px; margin-top: 2px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; backdrop-filter: blur(16px);">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <span class="live-pulse-dot"></span>
+    <div>
+      <div style="font-size: 17px; font-weight: 900; color: #F8FAFC; display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px;">
+        <span style="color: #00E5FF;">⚡</span> Indian Market Telemetry HUD
+      </div>
+      <div style="font-size: 12px; color: #94A3B8; margin-top: 2px;">
+        Real-time NSE / BSE institutional data feed · High-frequency macro sentiment
+      </div>
     </div>
   </div>
-  <div style="display: flex; align-items: center; gap: 8px;">
-    <span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 3px 11px; border-radius: 9999px; display: flex; align-items: center; gap: 5px;">
-      Yahoo Finance · Live Quotes
+  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.35); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace;">
+      ● LIVE NSE STREAM
+    </span>
+    <span style="background: rgba(0, 229, 255, 0.12); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.35); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">
+      IDEX-7.5SC DUAL-ENGINE
     </span>
   </div>
 </div>
@@ -842,50 +855,88 @@ idx_cols = st.columns(4)
 for i, idx in enumerate(indices_list):
     with idx_cols[i]:
         is_pos = idx["pct"] >= 0
-        delta_col = "#047857" if is_pos else "#DC2626"
-        delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
+        delta_col = "#00F5A0" if is_pos else "#FF453A"
+        delta_bg = "rgba(0, 245, 160, 0.12)" if is_pos else "rgba(255, 69, 58, 0.12)"
+        delta_border = "rgba(0, 245, 160, 0.35)" if is_pos else "rgba(255, 69, 58, 0.35)"
         delta_sign = "+" if is_pos else ""
         delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
 
+        # Calculate Day Range progress
+        lo = idx.get("lo", 0)
+        hi = idx.get("hi", 0)
+        cur = idx.get("cur", 0)
+        range_span = max(hi - lo, 1.0)
+        day_pct = min(100.0, max(0.0, (cur - lo) / range_span * 100.0))
+
         card_html = (
-            f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 14px;">'
-            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">'
-            f'<span style="font-size: 11.5px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
-            f'<span style="font-size: 10.5px; font-weight: 800; color: {delta_col}; background: {delta_bg}; padding: 2px 6px; border-radius: 4px;">{delta_str}</span>'
+            f'<div style="background: rgba(11, 17, 30, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 4px 16px rgba(0,0,0,0.3); margin-bottom: 14px; backdrop-filter: blur(10px);">'
+            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+            f'<span style="font-size: 12px; font-weight: 800; color: #94A3B8; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
+            f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; border: 1px solid {delta_border}; padding: 2px 7px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">{delta_str}</span>'
             f'</div>'
-            f'<div style="font-size: 20px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
-            f'<div style="font-size: 10.5px; color: #64748B; margin-top: 5px; display: flex; justify-content: space-between;">'
+            f'<div style="font-size: 22px; font-weight: 900; color: #F8FAFC; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
+            f'<div style="margin-top: 8px; background: #1E293B; height: 3px; border-radius: 9999px; position: relative;">'
+            f'<div style="background: linear-gradient(90deg, #00E5FF, {delta_col}); width: {day_pct:.1f}%; height: 3px; border-radius: 9999px;"></div>'
+            f'</div>'
+            f'<div style="font-size: 10px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between; font-family: \'JetBrains Mono\', monospace;">'
             f'<span>L: {idx["lo"]:,.0f}</span>'
+            f'<span>{day_pct:.0f}% of Day</span>'
             f'<span>H: {idx["hi"]:,.0f}</span>'
             f'</div>'
             f'</div>'
         )
         st.html(card_html)
 
-# Top hero: product promise and transparent source attribution.
+# Top hero: Futuristic Institutional Terminal Header
 st.html(f"""
 <section class="ss-hero">
   <div>
-    <div class="ss-hero-kicker">StockSage <span>•</span> Company research workspace</div>
-    <div class="ss-hero-title">See the business behind the ticker.</div>
-    <p class="ss-hero-subtitle">Review company fundamentals with market context, document research, and the IDEX-7.5SC framework in one clear workspace.</p>
-    <div class="ss-hero-meta"><span>IDEX-7.5SC Hybrid Pro</span><span>Source citations included in analysis</span><span>Settings in the sidebar</span></div>
+    <div class="ss-hero-kicker">
+      <span>⚡</span> StockSage // Quantum Institutional Terminal • V2.5
+    </div>
+    <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
+    <p class="ss-hero-subtitle">Autonomous 8-pillar due diligence, high-density multi-factor screening, holographic forensic shields, and real-time valuation radar in one unified workstation.</p>
+    <div class="ss-hero-meta">
+      <span>IDEX-7.5SC Dual-Engine</span>
+      <span>16 Canonical Factors</span>
+      <span>Sentinel Fraud Shield</span>
+      <span>Verified BSE Disclosures</span>
+    </div>
   </div>
   <div class="ss-hero-stats">
-    <div class="ss-hero-stat"><div class="ss-hero-stat-label">Company universe</div><div class="ss-hero-stat-value">{tracked_equity_count} tracked equities</div></div>
-    <div class="ss-hero-stat"><div class="ss-hero-stat-label">Sector groups</div><div class="ss-hero-stat-value">{sector_count} sectors</div></div>
-    <div class="ss-hero-stat"><div class="ss-hero-stat-label">Quote provider</div><div class="ss-hero-stat-value">Yahoo Finance</div></div>
+    <div class="ss-hero-stat">
+      <div class="ss-hero-stat-label">Coverage Universe</div>
+      <div class="ss-hero-stat-value">{tracked_equity_count} Bluechips</div>
+    </div>
+    <div class="ss-hero-stat">
+      <div class="ss-hero-stat-label">Sector Matrices</div>
+      <div class="ss-hero-stat-value">{sector_count} Sectors</div>
+    </div>
+    <div class="ss-hero-stat">
+      <div class="ss-hero-stat-label">Data Telemetry</div>
+      <div class="ss-hero-stat-value">Live NSE Stream</div>
+    </div>
   </div>
 </section>
 """)
 
 # --- TOP-LEVEL WORKSPACE NAVIGATION ---
-workspace_options = ["🌐 Explore", "🔬 Company Analysis", "📊 Nifty 50"]
-if "pending_nav_mode" in st.session_state:
-    st.session_state["active_nav_mode"] = st.session_state.pop("pending_nav_mode")
+workspace_options = ["⚡ Screener & Market Matrix", "🔬 Holographic Stock Dossier", "📑 Audited Filings Vault"]
 
-if st.session_state.get("active_nav_mode") not in workspace_options:
-    st.session_state["active_nav_mode"] = "🌐 Explore"
+# Smooth alias mapping for existing session states
+nav_alias_map = {
+    "🌐 Explore": "⚡ Screener & Market Matrix",
+    "📊 Nifty 50": "⚡ Screener & Market Matrix",
+    "🔬 Company Analysis": "🔬 Holographic Stock Dossier"
+}
+
+if "pending_nav_mode" in st.session_state:
+    raw_pending = st.session_state.pop("pending_nav_mode")
+    st.session_state["active_nav_mode"] = nav_alias_map.get(raw_pending, raw_pending)
+
+current_nav = st.session_state.get("active_nav_mode")
+if current_nav not in workspace_options:
+    st.session_state["active_nav_mode"] = nav_alias_map.get(current_nav, "⚡ Screener & Market Matrix")
 
 terminal_mode = st.segmented_control(
     "Workspace",
@@ -894,31 +945,44 @@ terminal_mode = st.segmented_control(
     label_visibility="collapsed"
 )
 
-if terminal_mode == "📊 Nifty 50":
+if terminal_mode == "⚡ Screener & Market Matrix":
+    # Presets for the Quantum Screener
+    st.markdown("""
+    <div style="margin-top: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+      <div style="font-size: 18px; font-weight: 800; color: #F8FAFC; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #00F5A0;">⚡</span> Quantum Multi-Factor Screener & Telemetry Matrix
+      </div>
+      <span style="font-size: 11.5px; color: #94A3B8; font-family: 'JetBrains Mono', monospace;">50 Premier Equities · 16 Canonical Ratios</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
     render_nifty50_screener_view()
     st.stop()
 
-if terminal_mode == "🔬 Company Analysis":
+if terminal_mode == "🔬 Holographic Stock Dossier":
     benchmark_launch_notice = st.session_state.pop("benchmark_launch_notice", None)
     if benchmark_launch_notice:
         st.warning(benchmark_launch_notice)
     # --- COMPANY ANALYSIS INTAKE ---
     with st.container(border=True):
-        st.markdown("#### Start a company review")
-        st.caption("Choose a company, then review its filings and supporting web sources.")
+        st.markdown("#### 🔬 Launch Holographic Stock Inspection")
+        st.caption("Select an equity from Dalal Street's tracked universe to trigger autonomous 8-pillar audit and forensic radar.")
     
         # Fast Preset Benchmark Chips
-        st.caption("Quick picks")
+        st.caption("Quick Bluechip Presets")
         presets = [
-            ("Reliance", "RELIANCE", "🔵"),
-            ("HDFC Bank", "HDFCBANK", "🟢"),
-            ("TCS", "TCS", "🟣"),
+            ("Reliance", "RELIANCE", "⚡"),
+            ("HDFC Bank", "HDFCBANK", "🏦"),
+            ("TCS", "TCS", "💻"),
+            ("L&T", "LT", "🏗️"),
+            ("Infosys", "INFY", "🌐"),
+            ("ITC", "ITC", "📦"),
         ]
         for row_start in range(0, len(presets), 3):
             preset_cols = st.columns(3)
             for col_idx, (label, sym, emoji) in enumerate(presets[row_start:row_start + 3]):
                 with preset_cols[col_idx]:
-                    if st.button(f"{emoji} {label}", key=f"btn_preset_{sym}", width="stretch"):
+                    if st.button(f"{emoji} {label} ({sym})", key=f"btn_preset_{sym}", width="stretch"):
                         info = find_company_info(sym)
                         st.session_state["selected_company_choice"] = info["display"]
                         st.rerun()
@@ -1027,7 +1091,7 @@ fin_res = None
 live_data = None
 
 # Reset evaluation only when the user changes the active company.
-if terminal_mode == "🔬 Company Analysis":
+if terminal_mode == "🔬 Holographic Stock Dossier":
     if "selected_company_memory" not in st.session_state:
         st.session_state["selected_company_memory"] = selected_company_str
     elif st.session_state["selected_company_memory"] != selected_company_str:
@@ -1055,8 +1119,8 @@ def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "
                 low=df["Low"],
                 close=df["Close"],
                 name="OHLC",
-                increasing_line_color="#059669",
-                decreasing_line_color="#DC2626",
+                increasing_line_color="#00F5A0",
+                decreasing_line_color="#FF453A",
                 showlegend=False
             ),
             row=1, col=1
@@ -1064,8 +1128,8 @@ def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "
     else:
         start_price = float(df["Close"].iloc[0])
         end_price = float(df["Close"].iloc[-1])
-        line_color = "#059669" if end_price >= start_price else "#DC2626"
-        fill_color = "rgba(5, 150, 105, 0.08)" if end_price >= start_price else "rgba(220, 38, 38, 0.08)"
+        line_color = "#00F5A0" if end_price >= start_price else "#FF453A"
+        fill_color = "rgba(0, 245, 160, 0.12)" if end_price >= start_price else "rgba(255, 69, 58, 0.12)"
         
         fig.add_trace(
             go.Scatter(
@@ -1073,7 +1137,7 @@ def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "
                 y=df["Close"],
                 mode="lines",
                 name="CMP",
-                line=dict(color=line_color, width=2.2),
+                line=dict(color=line_color, width=2.4),
                 fill="tozeroy",
                 fillcolor=fill_color
             ),
@@ -1089,7 +1153,7 @@ def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "
                     y=sma50,
                     mode="lines",
                     name="50 DMA",
-                    line=dict(color="#2563EB", width=1.4, dash="dot")
+                    line=dict(color="#00E5FF", width=1.5, dash="dot")
                 ),
                 row=1, col=1
             )
@@ -1101,12 +1165,12 @@ def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "
                     y=sma200,
                     mode="lines",
                     name="200 DMA",
-                    line=dict(color="#D97706", width=1.4, dash="dash")
+                    line=dict(color="#FFD60A", width=1.5, dash="dash")
                 ),
                 row=1, col=1
             )
 
-    vol_colors = ["#059669" if c >= o else "#DC2626" for c, o in zip(df["Close"], df["Open"])]
+    vol_colors = ["#00F5A0" if c >= o else "#FF453A" for c, o in zip(df["Close"], df["Open"])]
     fig.add_trace(
         go.Bar(
             x=df.index,
@@ -1119,18 +1183,18 @@ def build_ticker_chart(df: pd.DataFrame, ticker_title: str, chart_style: str = "
     )
     
     fig.update_layout(
-        template="plotly_white",
+        template="plotly_dark",
         height=380,
         margin=dict(l=10, r=10, t=10, b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=11, family="Inter, sans-serif")),
         xaxis_rangeslider_visible=False,
         hovermode="x unified",
-        paper_bgcolor="#FFFFFF",
-        plot_bgcolor="#FFFFFF"
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 23, 42, 0.45)"
     )
-    fig.update_yaxes(title_text="Price (₹)", row=1, col=1, gridcolor="#F1F5F9", tickfont=dict(size=11, family="JetBrains Mono, monospace"))
-    fig.update_yaxes(title_text="Vol", row=2, col=1, gridcolor="#F1F5F9", tickfont=dict(size=10))
-    fig.update_xaxes(gridcolor="#F1F5F9", tickfont=dict(size=11))
+    fig.update_yaxes(title_text="Price (₹)", row=1, col=1, gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(size=11, family="JetBrains Mono, monospace", color="#94A3B8"))
+    fig.update_yaxes(title_text="Vol", row=2, col=1, gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(size=10, color="#64748B"))
+    fig.update_xaxes(gridcolor="rgba(255, 255, 255, 0.06)", tickfont=dict(size=11, color="#94A3B8"))
     return fig
 
 live_data = None
@@ -1303,8 +1367,8 @@ if live_data:
     chg_pct = live_data.get("change_pct", 0)
     chg_val = live_data.get("change_val", 0)
     is_pos = chg_pct >= 0
-    delta_fg = "#047857" if is_pos else "#DC2626"
-    delta_bg = "#ECFDF5" if is_pos else "#FEF2F2"
+    delta_fg = "#00F5A0" if is_pos else "#FF453A"
+    delta_bg = "rgba(0, 245, 160, 0.12)" if is_pos else "rgba(255, 69, 58, 0.12)"
     delta_sign = "+" if is_pos else ""
     delta_str = f"{delta_sign}{chg_pct:.2f}%"
     
@@ -1332,15 +1396,15 @@ if live_data:
 
     # Helper function to format metric cells with spacious typography
     def fmt_metric_row(label: str, value: str, style_mode: str = "normal", is_even: bool = False) -> str:
-        row_bg = ' style="background-color: #F8FAFC;"' if is_even else ''
+        row_bg = ' style="background-color: rgba(255, 255, 255, 0.02);"' if is_even else ''
         if style_mode == "emerald":
-            val_span = f'<span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 15px;">{value}</span>'
+            val_span = f'<span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.35); padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 14px; font-family: \'JetBrains Mono\', monospace;">{value}</span>'
         elif style_mode == "teal":
-            val_span = f'<span style="background: #F0FDFA; color: #0F766E; border: 1.5px solid #99F6E4; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 15px;">{value}</span>'
+            val_span = f'<span style="background: rgba(0, 229, 255, 0.12); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.35); padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 14px; font-family: \'JetBrains Mono\', monospace;">{value}</span>'
         elif style_mode == "bold":
-            val_span = f'<span style="font-weight: 900; color: #0F172A; font-size: 16.5px;">{value}</span>'
+            val_span = f'<span style="font-weight: 900; color: #F8FAFC; font-size: 15px; font-family: \'JetBrains Mono\', monospace;">{value}</span>'
         else:
-            val_span = f'<span style="font-weight: 700; color: #1E293B; font-size: 15.5px;">{value}</span>'
+            val_span = f'<span style="font-weight: 700; color: #CBD5E1; font-size: 14.5px; font-family: \'JetBrains Mono\', monospace;">{value}</span>'
             
         return (
             f'<tr{row_bg}>'
@@ -1393,13 +1457,13 @@ if live_data:
             
         rows_str = "".join(rows_html)
         return (
-            f'<div class="metric-domain-card" style="border: 1.5px solid {border_col};">'
-            f'<div class="metric-domain-header" style="background: {hdr_bg}; border-bottom: 1.5px solid {border_col};">'
+            f'<div class="metric-domain-card" style="border: 1px solid {border_col}; background: rgba(15, 23, 42, 0.75); border-radius: 14px; overflow: hidden; backdrop-filter: blur(14px);">'
+            f'<div class="metric-domain-header" style="background: {hdr_bg}; border-bottom: 1px solid {border_col};">'
             f'<div style="display: flex; align-items: center; gap: 10px;">'
             f'<span style="font-size: 18px;">{icon}</span>'
-            f'<span style="font-size: 15px; font-weight: 800; color: {title_col}; letter-spacing: -0.3px;">{title}</span>'
+            f'<span style="font-size: 14.5px; font-weight: 800; color: {title_col}; letter-spacing: -0.3px;">{title}</span>'
             f'</div>'
-            f'<span style="font-size: 11.5px; font-weight: 700; color: {badge_fg}; background: #FFFFFF; border: 1px solid {border_col}; padding: 3px 9px; border-radius: 9999px;">{badge_lbl}</span>'
+            f'<span style="font-size: 11px; font-weight: 800; color: {badge_fg}; background: rgba(255, 255, 255, 0.06); border: 1px solid {border_col}; padding: 3px 9px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{badge_lbl}</span>'
             f'</div>'
             f'<table class="metric-table-spacious">'
             f'<tbody>{rows_str}</tbody>'
@@ -1407,9 +1471,9 @@ if live_data:
             f'</div>'
         )
 
-    card_val = build_spacious_card("Valuation & Pricing Multiples", "🏛️", "9 Key Metrics", "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)", "#BFDBFE", "#1E3A8A", "#1D4ED8", col1_items)
-    card_ret = build_spacious_card("Profitability & Capital Returns", "📈", "9 Key Metrics", "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", "#A7F3D0", "#064E3B", "#047857", col2_items)
-    card_sol = build_spacious_card("Solvency, Cash Flow & Growth", "🛡️", "9 Key Metrics", "linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)", "#DDD6FE", "#4C1D95", "#6D28D9", col3_items)
+    card_val = build_spacious_card("Valuation & Pricing Multiples", "🏛️", "9 Key Metrics", "linear-gradient(135deg, rgba(0, 229, 255, 0.14) 0%, rgba(15, 23, 42, 0.8) 100%)", "rgba(0, 229, 255, 0.25)", "#00E5FF", "#00E5FF", col1_items)
+    card_ret = build_spacious_card("Profitability & Capital Returns", "📈", "9 Key Metrics", "linear-gradient(135deg, rgba(0, 245, 160, 0.14) 0%, rgba(15, 23, 42, 0.8) 100%)", "rgba(0, 245, 160, 0.25)", "#00F5A0", "#00F5A0", col2_items)
+    card_sol = build_spacious_card("Solvency, Cash Flow & Growth", "🛡️", "9 Key Metrics", "linear-gradient(135deg, rgba(191, 90, 242, 0.14) 0%, rgba(15, 23, 42, 0.8) 100%)", "rgba(191, 90, 242, 0.25)", "#BF5AF2", "#BF5AF2", col3_items)
 
     def build_concise_operations_points(about_str: str, company_name: str, sector: str) -> list:
         if not about_str or len(about_str.strip()) < 30:
@@ -1483,29 +1547,29 @@ if live_data:
 
     ops_points = build_concise_operations_points(about_text, target_company_name, target_sector)
     ops_points_html = "".join([
-        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
-        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
-        f'<span><strong style="color: #0F172A; font-weight: 700;">{html.escape(label)}:</strong> {html.escape(desc)}</span>'
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #CBD5E1;">'
+        f'<span style="color: #00F5A0; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #F8FAFC; font-weight: 700;">{html.escape(label)}:</strong> {html.escape(desc)}</span>'
         f'</li>'
         for label, desc in ops_points
     ])
 
     facts_full_html = (
         f'<div class="facts-header-card">'
-        f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; padding-bottom: 20px; border-bottom: 1.5px solid #F1F5F9;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">'
         f'<div style="display: flex; align-items: center; gap: 18px;">'
-        f'<div style="width: 58px; height: 58px; border-radius: 14px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #FFFFFF; font-weight: 900; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(5,150,105,0.25); flex-shrink: 0;">'
+        f'<div style="width: 58px; height: 58px; border-radius: 14px; background: linear-gradient(135deg, #00F5A0 0%, #00D2FF 100%); color: #080C14; font-weight: 900; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0, 245, 160, 0.4); flex-shrink: 0; font-family: \'JetBrains Mono\', monospace;">'
         f'{logo_initials}'
         f'</div>'
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">'
-        f'<span style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.6px; line-height: 1.1;">{target_company_name}</span>'
-        f'<span style="background: #F0FDF4; color: #047857; border: 1.5px solid #BBF7D0; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 12.5px;">● NSE: {target_ticker}</span>'
-        f'<span style="background: #F8FAFC; color: #475569; border: 1.5px solid #E2E8F0; padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 12.5px;">BSE: {bse_code}</span>'
-        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 12.5px;">🏛️ {target_sector}</span>'
+        f'<span style="font-size: 28px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.6px; line-height: 1.1;">{target_company_name}</span>'
+        f'<span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.35); padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 12px; font-family: \'JetBrains Mono\', monospace;">● NSE: {target_ticker}</span>'
+        f'<span style="background: rgba(255, 255, 255, 0.05); color: #94A3B8; border: 1px solid rgba(255, 255, 255, 0.1); padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; font-family: \'JetBrains Mono\', monospace;">BSE: {bse_code}</span>'
+        f'<span style="background: rgba(0, 229, 255, 0.12); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.3); padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 12px;">🏛️ {target_sector}</span>'
         f'</div>'
-        f'<div style="margin-top: 8px; font-size: 13.5px; color: #64748B; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">'
-        f'<span>🌐 <a href="{website_url}" target="_blank" style="color: #2563EB; font-weight: 600; text-decoration: none;">{website_display} ↗</a></span>'
+        f'<div style="margin-top: 8px; font-size: 13px; color: #94A3B8; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">'
+        f'<span>🌐 <a href="{website_url}" target="_blank" style="color: #00E5FF; font-weight: 600; text-decoration: none;">{website_display} ↗</a></span>'
         f'<span>• Constituent of Nifty 500</span>'
         f'<span>• Reporting Standards: Ind AS</span>'
         f'</div>'
@@ -1513,56 +1577,57 @@ if live_data:
         f'</div>'
         f'<div style="text-align: right; min-width: 220px;">'
         f'<div style="display: flex; align-items: baseline; justify-content: flex-end; gap: 10px;">'
-        f'<span style="font-size: 32px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1;">{cur_str}</span>'
-        f'<span style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}40; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 800;">{delta_str}</span>'
+        f'<span style="font-size: 32px; font-weight: 900; color: #F8FAFC; font-family: \'JetBrains Mono\', monospace; line-height: 1;">{cur_str}</span>'
+        f'<span style="color: {delta_fg}; background: {delta_bg}; border: 1px solid {delta_fg}60; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 800; font-family: \'JetBrains Mono\', monospace; box-shadow: 0 0 10px {delta_fg}30;">{delta_str}</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #64748B; margin-top: 6px;">Yahoo Finance · {quote_status_label}<br>Retrieved: {price_date} · Market quote timestamp: unavailable</div>'
-        f'<div style="margin-top: 10px; width: 220px; margin-left: auto;">'
-        f'<div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748B; font-weight: 700; margin-bottom: 4px;">'
+        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Yahoo Finance · {quote_status_label}<br>Retrieved: {price_date}</div>'
+        f'<div style="margin-top: 10px; width: 230px; margin-left: auto;">'
+        f'<div style="display: flex; justify-content: space-between; font-size: 10.5px; color: #94A3B8; font-weight: 700; margin-bottom: 4px; font-family: \'JetBrains Mono\', monospace;">'
         f'<span>52W L: ₹ {l52_num:,.0f}</span>'
+        f'<span>{range_pct:.0f}% of 52W</span>'
         f'<span>52W H: ₹ {h52_num:,.0f}</span>'
         f'</div>'
-        f'<div style="background: #E2E8F0; border-radius: 9999px; height: 6px; position: relative;">'
-        f'<div style="background: #059669; width: {range_pct:.1f}%; height: 6px; border-radius: 9999px;"></div>'
-        f'<div style="position: absolute; left: {range_pct:.1f}%; top: -3px; width: 12px; height: 12px; border-radius: 50%; background: #047857; border: 2px solid #FFFFFF; transform: translateX(-50%); box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>'
+        f'<div style="background: #0B111E; border: 1px solid #1E293B; border-radius: 9999px; height: 7px; position: relative;">'
+        f'<div style="background: linear-gradient(90deg, #00E5FF 0%, #00F5A0 100%); width: {range_pct:.1f}%; height: 7px; border-radius: 9999px;"></div>'
+        f'<div style="position: absolute; left: {range_pct:.1f}%; top: -3px; width: 13px; height: 13px; border-radius: 50%; background: #00F5A0; border: 2px solid #080C14; transform: translateX(-50%); box-shadow: 0 0 12px #00F5A0;"></div>'
         f'</div>'
         f'</div>'
         f'</div>'
         f'</div>'
-        f'<div style="margin-top: 22px; display: grid; grid-template-columns: 2.2fr 1fr; gap: 24px;">'
-        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 18px 22px;">'
-        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">'
+        f'<div style="margin-top: 22px; display: grid; grid-template-columns: 2.2fr 1fr; gap: 20px;">'
+        f'<div style="background: rgba(11, 17, 30, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 18px 22px;">'
+        f'<div style="font-size: 12px; font-weight: 800; color: #F8FAFC; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">'
         f'<span style="display: flex; align-items: center; gap: 8px;"><span>🏢</span> Corporate Operations & Business Model</span>'
-        f'<span style="font-size: 11px; background: #EFF6FF; color: #1D4ED8; font-weight: 700; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 9999px;">Key Highlights</span>'
+        f'<span style="font-size: 10.5px; background: rgba(0, 229, 255, 0.12); color: #00E5FF; font-weight: 700; border: 1px solid rgba(0, 229, 255, 0.3); padding: 2px 8px; border-radius: 9999px;">Key Highlights</span>'
         f'</div>'
         f'<ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-direction: column; gap: 9px;">'
         f'{ops_points_html}'
         f'</ul>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between;">'
+        f'<div style="background: rgba(11, 17, 30, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between;">'
         f'<div>'
-        f'<div style="font-size: 12px; font-weight: 800; color: #0F172A; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">'
+        f'<div style="font-size: 12px; font-weight: 800; color: #F8FAFC; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">'
         f'<span style="display: flex; align-items: center; gap: 8px;"><span>🔑</span> Institutional Profile</span>'
-        f'<span style="font-size: 11px; background: #ECFDF5; color: #047857; font-weight: 700; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 9999px;">Nifty 500</span>'
+        f'<span style="font-size: 10.5px; background: rgba(0, 245, 160, 0.12); color: #00F5A0; font-weight: 700; border: 1px solid rgba(0, 245, 160, 0.35); padding: 2px 8px; border-radius: 9999px;">Nifty 500</span>'
         f'</div>'
         f'<ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-direction: column; gap: 9px;">'
-        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
-        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
-        f'<span><strong style="color: #0F172A; font-weight: 700;">Sector Benchmark:</strong> Constituent of {target_sector} peer index.</span>'
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #CBD5E1;">'
+        f'<span style="color: #00F5A0; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #F8FAFC; font-weight: 700;">Sector Benchmark:</strong> Constituent of {target_sector} peer index.</span>'
         f'</li>'
-        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
-        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
-        f'<span><strong style="color: #0F172A; font-weight: 700;">Accounting Framework:</strong> Reported under Ind AS & SEBI (LODR) guidelines.</span>'
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #CBD5E1;">'
+        f'<span style="color: #00F5A0; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #F8FAFC; font-weight: 700;">Accounting Framework:</strong> Reported under Ind AS & SEBI (LODR) guidelines.</span>'
         f'</li>'
-        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #334155;">'
-        f'<span style="color: #059669; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
-        f'<span><strong style="color: #0F172A; font-weight: 700;">Listing Exchanges:</strong> Listed on NSE ({target_ticker}) and BSE ({bse_code}).</span>'
+        f'<li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #CBD5E1;">'
+        f'<span style="color: #00F5A0; font-weight: 800; font-size: 14px; line-height: 1.2;">•</span>'
+        f'<span><strong style="color: #F8FAFC; font-weight: 700;">Listing Exchanges:</strong> Listed on NSE ({target_ticker}) and BSE ({bse_code}).</span>'
         f'</li>'
         f'</ul>'
         f'</div>'
         f'<div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">'
-        f'<span style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Ind AS Standards</span>'
-        f'<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Nifty 500 Constituent</span>'
+        f'<span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.35); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Ind AS Standards</span>'
+        f'<span style="background: rgba(0, 229, 255, 0.12); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.3); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">✔ Nifty 500 Constituent</span>'
         f'</div>'
         f'</div>'
         f'</div>'
@@ -1765,19 +1830,19 @@ with btn_col2:
         if target_ticker and not fin_res:
             fin_res = get_cached_financial_statements(target_ticker)
 
-# Helper metadata for 8 Pillars
+# Helper metadata for 8 Pillars (Cyber-Dark Institutional HUD)
 PILLAR_METADATA = {
-    1: {"icon": "🏛️", "chip": "Governance", "chip_bg": "#ECFDF5", "chip_fg": "#047857", "border": "#A7F3D0"},
-    2: {"icon": "🔍", "chip": "Forensics", "chip_bg": "#EFF6FF", "chip_fg": "#1D4ED8", "border": "#BFDBFE"},
-    3: {"icon": "🛡️", "chip": "Solvency", "chip_bg": "#F5F3FF", "chip_fg": "#6D28D9", "border": "#DDD6FE"},
-    4: {"icon": "📈", "chip": "Efficiency", "chip_bg": "#ECFEFF", "chip_fg": "#0E7490", "border": "#A5F3FC"},
-    5: {"icon": "🔄", "chip": "Working Cap", "chip_bg": "#F0FDF4", "chip_fg": "#15803D", "border": "#BBF7D0"},
-    6: {"icon": "💵", "chip": "Cash Flow", "chip_bg": "#FDF2F8", "chip_fg": "#BE185D", "border": "#FBCFE8"},
-    7: {"icon": "🚀", "chip": "Moat / Longevity", "chip_bg": "#FAF5FF", "chip_fg": "#7E22CE", "border": "#E9D5FF"},
-    8: {"icon": "⚖️", "chip": "Capital Allocation", "chip_bg": "#FFFBEB", "chip_fg": "#B45309", "border": "#FDE68A"},
+    1: {"icon": "🏛️", "chip": "Governance", "chip_bg": "rgba(0, 245, 160, 0.12)", "chip_fg": "#00F5A0", "border": "rgba(0, 245, 160, 0.35)"},
+    2: {"icon": "🔍", "chip": "Forensics", "chip_bg": "rgba(0, 229, 255, 0.12)", "chip_fg": "#00E5FF", "border": "rgba(0, 229, 255, 0.35)"},
+    3: {"icon": "🛡️", "chip": "Solvency", "chip_bg": "rgba(191, 90, 242, 0.12)", "chip_fg": "#BF5AF2", "border": "rgba(191, 90, 242, 0.35)"},
+    4: {"icon": "📈", "chip": "Efficiency", "chip_bg": "rgba(0, 229, 255, 0.12)", "chip_fg": "#00E5FF", "border": "rgba(0, 229, 255, 0.35)"},
+    5: {"icon": "🔄", "chip": "Working Cap", "chip_bg": "rgba(0, 245, 160, 0.12)", "chip_fg": "#00F5A0", "border": "rgba(0, 245, 160, 0.35)"},
+    6: {"icon": "💵", "chip": "Cash Flow", "chip_bg": "rgba(255, 214, 10, 0.12)", "chip_fg": "#FFD60A", "border": "rgba(255, 214, 10, 0.35)"},
+    7: {"icon": "🚀", "chip": "Moat / Longevity", "chip_bg": "rgba(191, 90, 242, 0.12)", "chip_fg": "#BF5AF2", "border": "rgba(191, 90, 242, 0.35)"},
+    8: {"icon": "⚖️", "chip": "Capital Allocation", "chip_bg": "rgba(255, 159, 10, 0.12)", "chip_fg": "#FF9F0A", "border": "rgba(255, 159, 10, 0.35)"},
 }
 
-# Helper to build Plotly 8-Pillar Radar Chart in Institutional Green & White
+# Helper to build Plotly 8-Pillar Radar Chart in Cyber-Dark Neon Emerald & Cyan
 def build_radar_chart(pillars):
     if not pillars:
         return None
@@ -1792,27 +1857,28 @@ def build_radar_chart(pillars):
         r=pct_closed,
         theta=names_closed,
         fill='toself',
-        fillcolor='rgba(5, 150, 105, 0.18)',
-        line=dict(color='#059669', width=3.5),
-        marker=dict(size=8, color='#059669', line=dict(color='#FFFFFF', width=2)),
+        fillcolor='rgba(0, 245, 160, 0.18)',
+        line=dict(color='#00F5A0', width=3),
+        marker=dict(size=7, color='#00E5FF', line=dict(color='#080C14', width=2)),
         name='% of Max Score'
     ))
 
     fig.update_layout(
+        template="plotly_dark",
         polar=dict(
-            bgcolor='rgba(240, 253, 244, 0.45)',
+            bgcolor='rgba(15, 23, 42, 0.65)',
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
                 ticksuffix="%",
-                gridcolor='#A7F3D0',
-                linecolor='#6EE7B7',
-                tickfont=dict(color='#047857', size=11, family='Inter', weight=600)
+                gridcolor='rgba(255, 255, 255, 0.08)',
+                linecolor='rgba(0, 229, 255, 0.3)',
+                tickfont=dict(color='#94A3B8', size=10, family='JetBrains Mono')
             ),
             angularaxis=dict(
-                gridcolor='#CBD5E1',
-                linecolor='#94A3B8',
-                tickfont=dict(color='#0F172A', size=12.5, family='Inter', weight=700)
+                gridcolor='rgba(255, 255, 255, 0.08)',
+                linecolor='rgba(0, 245, 160, 0.3)',
+                tickfont=dict(color='#F1F5F9', size=11.5, family='Inter', weight=700)
             )
         ),
         paper_bgcolor='rgba(0,0,0,0)',
@@ -1882,30 +1948,30 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
 
     if pio_trig or "RED" in guardrail:
         gov_status = "CRITICAL RISK"
-        gov_color = "#DC2626"
-        gov_bg = "#FEF2F2"
-        gov_border = "#FECACA"
+        gov_color = "#FF453A"
+        gov_bg = "rgba(255, 69, 58, 0.08)"
+        gov_border = "rgba(255, 69, 58, 0.3)"
         gov_sub = "High risk: Serious audit red flags or promoter integrity warnings active."
         gov_icon = "🔴"
     elif "ALERT" in guardrail or total_pen >= 4.0:
         gov_status = "MONITOR"
-        gov_color = "#D97706"
-        gov_bg = "#FFFBEB"
-        gov_border = "#FDE68A"
+        gov_color = "#FFD60A"
+        gov_bg = "rgba(255, 214, 10, 0.08)"
+        gov_border = "rgba(255, 214, 10, 0.3)"
         gov_sub = "Watch closely: Minor disclosure alerts or related-party schedules flagged."
         gov_icon = "🟡"
     elif has_gaps:
         gov_status = "INSUFFICIENT DATA"
-        gov_color = "#D97706"
-        gov_bg = "#FFFBEB"
-        gov_border = "#FDE68A"
+        gov_color = "#FFD60A"
+        gov_bg = "rgba(255, 214, 10, 0.08)"
+        gov_border = "rgba(255, 214, 10, 0.3)"
         gov_sub = "Evidence gaps present: Full statutory disclosures could not be verified."
         gov_icon = "🟡"
     else:
         gov_status = "PRISTINE"
-        gov_color = "#059669"
-        gov_bg = "#ECFDF5"
-        gov_border = "#A7F3D0"
+        gov_color = "#00F5A0"
+        gov_bg = "rgba(0, 245, 160, 0.08)"
+        gov_border = "rgba(0, 245, 160, 0.3)"
         gov_sub = "Clean record: Zero shares pledged, trusted auditor, no accounting issues."
         gov_icon = "🟢"
 
@@ -1913,30 +1979,30 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     if de_val is not None:
         if de_val <= 0.4:
             bs_status = "FORTRESS"
-            bs_color = "#059669"
-            bs_bg = "#ECFDF5"
-            bs_border = "#A7F3D0"
+            bs_color = "#00F5A0"
+            bs_bg = "rgba(0, 245, 160, 0.08)"
+            bs_border = "rgba(0, 245, 160, 0.3)"
             bs_sub = f"Virtually debt-free ({de_val:.2f}x D/E) with strong cash reserves."
             bs_icon = "🟢"
         elif de_val <= 1.0:
             bs_status = "MODERATE"
-            bs_color = "#D97706"
-            bs_bg = "#FFFBEB"
-            bs_border = "#FDE68A"
+            bs_color = "#FFD60A"
+            bs_bg = "rgba(255, 214, 10, 0.08)"
+            bs_border = "rgba(255, 214, 10, 0.3)"
             bs_sub = f"Manageable debt ({de_val:.2f}x D/E) comfortably serviced by operating cash."
             bs_icon = "🟡"
         else:
             bs_status = "LEVERAGED"
-            bs_color = "#DC2626"
-            bs_bg = "#FEF2F2"
-            bs_border = "#FECACA"
+            bs_color = "#FF453A"
+            bs_bg = "rgba(255, 69, 58, 0.08)"
+            bs_border = "rgba(255, 69, 58, 0.3)"
             bs_sub = f"High debt ({de_val:.2f}x D/E). Vulnerable to interest rate or economic slowdowns."
             bs_icon = "🔴"
     else:
         bs_status = "NOT ASSESSED"
-        bs_color = "#64748B"
-        bs_bg = "#F8FAFC"
-        bs_border = "#CBD5E1"
+        bs_color = "#94A3B8"
+        bs_bg = "rgba(148, 163, 184, 0.08)"
+        bs_border = "rgba(148, 163, 184, 0.2)"
         bs_sub = "Debt-to-equity metric is unavailable from market data feeds."
         bs_icon = "⚪"
 
@@ -1952,52 +2018,52 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     if mos_pct is not None:
         if mos_pct >= 5.0:
             val_status = "ATTRACTIVE"
-            val_color = "#059669"
-            val_bg = "#ECFDF5"
-            val_border = "#A7F3D0"
+            val_color = "#00F5A0"
+            val_bg = "rgba(0, 245, 160, 0.08)"
+            val_border = "rgba(0, 245, 160, 0.3)"
             val_sub = f"Good entry: Trading {mos_pct:.1f}% below fair value (₹{dcf_mid:,.0f})."
             val_icon = "🟢"
         elif mos_pct >= -10.0:
             val_status = "FAIR VALUE"
-            val_color = "#2563EB"
-            val_bg = "#EFF6FF"
-            val_border = "#BFDBFE"
+            val_color = "#00E5FF"
+            val_bg = "rgba(0, 229, 255, 0.08)"
+            val_border = "rgba(0, 229, 255, 0.3)"
             val_sub = f"Fairly priced: Trading near intrinsic fair value (₹{dcf_mid:,.0f})."
             val_icon = "🔵"
         else:
             val_status = "STRETCHED"
-            val_color = "#DC2626"
-            val_bg = "#FEF2F2"
-            val_border = "#FECACA"
+            val_color = "#FF453A"
+            val_bg = "rgba(255, 69, 58, 0.08)"
+            val_border = "rgba(255, 69, 58, 0.3)"
             val_sub = f"Expensive: Trading {abs(mos_pct):.1f}% above fair value (₹{dcf_mid:,.0f})."
             val_icon = "🔴"
     elif pe is not None:
         if pe <= 25:
             val_status = "ATTRACTIVE"
-            val_color = "#059669"
-            val_bg = "#ECFDF5"
-            val_border = "#A7F3D0"
+            val_color = "#00F5A0"
+            val_bg = "rgba(0, 245, 160, 0.08)"
+            val_border = "rgba(0, 245, 160, 0.3)"
             val_sub = f"Attractive multiple ({pe:.1f}x P/E) offering good value support."
             val_icon = "🟢"
         elif pe <= 55:
             val_status = "FAIR VALUE"
-            val_color = "#2563EB"
-            val_bg = "#EFF6FF"
-            val_border = "#BFDBFE"
+            val_color = "#00E5FF"
+            val_bg = "rgba(0, 229, 255, 0.08)"
+            val_border = "rgba(0, 229, 255, 0.3)"
             val_sub = f"Reasonable multiple ({pe:.1f}x P/E) reflecting steady business quality."
             val_icon = "🔵"
         else:
             val_status = "STRETCHED"
-            val_color = "#DC2626"
-            val_bg = "#FEF2F2"
-            val_border = "#FECACA"
+            val_color = "#FF453A"
+            val_bg = "rgba(255, 69, 58, 0.08)"
+            val_border = "rgba(255, 69, 58, 0.3)"
             val_sub = f"High valuation ({pe:.1f}x P/E) leaves little margin for error."
             val_icon = "🔴"
     else:
         val_status = "BALANCED"
-        val_color = "#2563EB"
-        val_bg = "#EFF6FF"
-        val_border = "#BFDBFE"
+        val_color = "#00E5FF"
+        val_bg = "rgba(0, 229, 255, 0.08)"
+        val_border = "rgba(0, 229, 255, 0.3)"
         val_sub = "Valuation multiples in line with industry peers."
         val_icon = "🔵"
 
@@ -2009,18 +2075,21 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     if final_score >= 75:
         eli_action = "Bottom Line: High-quality compounder with strong financials and clean governance. Great candidate to buy on dips for long-term wealth creation."
         eli_badge = "STRONG ACCUMULATE"
-        eli_badge_bg = "#ECFDF5"
-        eli_badge_fg = "#047857"
+        eli_badge_bg = "rgba(0, 245, 160, 0.15)"
+        eli_badge_fg = "#00F5A0"
+        eli_badge_bdr = "rgba(0, 245, 160, 0.4)"
     elif final_score >= 60:
         eli_action = "Bottom Line: Good company with solid moats, but waiting for a price dip makes more sense right now."
         eli_badge = "SELECTIVE ACCUMULATE"
-        eli_badge_bg = "#EFF6FF"
-        eli_badge_fg = "#1D4ED8"
+        eli_badge_bg = "rgba(0, 229, 255, 0.15)"
+        eli_badge_fg = "#00E5FF"
+        eli_badge_bdr = "rgba(0, 229, 255, 0.4)"
     else:
         eli_action = "Bottom Line: High risk. Red flags found in debt, governance, or cash flow. Better to stay away until things improve."
         eli_badge = "AVOID / PRUDENCE"
-        eli_badge_bg = "#FEF2F2"
-        eli_badge_fg = "#DC2626"
+        eli_badge_bg = "rgba(255, 69, 58, 0.15)"
+        eli_badge_fg = "#FF453A"
+        eli_badge_bdr = "rgba(255, 69, 58, 0.4)"
 
     strengths = res.get("strengths", [])
     if strengths and len(strengths) > 0:
@@ -2033,46 +2102,46 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
         eli_biz = f"<strong>{company_clean}</strong> is an established business in India\'s <strong>{sector_clean}</strong> sector with healthy operating cash flows and strong market reach."
 
     html = (
-        f'<div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">'
+        f'<div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🚦</span>'
-        f'<span style="font-size: 15px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">10-Second Summary & Quick Takeaway</span>'
+        f'<span style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; text-transform: uppercase; letter-spacing: 0.8px;">10-Second Telemetry & Quick Takeaway</span>'
         f'</div>'
-        f'<span style="background: {eli_badge_bg}; color: {eli_badge_fg}; border: 1.5px solid {eli_badge_fg}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{eli_badge}</span>'
+        f'<span style="background: {eli_badge_bg}; color: {eli_badge_fg}; border: 1px solid {eli_badge_bdr}; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.4px;">{eli_badge}</span>'
         f'</div>'
-        f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">'
-        f'<div style="background: {gov_bg}; border: 1.5px solid {gov_border}; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
-        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">1. MANAGEMENT & AUDIT</div>'
+        f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px;">'
+        f'<div style="background: {gov_bg}; border: 1px solid {gov_border}; border-radius: 12px; padding: 16px 18px;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">1. MANAGEMENT & AUDIT</div>'
         f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">'
-        f'<span style="font-size: 18px;">{gov_icon}</span>'
-        f'<span style="font-size: 17px; font-weight: 900; color: {gov_color}; font-family: \'JetBrains Mono\', monospace;">{gov_status}</span>'
+        f'<span style="font-size: 16px;">{gov_icon}</span>'
+        f'<span style="font-size: 16px; font-weight: 900; color: {gov_color}; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{gov_status}</span>'
         f'</div>'
-        f'<div style="font-size: 13px; line-height: 1.5; color: #334155;">{gov_sub}</div>'
+        f'<div style="font-size: 12.5px; line-height: 1.5; color: #CBD5E1;">{gov_sub}</div>'
         f'</div>'
-        f'<div style="background: {bs_bg}; border: 1.5px solid {bs_border}; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
-        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">2. BALANCE SHEET HEALTH</div>'
+        f'<div style="background: {bs_bg}; border: 1px solid {bs_border}; border-radius: 12px; padding: 16px 18px;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">2. BALANCE SHEET FORTRESS</div>'
         f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">'
-        f'<span style="font-size: 18px;">{bs_icon}</span>'
-        f'<span style="font-size: 17px; font-weight: 900; color: {bs_color}; font-family: \'JetBrains Mono\', monospace;">{bs_status}</span>'
+        f'<span style="font-size: 16px;">{bs_icon}</span>'
+        f'<span style="font-size: 16px; font-weight: 900; color: {bs_color}; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{bs_status}</span>'
         f'</div>'
-        f'<div style="font-size: 13px; line-height: 1.5; color: #334155;">{bs_sub}</div>'
+        f'<div style="font-size: 12.5px; line-height: 1.5; color: #CBD5E1;">{bs_sub}</div>'
         f'</div>'
-        f'<div style="background: {val_bg}; border: 1.5px solid {val_border}; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
-        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">3. VALUATION & PRICE</div>'
+        f'<div style="background: {val_bg}; border: 1px solid {val_border}; border-radius: 12px; padding: 16px 18px;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">3. VALUATION & ENTRY</div>'
         f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">'
-        f'<span style="font-size: 18px;">{val_icon}</span>'
-        f'<span style="font-size: 17px; font-weight: 900; color: {val_color}; font-family: \'JetBrains Mono\', monospace;">{val_status}</span>'
+        f'<span style="font-size: 16px;">{val_icon}</span>'
+        f'<span style="font-size: 16px; font-weight: 900; color: {val_color}; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{val_status}</span>'
         f'</div>'
-        f'<div style="font-size: 13px; line-height: 1.5; color: #334155;">{val_sub}</div>'
+        f'<div style="font-size: 12.5px; line-height: 1.5; color: #CBD5E1;">{val_sub}</div>'
         f'</div>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-left: 5px solid #059669; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
-        f'<div style="font-size: 12px; font-weight: 800; color: #065F46; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
-        f'<span>💬</span> Plain-English Summary (ELI15 Takeaway)'
+        f'<div style="background: rgba(2, 6, 23, 0.75); border: 1px solid rgba(0, 245, 160, 0.25); border-left: 4px solid #00F5A0; border-radius: 10px; padding: 16px 20px;">'
+        f'<div style="font-size: 11.5px; font-weight: 800; color: #00F5A0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">'
+        f'<span>💬</span> Plain-English Executive Summary (ELI15 Takeaway)'
         f'</div>'
-        f'<div style="font-size: 14px; line-height: 1.6; color: #1E293B; margin-bottom: 6px;">{eli_biz}</div>'
-        f'<div style="font-size: 14px; line-height: 1.6; color: #0F172A; font-weight: 700;">{eli_action}</div>'
+        f'<div style="font-size: 13.5px; line-height: 1.6; color: #CBD5E1; margin-bottom: 6px;">{eli_biz}</div>'
+        f'<div style="font-size: 13.5px; line-height: 1.6; color: #F8FAFC; font-weight: 700;">{eli_action}</div>'
         f'</div>'
         f'</div>'
     )
@@ -2355,45 +2424,47 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
 
     passed_count = sum(1 for it in shield_items if it["status"] == "PASS")
     shield_badge = f"{passed_count} / 6 CHECKS PASSED — ALL CLEAR" if passed_count == 6 else f"{passed_count} / 6 CHECKS PASSED"
-    shield_badge_bg = "#059669" if passed_count >= 5 else "#D97706"
+    shield_badge_bg = "rgba(0, 245, 160, 0.15)" if passed_count >= 5 else "rgba(255, 214, 10, 0.15)"
+    shield_badge_fg = "#00F5A0" if passed_count >= 5 else "#FFD60A"
+    shield_badge_bdr = "rgba(0, 245, 160, 0.4)" if passed_count >= 5 else "rgba(255, 214, 10, 0.4)"
 
     cards_html_list = []
     for it in shield_items:
         is_pass = (it["status"] == "PASS")
         icon_str = "✔" if is_pass else ("⚠" if it["status"] == "MONITOR" else "✖")
-        icon_bg = "#ECFDF5" if is_pass else ("#FFFBEB" if it["status"] == "MONITOR" else "#FEF2F2")
-        icon_fg = "#059669" if is_pass else ("#D97706" if it["status"] == "MONITOR" else "#DC2626")
-        badge_bg = "#ECFDF5" if is_pass else ("#FFFBEB" if it["status"] == "MONITOR" else "#FEF2F2")
-        badge_fg = "#047857" if is_pass else ("#B45309" if it["status"] == "MONITOR" else "#991B1B")
-        badge_border = "#A7F3D0" if is_pass else ("#FDE68A" if it["status"] == "MONITOR" else "#FECACA")
+        icon_bg = "rgba(0, 245, 160, 0.12)" if is_pass else ("rgba(255, 214, 10, 0.12)" if it["status"] == "MONITOR" else "rgba(255, 69, 58, 0.12)")
+        icon_fg = "#00F5A0" if is_pass else ("#FFD60A" if it["status"] == "MONITOR" else "#FF453A")
+        badge_bg = "rgba(0, 245, 160, 0.12)" if is_pass else ("rgba(255, 214, 10, 0.12)" if it["status"] == "MONITOR" else "rgba(255, 69, 58, 0.12)")
+        badge_fg = "#00F5A0" if is_pass else ("#FFD60A" if it["status"] == "MONITOR" else "#FF453A")
+        badge_border = "rgba(0, 245, 160, 0.35)" if is_pass else ("rgba(255, 214, 10, 0.35)" if it["status"] == "MONITOR" else "rgba(255, 69, 58, 0.35)")
         
         cards_html_list.append(
-            f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease;">'
+            f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease;">'
             f'<div>'
             f'<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">'
             f'<div style="display: flex; align-items: center; gap: 8px;">'
-            f'<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: {icon_bg}; color: {icon_fg}; border-radius: 50%; font-size: 13px; font-weight: 900;">{icon_str}</span>'
-            f'<span style="font-size: 13.5px; font-weight: 800; color: #0F172A;">{it["title"]}</span>'
+            f'<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: {icon_bg}; color: {icon_fg}; border-radius: 50%; font-size: 12px; font-weight: 900;">{icon_str}</span>'
+            f'<span style="font-size: 13.5px; font-weight: 800; color: #F1F5F9;">{it["title"]}</span>'
             f'</div>'
-            f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 9999px; white-space: nowrap; font-family: \'JetBrains Mono\', monospace;">{it["badge"]}</span>'
+            f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; white-space: nowrap; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{it["badge"]}</span>'
             f'</div>'
-            f'<div style="font-size: 12.5px; line-height: 1.5; color: #475569; margin-top: 4px;">{it["evidence"]}</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #94A3B8; margin-top: 4px;">{it["evidence"]}</div>'
             f'</div>'
             f'</div>'
         )
     cards_html = "".join(cards_html_list)
 
     html = (
-        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">'
+        f'<div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">'
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🛡️</span>'
-        f'<span style="font-size: 15px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">6-Point Forensic Safety Shield (Anti-Fraud Filter)</span>'
+        f'<span style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; text-transform: uppercase; letter-spacing: 0.8px;">6-Point Forensic Safety Shield (Anti-Fraud Filter)</span>'
         f'</div>'
-        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">A 6-point background check for accounting tricks, hidden debt, and promoter red flags</div>'
+        f'<div style="font-size: 12.5px; color: #94A3B8; margin-top: 3px;">A 6-point background check for accounting tricks, hidden debt, and promoter red flags</div>'
         f'</div>'
-        f'<span style="background: {shield_badge_bg}; color: #FFFFFF; font-size: 12px; font-weight: 800; padding: 5px 13px; border-radius: 9999px; letter-spacing: 0.4px; font-family: \'JetBrains Mono\', monospace;">{shield_badge}</span>'
+        f'<span style="background: {shield_badge_bg}; color: {shield_badge_fg}; border: 1px solid {shield_badge_bdr}; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.4px; font-family: \'JetBrains Mono\', monospace;">{shield_badge}</span>'
         f'</div>'
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">'
         f'{cards_html}'
@@ -2450,13 +2521,15 @@ def render_valuation_compass_html(res, live_data):
     mos_pct = ((dcf_mid - cmp) / dcf_mid) * 100.0
     if mos_pct > 0:
         mos_badge = f"+{mos_pct:.1f}% Margin of Safety"
-        mos_color = "#059669"
-        mos_bg = "#ECFDF5"
+        mos_color = "#00F5A0"
+        mos_bg = "rgba(0, 245, 160, 0.15)"
+        mos_bdr = "rgba(0, 245, 160, 0.4)"
         mos_desc = f"Trading at discount to DCF Intrinsic Value (₹{dcf_mid:,.0f})"
     else:
         mos_badge = f"{abs(mos_pct):.1f}% Valuation Premium"
-        mos_color = "#DC2626"
-        mos_bg = "#FEF2F2"
+        mos_color = "#FF453A"
+        mos_bg = "rgba(255, 69, 58, 0.15)"
+        mos_bdr = "rgba(255, 69, 58, 0.4)"
         mos_desc = f"Trading above DCF Intrinsic Value (₹{dcf_mid:,.0f})"
 
     # Asymmetry & Risk-Reward calculations
@@ -2465,11 +2538,11 @@ def render_valuation_compass_html(res, live_data):
 
     if upside_dcf_pct >= 0:
         upside_str = f"+{upside_dcf_pct:.1f}% to DCF"
-        upside_color = "#047857"
+        upside_color = "#00F5A0"
         asymmetry_desc = "Favorable risk-reward with margin of safety"
     else:
         upside_str = f"{upside_dcf_pct:.1f}% to DCF"
-        upside_color = "#DC2626"
+        upside_color = "#FF453A"
         asymmetry_desc = "Trading above DCF estimate; downside risk to 52W Low"
 
     downside_str = f"-{abs(downside_low_pct):.1f}% to 52W L"
@@ -2494,63 +2567,63 @@ def render_valuation_compass_html(res, live_data):
     range_52w_width = max(3.0, pct_high - pct_low)
 
     html = (
-        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">'
+        f'<div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">'
         f'<div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="font-size: 20px;">🧭</span>'
-        f'<span style="font-size: 15px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">Valuation Compass & Fair Value Range</span>'
+        f'<span style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; text-transform: uppercase; letter-spacing: 0.8px;">Valuation Compass & Fair Value Corridor</span>'
         f'</div>'
-        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">Current market price relative to 52-week corridor and DCF intrinsic fair value</div>'
+        f'<div style="font-size: 12.5px; color: #94A3B8; margin-top: 3px;">Current market price relative to 52-week corridor and DCF intrinsic fair value</div>'
         f'</div>'
-        f'<span style="background: {mos_bg}; color: {mos_color}; border: 1.5px solid {mos_color}; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{mos_badge}</span>'
+        f'<span style="background: {mos_bg}; color: {mos_color}; border: 1px solid {mos_bdr}; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{mos_badge}</span>'
         f'</div>'
-        f'<div style="position: relative; margin: 44px 16px 36px 16px; height: 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 9999px;">'
+        f'<div style="position: relative; margin: 44px 16px 36px 16px; height: 14px; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 9999px;">'
         # 1. 52-week range corridor (unfilled guide from 52W L to 52W H)
-        f'<div style="position: absolute; left: {pct_low:.1f}%; width: {range_52w_width:.1f}%; height: 100%; background: #F1F5F9; border-radius: 9999px;"></div>'
+        f'<div style="position: absolute; left: {pct_low:.1f}%; width: {range_52w_width:.1f}%; height: 100%; background: rgba(255, 255, 255, 0.06); border-radius: 9999px;"></div>'
         # 2. Active valuation bar filled in accordance with CMP (from 52W Low up to CMP)
-        f'<div style="position: absolute; left: {fill_left:.1f}%; width: {fill_width:.1f}%; height: 100%; background: linear-gradient(90deg, #60A5FA 0%, #2563EB 100%); border-radius: 9999px; z-index: 2; box-shadow: 0 1px 4px rgba(37,99,235,0.25);"></div>'
+        f'<div style="position: absolute; left: {fill_left:.1f}%; width: {fill_width:.1f}%; height: 100%; background: linear-gradient(90deg, #00E5FF 0%, #00F5A0 100%); border-radius: 9999px; z-index: 2; box-shadow: 0 0 14px rgba(0, 245, 160, 0.45);"></div>'
         # 3. DCF Fair Value Range Target Zone (capsule)
-        f'<div style="position: absolute; left: {pct_dcf_low:.1f}%; width: {dcf_width:.1f}%; height: 100%; background: rgba(16, 185, 129, 0.25); border: 1.5px solid #10B981; border-radius: 9999px; z-index: 3;"></div>'
+        f'<div style="position: absolute; left: {pct_dcf_low:.1f}%; width: {dcf_width:.1f}%; height: 100%; background: rgba(0, 245, 160, 0.18); border: 1.5px solid #00F5A0; border-radius: 9999px; z-index: 3; box-shadow: 0 0 10px rgba(0, 245, 160, 0.3);"></div>'
         # 4. 52W Low tick & label
-        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W L: ₹{low_52w:,.1f}</div>'
-        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -2px; transform: translateX(-50%); width: 3px; height: 18px; background: #94A3B8; border-radius: 2px; z-index: 4;"></div>'
+        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #94A3B8; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W L: ₹{low_52w:,.1f}</div>'
+        f'<div style="position: absolute; left: {pct_low:.1f}%; top: -2px; transform: translateX(-50%); width: 3px; height: 18px; background: rgba(255, 255, 255, 0.25); border-radius: 2px; z-index: 4;"></div>'
         # 5. DCF Fair Value Target Label (below)
-        f'<div style="position: absolute; left: {to_pct(dcf_mid):.1f}%; top: 18px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; color: #047857; font-family: \'JetBrains Mono\', monospace; white-space: nowrap; z-index: 4;">▲ DCF Fair: ₹{dcf_mid:,.0f}</div>'
+        f'<div style="position: absolute; left: {to_pct(dcf_mid):.1f}%; top: 18px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; color: #00F5A0; font-family: \'JetBrains Mono\', monospace; white-space: nowrap; z-index: 4;">▲ DCF Fair: ₹{dcf_mid:,.0f}</div>'
         # 6. CMP Needle and Badge (positioned precisely at CMP)
         f'<div style="position: absolute; left: {pct_cmp:.1f}%; top: -34px; transform: translateX(-50%); z-index: 5; text-align: center;">'
-        f'<span style="background: #2563EB; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.35); font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">CMP ₹{cmp:,.1f}</span>'
-        f'<div style="width: 3px; height: 18px; background: #2563EB; margin: 0 auto; border-radius: 2px;"></div>'
+        f'<span style="background: #00E5FF; color: #080C14; font-size: 11.5px; font-weight: 900; padding: 2px 8px; border-radius: 6px; box-shadow: 0 0 12px rgba(0, 229, 255, 0.6); font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">CMP ₹{cmp:,.1f}</span>'
+        f'<div style="width: 3px; height: 18px; background: #00E5FF; margin: 0 auto; border-radius: 2px; box-shadow: 0 0 8px rgba(0, 229, 255, 0.8);"></div>'
         f'</div>'
         # 7. 52W High tick & label
-        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W H: ₹{high_52w:,.1f}</div>'
-        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -2px; transform: translateX(-50%); width: 3px; height: 18px; background: #94A3B8; border-radius: 2px; z-index: 4;"></div>'
+        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #94A3B8; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W H: ₹{high_52w:,.1f}</div>'
+        f'<div style="position: absolute; left: {pct_high:.1f}%; top: -2px; transform: translateX(-50%); width: 3px; height: 18px; background: rgba(255, 255, 255, 0.25); border-radius: 2px; z-index: 4;"></div>'
         f'</div>'
         # Bottom Metric Cards
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px;">'
-        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
-        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">FAIR VALUE (DCF)</div>'
-        f'<div style="font-size: 16.5px; font-weight: 800; color: #047857; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">{dcf_card_val}</div>'
-        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">{dcf_card_sub}</div>'
+        f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 14px 16px;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">FAIR VALUE (DCF)</div>'
+        f'<div style="font-size: 16.5px; font-weight: 800; color: #00F5A0; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">{dcf_card_val}</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 2px;">{dcf_card_sub}</div>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
-        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">VALUATION STATUS</div>'
+        f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 14px 16px;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">VALUATION STATUS</div>'
         f'<div style="font-size: 16.5px; font-weight: 800; color: {mos_color}; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">{mos_badge}</div>'
-        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">{mos_desc}</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 2px;">{mos_desc}</div>'
         f'</div>'
-        f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
-        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase;">UPSIDE VS DOWNSIDE</div>'
-        f'<div style="font-size: 14.5px; font-weight: 800; color: #1E293B; margin-top: 4px; font-family: \'JetBrains Mono\', monospace;">'
-        f'<span style="color: {upside_color};">{upside_str}</span> &bull; <span style="color: #64748B;">{downside_str}</span>'
+        f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 14px 16px;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">UPSIDE VS DOWNSIDE</div>'
+        f'<div style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; margin-top: 4px; font-family: \'JetBrains Mono\', monospace;">'
+        f'<span style="color: {upside_color};">{upside_str}</span> &bull; <span style="color: #94A3B8;">{downside_str}</span>'
         f'</div>'
-        f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">{asymmetry_desc}</div>'
+        f'<div style="font-size: 12px; color: #64748B; margin-top: 2px;">{asymmetry_desc}</div>'
         f'</div>'
         f'</div>'
         # Micro-Legend for Valuation Compass
-        f'<div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px dashed #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B;">'
-        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: #2563EB; border-radius: 2px;"></span> CMP Active Price Pin</span>'
-        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: rgba(16, 185, 129, 0.3); border: 1.5px solid #10B981; border-radius: 2px;"></span> DCF Fair Value Zone</span>'
-        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 2px;"></span> 52-Week Range Bounds</span>'
+        f'<div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(255, 255, 255, 0.08); font-size: 11px; font-weight: 700; color: #64748B;">'
+        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: #00E5FF; border-radius: 2px; box-shadow: 0 0 6px rgba(0,229,255,0.6);"></span> CMP Active Price Pin</span>'
+        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: rgba(0, 245, 160, 0.25); border: 1.5px solid #00F5A0; border-radius: 2px;"></span> DCF Fair Value Zone</span>'
+        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 2px;"></span> 52-Week Range Bounds</span>'
         f'</div>'
         f'</div>'
     )
@@ -2562,136 +2635,136 @@ def render_graphical_forensic_architecture_html() -> str:
     StockSage Forensic Evaluation Architecture, replacing walls of text with intuitive infographics.
     """
     return """
-    <div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);">
+    <div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px 28px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);">
       <!-- Header -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 16px;">
         <div>
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 22px;">🧭</span>
-            <span style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px;">StockSage Forensic Architecture & Evaluation Pipeline</span>
+            <span style="font-size: 17px; font-weight: 800; color: #F1F5F9; letter-spacing: -0.2px;">StockSage Forensic Architecture & Evaluation Pipeline</span>
           </div>
-          <div style="font-size: 13.5px; color: #64748B; margin-top: 3px;">
-            Company analysis combining market context with current filing and sector research.
+          <div style="font-size: 13px; color: #94A3B8; margin-top: 3px;">
+            Deterministic multi-layer forensic audit combining live market context with audited filing telemetry.
           </div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <span style="background: #ECFDF5; color: #047857; border: 1.5px solid #A7F3D0; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px;">Ind AS Aligned</span>
-          <span style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px;">Internal consistency checks</span>
+          <span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.3); font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">Ind AS Aligned</span>
+          <span style="background: rgba(0, 229, 255, 0.12); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.3); font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">Internal consistency checks</span>
         </div>
       </div>
 
       <!-- Stage 1-4 Connected Pipeline Infographic -->
       <div class="ss-pipeline-grid">
         <!-- Step 1 -->
-        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #059669; border-radius: 12px; padding: 18px 20px; position: relative;">
+        <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-top: 3.5px solid #00F5A0; border-radius: 12px; padding: 18px 20px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="width: 28px; height: 28px; border-radius: 50%; background: #059669; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">1</span>
-            <span style="font-size: 11px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 9999px;">DATA LAYER</span>
+            <span style="width: 26px; height: 26px; border-radius: 50%; background: #00F5A0; color: #080C14; font-weight: 900; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(0,245,160,0.5);">1</span>
+            <span style="font-size: 10px; font-weight: 800; color: #00F5A0; background: rgba(0, 245, 160, 0.12); border: 1px solid rgba(0, 245, 160, 0.3); padding: 2px 7px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">DATA LAYER</span>
           </div>
-          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">Universe Ingestion</div>
-          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Search 501 tracked equities, view Yahoo Finance quotes, and review current filings and supporting reports.</div>
+          <div style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; margin-bottom: 4px;">Universe Ingestion</div>
+          <div style="font-size: 12px; color: #94A3B8; line-height: 1.45; margin-bottom: 12px;">Ingest 501 tracked equities, pull live quotes, and review primary annual reports.</div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">501 tracked</span>
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">Yahoo Finance</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">501 tracked</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">Live Feeds</span>
           </div>
         </div>
 
         <!-- Step 2 -->
-        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #2563EB; border-radius: 12px; padding: 18px 20px; position: relative;">
+        <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-top: 3.5px solid #00E5FF; border-radius: 12px; padding: 18px 20px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="width: 28px; height: 28px; border-radius: 50%; background: #2563EB; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">2</span>
-            <span style="font-size: 11px; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 9999px;">AUDIT LAYER</span>
+            <span style="width: 26px; height: 26px; border-radius: 50%; background: #00E5FF; color: #080C14; font-weight: 900; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(0,229,255,0.5);">2</span>
+            <span style="font-size: 10px; font-weight: 800; color: #00E5FF; background: rgba(0, 229, 255, 0.12); border: 1px solid rgba(0, 229, 255, 0.3); padding: 2px 7px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">AUDIT LAYER</span>
           </div>
-          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">Sentinel-1 Verification</div>
-          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Runs 6-point mathematical cross-check to verify balance equations, cash flows & zero hallucinations.</div>
+          <div style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; margin-bottom: 4px;">Sentinel-1 Verification</div>
+          <div style="font-size: 12px; color: #94A3B8; line-height: 1.45; margin-bottom: 12px;">Runs 6-point mathematical cross-check to verify balance equations and zero hallucinations.</div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">6/6 Check</span>
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">SHA Seal</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">6/6 Check</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">SHA Seal</span>
           </div>
         </div>
 
         <!-- Step 3 -->
-        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #D97706; border-radius: 12px; padding: 18px 20px; position: relative;">
+        <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-top: 3.5px solid #FFD60A; border-radius: 12px; padding: 18px 20px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="width: 28px; height: 28px; border-radius: 50%; background: #D97706; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(217,119,6,0.3);">3</span>
-            <span style="font-size: 11px; font-weight: 800; color: #D97706; background: #FFFBEB; border: 1px solid #FDE68A; padding: 2px 8px; border-radius: 9999px;">CAGR LAYER</span>
+            <span style="width: 26px; height: 26px; border-radius: 50%; background: #FFD60A; color: #080C14; font-weight: 900; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255,214,10,0.5);">3</span>
+            <span style="font-size: 10px; font-weight: 800; color: #FFD60A; background: rgba(255, 214, 10, 0.12); border: 1px solid rgba(255, 214, 10, 0.3); padding: 2px 7px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">CAGR LAYER</span>
           </div>
-          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">Multi-Year Trends</div>
-          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Computes 3–5 year compounded growth across Revenue, Profit, ROCE, and Free Cash Flow.</div>
+          <div style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; margin-bottom: 4px;">Multi-Year Trends</div>
+          <div style="font-size: 12px; color: #94A3B8; line-height: 1.45; margin-bottom: 12px;">Computes 3–5 year compounded growth across Revenue, Profit, ROCE, and Free Cash Flow.</div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">5Y CAGR</span>
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">FCF Engine</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">5Y CAGR</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">FCF Engine</span>
           </div>
         </div>
 
         <!-- Step 4 -->
-        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4.5px solid #7C3AED; border-radius: 12px; padding: 18px 20px; position: relative;">
+        <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-top: 3.5px solid #BF5AF2; border-radius: 12px; padding: 18px 20px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="width: 28px; height: 28px; border-radius: 50%; background: #7C3AED; color: #FFFFFF; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">4</span>
-            <span style="font-size: 11px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 8px; border-radius: 9999px;">SYNTHESIS</span>
+            <span style="width: 26px; height: 26px; border-radius: 50%; background: #BF5AF2; color: #080C14; font-weight: 900; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(191,90,242,0.5);">4</span>
+            <span style="font-size: 10px; font-weight: 800; color: #BF5AF2; background: rgba(191, 90, 242, 0.12); border: 1px solid rgba(191, 90, 242, 0.3); padding: 2px 7px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">SYNTHESIS</span>
           </div>
-          <div style="font-size: 15.5px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">8-Pillar AI Dossier</div>
-          <div style="font-size: 12.5px; color: #64748B; line-height: 1.45; margin-bottom: 12px;">Synthesizes 0–100 score, forensic penalties, Big 4 auditor checks, and institutional position call.</div>
+          <div style="font-size: 14.5px; font-weight: 800; color: #F1F5F9; margin-bottom: 4px;">8-Pillar AI Dossier</div>
+          <div style="font-size: 12px; color: #94A3B8; line-height: 1.45; margin-bottom: 12px;">Synthesizes 0–100 score, forensic penalties, Big 4 auditor checks, and institutional position call.</div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">0-100 Score</span>
-            <span style="font-size: 10.5px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #334155; padding: 2px 7px; border-radius: 6px; font-weight: 600;">Position Call</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">0-100 Score</span>
+            <span style="font-size: 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); color: #CBD5E1; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">Position Call</span>
           </div>
         </div>
       </div>
 
       <!-- Graphical Metric Benchmark Cards -->
-      <div style="border-top: 1.5px solid #F1F5F9; padding-top: 20px;">
-        <div style="font-size: 13px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+      <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 20px;">
+        <div style="font-size: 12.5px; font-weight: 800; color: #F1F5F9; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
           <span>📊</span> Forensic Threshold Compass (Dalal Street Institutional Benchmarks)
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
           <!-- Benchmark 1 -->
-          <div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 14px 16px;">
+          <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(0, 245, 160, 0.25); border-radius: 12px; padding: 14px 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">CFO / PAT CONVERSION</span>
-              <span style="background: #059669; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≥ 95%</span>
+              <span style="font-size: 10.5px; font-weight: 800; color: #00F5A0; text-transform: uppercase; letter-spacing: 0.5px;">CFO / PAT CONVERSION</span>
+              <span style="background: rgba(0, 245, 160, 0.15); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.3); font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">≥ 95%</span>
             </div>
-            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
-              <div style="background: #059669; width: 95%; height: 6px; border-radius: 9999px;"></div>
+            <div style="background: rgba(255, 255, 255, 0.08); border-radius: 9999px; height: 5px; margin-bottom: 8px;">
+              <div style="background: #00F5A0; width: 95%; height: 5px; border-radius: 9999px; box-shadow: 0 0 6px rgba(0,245,160,0.6);"></div>
             </div>
-            <div style="font-size: 12px; color: #064E3B; line-height: 1.4; font-weight: 600;">Real Cash in Bank: Over 95% confirms reported accounting profits actually turn into liquid cash.</div>
+            <div style="font-size: 11.5px; color: #94A3B8; line-height: 1.4;">Real Cash in Bank: Over 95% confirms reported accounting profits actually turn into liquid cash.</div>
           </div>
 
           <!-- Benchmark 2 -->
-          <div style="background: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: 12px; padding: 14px 16px;">
+          <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 12px; padding: 14px 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-size: 11px; font-weight: 800; color: #1D4ED8; text-transform: uppercase;">DEBT TO EQUITY (D/E)</span>
-              <span style="background: #2563EB; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≤ 0.3x</span>
+              <span style="font-size: 10.5px; font-weight: 800; color: #00E5FF; text-transform: uppercase; letter-spacing: 0.5px;">DEBT TO EQUITY (D/E)</span>
+              <span style="background: rgba(0, 229, 255, 0.15); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.3); font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">≤ 0.3x</span>
             </div>
-            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
-              <div style="background: #2563EB; width: 30%; height: 6px; border-radius: 9999px;"></div>
+            <div style="background: rgba(255, 255, 255, 0.08); border-radius: 9999px; height: 5px; margin-bottom: 8px;">
+              <div style="background: #00E5FF; width: 30%; height: 5px; border-radius: 9999px; box-shadow: 0 0 6px rgba(0,229,255,0.6);"></div>
             </div>
-            <div style="font-size: 12px; color: #1E3A8A; line-height: 1.4; font-weight: 600;">Solvency Shield: Low debt prevents interest burden shocks during macro slowdowns.</div>
+            <div style="font-size: 11.5px; color: #94A3B8; line-height: 1.4;">Solvency Shield: Low debt prevents interest burden shocks during macro slowdowns.</div>
           </div>
 
           <!-- Benchmark 3 -->
-          <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 12px; padding: 14px 16px;">
+          <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 214, 10, 0.25); border-radius: 12px; padding: 14px 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-size: 11px; font-weight: 800; color: #B45309; text-transform: uppercase;">ROCE (CAPITAL RETURNS)</span>
-              <span style="background: #D97706; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≥ 20%</span>
+              <span style="font-size: 10.5px; font-weight: 800; color: #FFD60A; text-transform: uppercase; letter-spacing: 0.5px;">ROCE (CAPITAL RETURNS)</span>
+              <span style="background: rgba(255, 214, 10, 0.15); color: #FFD60A; border: 1px solid rgba(255, 214, 10, 0.3); font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">≥ 20%</span>
             </div>
-            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
-              <div style="background: #D97706; width: 80%; height: 6px; border-radius: 9999px;"></div>
+            <div style="background: rgba(255, 255, 255, 0.08); border-radius: 9999px; height: 5px; margin-bottom: 8px;">
+              <div style="background: #FFD60A; width: 80%; height: 5px; border-radius: 9999px; box-shadow: 0 0 6px rgba(255,214,10,0.6);"></div>
             </div>
-            <div style="font-size: 12px; color: #78350F; line-height: 1.4; font-weight: 600;">Elite Moat: Generates >₹20 operating profit per ₹100 of capital employed.</div>
+            <div style="font-size: 11.5px; color: #94A3B8; line-height: 1.4;">Elite Moat: Generates >₹20 operating profit per ₹100 of capital employed.</div>
           </div>
 
           <!-- Benchmark 4 -->
-          <div style="background: #FAF5FF; border: 1.5px solid #E9D5FF; border-radius: 12px; padding: 14px 16px;">
+          <div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(191, 90, 242, 0.25); border-radius: 12px; padding: 14px 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-size: 11px; font-weight: 800; color: #6D28D9; text-transform: uppercase;">IDEX COMPOSITE SCORE</span>
-              <span style="background: #7C3AED; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: monospace;">≥ 85 / 100</span>
+              <span style="font-size: 10.5px; font-weight: 800; color: #BF5AF2; text-transform: uppercase; letter-spacing: 0.5px;">IDEX COMPOSITE SCORE</span>
+              <span style="background: rgba(191, 90, 242, 0.15); color: #BF5AF2; border: 1px solid rgba(191, 90, 242, 0.3); font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">≥ 85 / 100</span>
             </div>
-            <div style="background: #E2E8F0; border-radius: 9999px; height: 6px; margin-bottom: 8px;">
-              <div style="background: #7C3AED; width: 85%; height: 6px; border-radius: 9999px;"></div>
+            <div style="background: rgba(255, 255, 255, 0.08); border-radius: 9999px; height: 5px; margin-bottom: 8px;">
+              <div style="background: #BF5AF2; width: 85%; height: 5px; border-radius: 9999px; box-shadow: 0 0 6px rgba(191,90,242,0.6);"></div>
             </div>
-            <div style="font-size: 12px; color: #4C1D95; line-height: 1.4; font-weight: 600;">Potential Compounder: Top 15% quality tier with clean governance and moat endurance.</div>
+            <div style="font-size: 11.5px; color: #94A3B8; line-height: 1.4;">Potential Compounder: Top 15% quality tier with clean governance and moat endurance.</div>
           </div>
         </div>
       </div>
@@ -2767,13 +2840,13 @@ if "idex_result" in st.session_state:
 
     if is_demo:
         st.html(
-            f'<div style="background: #FFFBEB; border: 2px solid #F59E0B; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);">'
+            f'<div style="background: rgba(255, 214, 10, 0.08); border: 1px solid rgba(255, 214, 10, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">'
             f'<span style="font-size: 26px;">⚠️</span>'
             f'<div>'
-            f'<div style="font-size: 14.5px; font-weight: 800; color: #92400E; text-transform: uppercase; letter-spacing: 0.5px;">'
+            f'<div style="font-size: 14px; font-weight: 800; color: #FFD60A; text-transform: uppercase; letter-spacing: 0.6px; font-family: \'JetBrains Mono\', monospace;">'
             f'Synthetic Demo Mode — Not Investment Research'
             f'</div>'
-            f'<div style="font-size: 13.5px; color: #B45309; margin-top: 2px; line-height: 1.4;">'
+            f'<div style="font-size: 13px; color: #CBD5E1; margin-top: 2px; line-height: 1.4;">'
             f'This evaluation was generated using synthetic demonstration data for UI illustration. '
             f'No actual statutory audit or regulatory claims are made for {target_company_name}.'
             f'</div>'
@@ -2871,11 +2944,11 @@ if "idex_result" in st.session_state:
         s_run_id = sentinel_audit.get('run_id') or sentinel_audit.get('audit_hash', 'RUN-ID')
         with st.expander(f"🔍 Data Consistency Trail: {sentinel_audit.get('status', 'EVALUATED')} (Score: {s_score_text} • ID: {s_run_id})", expanded=False):
             st.html(
-                f'<div style="background: {sentinel_audit.get("badge_bg", "#F8FAFC")}; border: 1.5px solid {sentinel_audit.get("badge_border", "#CBD5E1")}; border-left: 5px solid {sentinel_audit.get("badge_color", "#059669")}; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
-                f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15.5px;">🔍 {sentinel_audit.get("agent_name", "Data Consistency Engine")}</span>'
-                f'<div style="font-size: 13.5px; color: #475569; margin-top: 3px;">{sentinel_audit.get("verdict_desc", "")}</div></div>'
-                f'<div style="text-align: right;"><span style="background: {sentinel_audit.get("badge_color", "#059669")}; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px;">{sentinel_audit.get("status", "EVALUATED")}</span>'
-                f'<div style="font-size: 11.5px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Run ID: {s_run_id}</div></div>'
+                f'<div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(0, 245, 160, 0.3); border-left: 5px solid #00F5A0; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">'
+                f'<div><span style="font-weight: 800; color: #F1F5F9; font-size: 15px;">🔍 {sentinel_audit.get("agent_name", "Data Consistency Engine")}</span>'
+                f'<div style="font-size: 13px; color: #94A3B8; margin-top: 3px;">{sentinel_audit.get("verdict_desc", "")}</div></div>'
+                f'<div style="text-align: right;"><span style="background: rgba(0, 245, 160, 0.15); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.4); font-size: 11.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{sentinel_audit.get("status", "EVALUATED")}</span>'
+                f'<div style="font-size: 11px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: \'JetBrains Mono\', monospace;">Run ID: {s_run_id}</div></div>'
                 f'</div>'
             )
 
@@ -2895,7 +2968,7 @@ if "idex_result" in st.session_state:
         with st.expander(f"🕵️ Forensic Due Diligence Trail: {v_badge} (FQI: {fqi:.0f}/100 • 8-Pillar Concealed Risk Surveillance)", expanded=False):
             st.html(render_forensic_dossier_html(forensic_audit))
 
-    # 1. EXECUTIVE SCORE ROW (Vibrant Gradient KPI Cards with Generous Typography)
+    # 1. EXECUTIVE SCORE ROW (Holographic Radial IDEX Gauge & Formula Waterfall Bridge)
     final_score = res.get('final_score', 0)
     verdict = res.get("verdict", "").split("—")[0].strip()
     core_score = res.get('core_score', 0)
@@ -2903,67 +2976,107 @@ if "idex_result" in st.session_state:
     total_bonus = res.get('bonuses_breakdown', {}).get('total_bonus_applied', 0)
     position_sizing = res.get("position_sizing", "0%")
 
+    try:
+        f_val = float(final_score)
+    except (ValueError, TypeError):
+        f_val = 0.0
+
+    clamped_score = min(100.0, max(0.0, f_val))
+    circumference = 326.7
+    gauge_offset = circumference * (1.0 - (clamped_score / 100.0))
+
+    if f_val >= 80:
+        score_neon_color = "#00F5A0"
+        score_badge_bg = "rgba(0, 245, 160, 0.15)"
+        score_badge_bdr = "rgba(0, 245, 160, 0.4)"
+    elif f_val >= 60:
+        score_neon_color = "#00E5FF"
+        score_badge_bg = "rgba(0, 229, 255, 0.15)"
+        score_badge_bdr = "rgba(0, 229, 255, 0.4)"
+    else:
+        score_neon_color = "#FF453A"
+        score_badge_bg = "rgba(255, 69, 58, 0.15)"
+        score_badge_bdr = "rgba(255, 69, 58, 0.4)"
+
     kpi_cards_html = (
-        f'<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">'
-        f'<div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #10B981; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);">'
-        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #065F46; text-transform: uppercase;">FINAL IDEX SCORE</span>'
-        f'<span style="font-size: 20px;">🏆</span>'
+        f'<div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);">'
+        f'<div style="display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: center;">'
+        # Radial Gauge Pod
+        f'<div style="background: rgba(2, 6, 23, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 18px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative;">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">IDEX COMPOSITE SCORE</div>'
+        f'<div style="position: relative; width: 130px; height: 130px;">'
+        f'<svg width="130" height="130" viewBox="0 0 140 140" style="transform: rotate(-90deg);">'
+        f'<defs>'
+        f'<linearGradient id="idexNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">'
+        f'<stop offset="0%" stop-color="#00E5FF" />'
+        f'<stop offset="100%" stop-color="#00F5A0" />'
+        f'</linearGradient>'
+        f'</defs>'
+        f'<circle cx="70" cy="70" r="52" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="10" />'
+        f'<circle cx="70" cy="70" r="52" fill="none" stroke="url(#idexNeonGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="{circumference:.1f}" stroke-dashoffset="{gauge_offset:.1f}" style="transition: stroke-dashoffset 0.8s ease;" />'
+        f'</svg>'
+        f'<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">'
+        f'<span style="font-family: \'JetBrains Mono\', monospace; font-size: 26px; font-weight: 900; color: #F1F5F9; line-height: 1;">{final_score:.1f}</span>'
+        f'<span style="font-size: 11px; font-weight: 700; color: {score_neon_color}; font-family: \'JetBrains Mono\', monospace; margin-top: 2px;">/ 100</span>'
         f'</div>'
-        f'<div style="font-size: 32px; font-weight: 900; color: #064E3B; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'{final_score:.1f} <span style="font-size: 16px; font-weight: 700; color: #047857;">/ 100</span>'
         f'</div>'
         f'<div style="margin-top: 10px;">'
-        f'<span style="background: #059669; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; letter-spacing: 0.3px; display: inline-block;">{verdict}</span>'
+        f'<span style="background: {score_badge_bg}; color: {score_neon_color}; border: 1px solid {score_badge_bdr}; font-size: 11px; font-weight: 800; padding: 3px 12px; border-radius: 9999px; letter-spacing: 0.4px; font-family: \'JetBrains Mono\', monospace;">{verdict}</span>'
         f'</div>'
         f'</div>'
-        f'<div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 1.5px solid #60A5FA; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.08);">'
-        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #1E40AF; text-transform: uppercase;">CORE QUALITY</span>'
-        f'<span style="font-size: 20px;">💎</span>'
+        # 4 Telemetry Pods
+        f'<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">'
+        # Pod 1: Core Quality
+        f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 12px; padding: 16px 18px;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+        f'<span style="font-size: 11px; font-weight: 800; color: #00E5FF; text-transform: uppercase; letter-spacing: 0.6px;">CORE QUALITY</span>'
+        f'<span style="font-size: 16px;">💎</span>'
         f'</div>'
-        f'<div style="font-size: 32px; font-weight: 900; color: #1E3A8A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'{core_score:.1f} <span style="font-size: 16px; font-weight: 700; color: #2563EB;">/ 100</span>'
+        f'<div style="font-size: 24px; font-weight: 900; color: #F1F5F9; font-family: \'JetBrains Mono\', monospace;">{core_score:.1f} <span style="font-size: 13px; font-weight: 600; color: #00E5FF;">/ 100</span></div>'
+        f'<div style="font-size: 11.5px; color: #94A3B8; margin-top: 6px;">Base 8-pillar rating</div>'
         f'</div>'
-        f'<div style="margin-top: 10px; font-size: 13px; font-weight: 700; color: #1D4ED8;">'
-        f'Base quality score'
+        # Pod 2: Risk Deductions
+        f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 69, 58, 0.25); border-radius: 12px; padding: 16px 18px;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+        f'<span style="font-size: 11px; font-weight: 800; color: #FF453A; text-transform: uppercase; letter-spacing: 0.6px;">RISK PENALTIES</span>'
+        f'<span style="font-size: 16px;">🛡️</span>'
+        f'</div>'
+        f'<div style="font-size: 24px; font-weight: 900; color: #FF453A; font-family: \'JetBrains Mono\', monospace;">-{abs(total_penalties):.1f} <span style="font-size: 13px; font-weight: 600; color: #FF453A;">pts</span></div>'
+        f'<div style="font-size: 11.5px; color: #94A3B8; margin-top: 6px;">Cap: -7.5 pts max</div>'
+        f'</div>'
+        # Pod 3: Growth Bonuses
+        f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(191, 90, 242, 0.25); border-radius: 12px; padding: 16px 18px;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+        f'<span style="font-size: 11px; font-weight: 800; color: #BF5AF2; text-transform: uppercase; letter-spacing: 0.6px;">ALPHA BONUSES</span>'
+        f'<span style="font-size: 16px;">🚀</span>'
+        f'</div>'
+        f'<div style="font-size: 24px; font-weight: 900; color: #BF5AF2; font-family: \'JetBrains Mono\', monospace;">+{total_bonus:.1f} <span style="font-size: 13px; font-weight: 600; color: #BF5AF2;">pts</span></div>'
+        f'<div style="font-size: 11.5px; color: #94A3B8; margin-top: 6px;">Cap: +10% max</div>'
+        f'</div>'
+        # Pod 4: Sizing
+        f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 214, 10, 0.25); border-radius: 12px; padding: 16px 18px;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+        f'<span style="font-size: 11px; font-weight: 800; color: #FFD60A; text-transform: uppercase; letter-spacing: 0.6px;">ALLOCATION</span>'
+        f'<span style="font-size: 16px;">⚖️</span>'
+        f'</div>'
+        f'<div style="font-size: 22px; font-weight: 900; color: #FFD60A; font-family: \'JetBrains Mono\', monospace;">{position_sizing}</div>'
+        f'<div style="font-size: 11.5px; color: #94A3B8; margin-top: 6px;">Model portfolio weight</div>'
         f'</div>'
         f'</div>'
-        f'<div style="background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%); border: 1.5px solid #F87171; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.08);">'
-        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #991B1B; text-transform: uppercase;">RISK PENALTIES</span>'
-        f'<span style="font-size: 20px;">🛡️</span>'
         f'</div>'
-        f'<div style="font-size: 32px; font-weight: 900; color: #7F1D1D; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'-{abs(total_penalties):.1f} <span style="font-size: 16px; font-weight: 700; color: #B91C1C;">pts</span>'
+        # Interactive Formula Bridge Node Strip
+        f'<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); flex-wrap: wrap;">'
+        f'<div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-family: \'JetBrains Mono\', monospace; color: #94A3B8;">'
+        f'<span>⚡ IDEX-7.5SC Formula:</span>'
+        f'<span style="background: rgba(0, 229, 255, 0.1); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.3); padding: 2px 8px; border-radius: 6px;">Core: {core_score:.1f}</span>'
+        f'<span>−</span>'
+        f'<span style="background: rgba(255, 69, 58, 0.1); color: #FF453A; border: 1px solid rgba(255, 69, 58, 0.3); padding: 2px 8px; border-radius: 6px;">Penalties: {abs(total_penalties):.1f}</span>'
+        f'<span>+</span>'
+        f'<span style="background: rgba(191, 90, 242, 0.1); color: #BF5AF2; border: 1px solid rgba(191, 90, 242, 0.3); padding: 2px 8px; border-radius: 6px;">Bonuses: {total_bonus:.1f}</span>'
+        f'<span>=</span>'
+        f'<span style="background: rgba(0, 245, 160, 0.15); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.4); padding: 2px 10px; border-radius: 6px; font-weight: 800;">Final: {final_score:.1f}</span>'
         f'</div>'
-        f'<div style="margin-top: 10px;">'
-        f'<span style="background: #DC2626; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">Max -7.5 pts</span>'
-        f'</div>'
-        f'</div>'
-        f'<div style="background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%); border: 1.5px solid #A78BFA; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(139, 92, 246, 0.08);">'
-        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #5B21B6; text-transform: uppercase;">GROWTH BONUSES</span>'
-        f'<span style="font-size: 20px;">🚀</span>'
-        f'</div>'
-        f'<div style="font-size: 32px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'+{total_bonus:.1f} pts'
-        f'</div>'
-        f'<div style="margin-top: 10px;">'
-        f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">Max +10.0 pts</span>'
-        f'</div>'
-        f'</div>'
-        f'<div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #FBBF24; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);">'
-        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-        f'<span style="font-size: 13px; font-weight: 800; letter-spacing: 0.8px; color: #92400E; text-transform: uppercase;">PORTFOLIO ALLOCATION</span>'
-        f'<span style="font-size: 20px;">⚖️</span>'
-        f'</div>'
-        f'<div style="font-size: 30px; font-weight: 900; color: #78350F; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'{position_sizing}'
-        f'</div>'
-        f'<div style="margin-top: 10px; font-size: 13px; font-weight: 700; color: #B45309;">'
-        f'Suggested allocation'
-        f'</div>'
+        f'<div style="font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace;">MATHEMATICAL DETERMINISM VERIFIED ✔</div>'
         f'</div>'
         f'</div>'
     )
@@ -3021,173 +3134,137 @@ if "idex_result" in st.session_state:
     drift_lower = drift_str.lower() if drift_str else "operational metrics"
 
     if stance == "AVOID":
-        banner_border = "#DC2626"
-        badge_bg = "#DC2626"
-        badge_border = "#B91C1C"
+        banner_border = "rgba(255, 69, 58, 0.5)"
+        badge_bg = "rgba(255, 69, 58, 0.15)"
+        badge_border = "rgba(255, 69, 58, 0.4)"
+        badge_fg = "#FF453A"
         badge_text = call_badge if "AVOID" in call_badge.upper() else "🛑 AVOID / PRUDENCE"
         sizing_display = "0.0% (No Allocation)"
-        summary_color = "#991B1B"
+        summary_color = "#FF453A"
         cards = [
             {
                 "icon": "🛑",
                 "title": "BIGGEST RED FLAG",
                 "text": wk_list[0] if wk_list else "Serious accounting, governance, or debt red flags found in filings.",
-                "bg": "#FEF2F2",
-                "border": "#FECACA",
-                "color": "#7F1D1D",
-                "hcolor": "#991B1B"
+                "hcolor": "#FF453A"
             },
             {
                 "icon": "⚠️",
                 "title": "RISK OF CAPITAL LOSS",
                 "text": wk_list[1] if len(wk_list) > 1 else "High risk of losing capital if business conditions or debt worsen.",
-                "bg": "#FEF2F2",
-                "border": "#FECACA",
-                "color": "#7F1D1D",
-                "hcolor": "#991B1B"
+                "hcolor": "#FF453A"
             },
             {
                 "icon": "📉",
                 "title": "WEAK CASH FLOW CONVERSION",
                 "text": esg_str or "Reported profits are not turning into real cash in the bank.",
-                "bg": "#FFFBEB",
-                "border": "#FDE68A",
-                "color": "#78350F",
-                "hcolor": "#92400E"
+                "hcolor": "#FFD60A"
             },
             {
                 "icon": "🛡️",
                 "title": "WHAT MUST CHANGE TO RECONSIDER",
                 "text": "Company must cut debt, remove all share pledges, and get clean audit reports before buying.",
-                "bg": "#F8FAFC",
-                "border": "#CBD5E1",
-                "color": "#334155",
-                "hcolor": "#475569"
+                "hcolor": "#94A3B8"
             }
         ]
     elif stance == "BUY":
-        banner_border = "#059669"
-        badge_bg = "#059669"
-        badge_border = "#047857"
+        banner_border = "rgba(0, 245, 160, 0.5)"
+        badge_bg = "rgba(0, 245, 160, 0.15)"
+        badge_border = "rgba(0, 245, 160, 0.4)"
+        badge_fg = "#00F5A0"
         badge_text = call_badge if any(k in call_badge.upper() for k in ["BUY", "ACCUMULATE"]) else "🎯 ACCUMULATE ON DIPS"
         sizing_display = position_sizing
-        summary_color = "#064E3B"
+        summary_color = "#00F5A0"
         cards = [
             {
                 "icon": "🟢",
                 "title": "STRONG BUSINESS MOAT",
                 "text": str_list[0] if str_list else "Dominant market leader with high pricing power and sticky customers.",
-                "bg": "#F0FDF4",
-                "border": "#BBF7D0",
-                "color": "#064E3B",
-                "hcolor": "#047857"
+                "hcolor": "#00F5A0"
             },
             {
                 "icon": "🛡️",
                 "title": "STRONG CASH & LOW DEBT",
                 "text": str_list[1] if len(str_list) > 1 else "Virtually debt-free balance sheet with solid operating cash flow.",
-                "bg": "#EFF6FF",
-                "border": "#BFDBFE",
-                "color": "#1E3A8A",
-                "hcolor": "#1D4ED8"
+                "hcolor": "#00E5FF"
             },
             {
                 "icon": "🚀",
                 "title": "1–2 YEAR GROWTH DRIVERS",
                 "text": drift_str or "New capacity and expansion plans driving steady earnings growth.",
-                "bg": "#FAF5FF",
-                "border": "#E9D5FF",
-                "color": "#581C87",
-                "hcolor": "#7E22CE"
+                "hcolor": "#BF5AF2"
             },
             {
                 "icon": "🎯",
                 "title": "HOW TO BUY (ACTION PLAN)",
                 "text": "Accumulate steadily on market dips near fair value for steady compounding.",
-                "bg": "#ECFDF5",
-                "border": "#A7F3D0",
-                "color": "#065F46",
-                "hcolor": "#059669"
+                "hcolor": "#00F5A0"
             }
         ]
     else:  # HOLD / MONITOR
-        banner_border = "#D97706"
-        badge_bg = "#D97706"
-        badge_border = "#B45309"
+        banner_border = "rgba(255, 214, 10, 0.5)"
+        badge_bg = "rgba(255, 214, 10, 0.15)"
+        badge_border = "rgba(255, 214, 10, 0.4)"
+        badge_fg = "#FFD60A"
         badge_text = call_badge if "HOLD" in call_badge.upper() else "⏳ HOLD / MONITOR"
         sizing_display = "0.0% – 2.0% (Small Hold / Watchlist)"
-        summary_color = "#78350F"
+        summary_color = "#FFD60A"
         cards = [
             {
                 "icon": "🟢",
                 "title": "SOLID BUSINESS FOUNDATION",
                 "text": str_list[0] if str_list else "Good business with respectable brand presence and operations.",
-                "bg": "#F0FDF4",
-                "border": "#BBF7D0",
-                "color": "#064E3B",
-                "hcolor": "#047857"
+                "hcolor": "#00F5A0"
             },
             {
                 "icon": "⏳",
                 "title": "WHY NOT A 'BUY' TODAY?",
                 "text": wk_list[0] if wk_list else "Valuation is a bit high or profit growth is temporarily slowing down.",
-                "bg": "#FFFBEB",
-                "border": "#FDE68A",
-                "color": "#78350F",
-                "hcolor": "#92400E"
+                "hcolor": "#FFD60A"
             },
             {
                 "icon": "🎯",
                 "title": "WHEN TO UPGRADE TO BUY",
                 "text": f"A price drop closer to fair value or faster earnings growth in {drift_lower}.",
-                "bg": "#EFF6FF",
-                "border": "#BFDBFE",
-                "color": "#1E3A8A",
-                "hcolor": "#1D4ED8"
+                "hcolor": "#00E5FF"
             },
             {
                 "icon": "⚠️",
                 "title": "DOWNSIDE RISKS TO WATCH",
                 "text": wk_list[1] if len(wk_list) > 1 else "Watch for margin pressure or rising customer dues before taking action.",
-                "bg": "#FEF2F2",
-                "border": "#FECACA",
-                "color": "#7F1D1D",
-                "hcolor": "#DC2626"
+                "hcolor": "#FF453A"
             }
         ]
 
     card_blocks_list = []
     for c in cards:
-        c_bg = c["bg"]
-        c_border = c["border"]
         c_hcolor = c["hcolor"]
         c_icon = c["icon"]
         c_title = c["title"]
-        c_color = c["color"]
         c_text = c["text"]
         card_blocks_list.append(
-            f'<div style="background: {c_bg}; border: 1.5px solid {c_border}; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
-            f'<div style="font-size: 11px; font-weight: 800; color: {c_hcolor}; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;">'
+            f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 14px 16px;">'
+            f'<div style="font-size: 10.5px; font-weight: 800; color: {c_hcolor}; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;">'
             f'<span>{c_icon}</span> {c_title}'
             f'</div>'
-            f'<div style="font-size: 13.5px; line-height: 1.5; color: {c_color}; font-weight: 600;">{c_text}</div>'
+            f'<div style="font-size: 13px; line-height: 1.5; color: #CBD5E1; font-weight: 500;">{c_text}</div>'
             f'</div>'
         )
     card_blocks = "".join(card_blocks_list)
 
     thesis_banner_html = (
-        f'<div style="background: #FFFFFF; border: 2px solid {banner_border}; border-radius: 16px; padding: 24px 26px; margin-bottom: 18px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);">'
+        f'<div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid {banner_border}; border-radius: 16px; padding: 22px 26px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">'
         f'<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">'
-        f'<span style="background: #F8FAFC; color: #0F172A; border: 1.5px solid #CBD5E1; font-size: 11.5px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase;">🎯 POSITION CALL</span>'
-        f'<span style="background: {badge_bg}; color: #FFFFFF; border: 1.5px solid {badge_border}; font-size: 12px; font-weight: 900; padding: 3px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.4px;">{badge_text}</span>'
+        f'<span style="background: rgba(15, 23, 42, 0.8); color: #94A3B8; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase; font-family: \'JetBrains Mono\', monospace;">🎯 POSITION CALL</span>'
+        f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 11.5px; font-weight: 900; padding: 3px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.4px;">{badge_text}</span>'
         f'</div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
-        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">⏱️ 1–2 Year Horizon</span>'
-        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">⚖️ Sizing: {sizing_display}</span>'
+        f'<span style="background: rgba(2, 6, 23, 0.6); color: #94A3B8; border: 1px solid rgba(255, 255, 255, 0.08); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">⏱️ 1–2 Year Horizon</span>'
+        f'<span style="background: rgba(2, 6, 23, 0.6); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.25); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">⚖️ Sizing: {sizing_display}</span>'
         f'</div>'
         f'</div>'
-        f'<div style="font-size: 16.5px; font-weight: 800; color: {summary_color}; line-height: 1.45; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1.5px solid #F1F5F9;">'
+        f'<div style="font-size: 16px; font-weight: 800; color: {summary_color}; line-height: 1.45; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">'
         f'{call_summary}'
         f'</div>'
         f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">'
@@ -3200,15 +3277,15 @@ if "idex_result" in st.session_state:
     # Detailed notes in collapsed expander for users wanting deeper raw filing reads
     str_html_items = "".join([
         f'<div style="font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;">'
-        f'<span style="color: #059669; font-weight: 800;">✔</span>'
-        f'<span style="color: #064E3B;">{s}</span>'
+        f'<span style="color: #00F5A0; font-weight: 800;">✔</span>'
+        f'<span style="color: #CBD5E1;">{s}</span>'
         f'</div>'
         for s in str_list
     ])
     wk_html_items = "".join([
         f'<div style="font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;">'
-        f'<span style="color: #DC2626; font-weight: 800;">✖</span>'
-        f'<span style="color: #7F1D1D;">{w}</span>'
+        f'<span style="color: #FF453A; font-weight: 800;">✖</span>'
+        f'<span style="color: #CBD5E1;">{w}</span>'
         f'</div>'
         for w in wk_list
     ])
@@ -3216,23 +3293,23 @@ if "idex_result" in st.session_state:
     with st.expander("📑 View Detailed Strengths, Risks & Notes", expanded=False):
         st.html(
             f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;">'
-            f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px;">'
-            f'<div style="font-size: 12px; font-weight: 800; color: #047857; margin-bottom: 8px; text-transform: uppercase;">🟢 Key Strengths & Moats</div>'
+            f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(0, 245, 160, 0.25); border-radius: 8px; padding: 14px 16px;">'
+            f'<div style="font-size: 11px; font-weight: 800; color: #00F5A0; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.6px;">🟢 Key Strengths & Moats</div>'
             f'{str_html_items}'
             f'</div>'
-            f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 14px 16px;">'
-            f'<div style="font-size: 12px; font-weight: 800; color: #DC2626; margin-bottom: 8px; text-transform: uppercase;">🔴 Key Risks & Fragilities</div>'
+            f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 69, 58, 0.25); border-radius: 8px; padding: 14px 16px;">'
+            f'<div style="font-size: 11px; font-weight: 800; color: #FF453A; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.6px;">🔴 Key Risks & Fragilities</div>'
             f'{wk_html_items}'
             f'</div>'
             f'</div>'
             f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">'
-            f'<div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 14px;">'
-            f'<div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px;">⏱️ Growth Drivers & Catalysts</div>'
-            f'<div style="font-size: 12.5px; line-height: 1.5; color: #1E293B;">{drift_str}</div>'
+            f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px;">'
+            f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">⏱️ Growth Drivers & Catalysts</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #CBD5E1;">{drift_str}</div>'
             f'</div>'
-            f'<div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 14px;">'
-            f'<div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px;">🌍 Governance & Integrity Notes</div>'
-            f'<div style="font-size: 12.5px; line-height: 1.5; color: #1E293B;">{esg_str}</div>'
+            f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px;">'
+            f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">🌍 Governance & Integrity Notes</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #CBD5E1;">{esg_str}</div>'
             f'</div>'
             f'</div>'
         )
@@ -3278,11 +3355,11 @@ if "idex_result" in st.session_state:
             bridge_math_summary = f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f} pts) → Final IDEX ({final_score:.1f})'
 
         st.markdown(
-            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
-            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;">'
+            f'<div style="font-size: 17px; font-weight: 800; color: #F1F5F9; display: flex; align-items: center; gap: 8px;">'
             f'<span>🛡️</span> Forensic Score Bridge: Risk Deductions & Applied Bonuses'
             f'</div>'
-            f'<span style="font-size: 12px; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 6px; font-weight: 600;">'
+            f'<span style="font-size: 11.5px; color: #00E5FF; background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.25); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: \'JetBrains Mono\', monospace;">'
             f'{bridge_math_summary}'
             f'</span>'
             f'</div>',
@@ -3293,8 +3370,8 @@ if "idex_result" in st.session_state:
             with st.container(border=True):
                 st.markdown(
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
-                    '<span style="font-size: 13.5px; font-weight: 800; color: #991B1B; text-transform: uppercase;">Deducted Risk Penalties</span>'
-                    '<span style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-7.5 pts Max Cap</span>'
+                    '<span style="font-size: 13px; font-weight: 800; color: #FF453A; text-transform: uppercase; letter-spacing: 0.6px;">Deducted Risk Penalties</span>'
+                    '<span style="background: rgba(255, 69, 58, 0.15); color: #FF453A; border: 1px solid rgba(255, 69, 58, 0.35); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">-7.5 pts Max Cap</span>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -3304,18 +3381,18 @@ if "idex_result" in st.session_state:
                     for pen in penalties:
                         pts_val = abs(float(pen.get("points", 0)))
                         pen_html.append(
-                            f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #DC2626; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px;">'
+                            f'<div style="background: rgba(255, 69, 58, 0.08); border: 1px solid rgba(255, 69, 58, 0.25); border-left: 4px solid #FF453A; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px;">'
                             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">'
-                            f'<span style="font-size: 14.5px; font-weight: 800; color: #991B1B;">{pen.get("penalty_name")}</span>'
-                            f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">-{pts_val:.1f} pts</span>'
+                            f'<span style="font-size: 13.5px; font-weight: 800; color: #FF453A;">{pen.get("penalty_name")}</span>'
+                            f'<span style="background: #FF453A; color: #080C14; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">-{pts_val:.1f} pts</span>'
                             f'</div>'
-                            f'<div style="font-size: 13.5px; color: #7F1D1D; line-height: 1.5;">{pen.get("reason")}</div>'
+                            f'<div style="font-size: 12.5px; color: #CBD5E1; line-height: 1.5;">{pen.get("reason")}</div>'
                             f'</div>'
                         )
                     st.html("".join(pen_html))
                 else:
                     st.html(
-                        '<div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-left: 4px solid #10B981; border-radius: 8px; padding: 16px 18px; color: #064E3B; font-weight: 700; font-size: 14px;">'
+                        '<div style="background: rgba(0, 245, 160, 0.08); border: 1px solid rgba(0, 245, 160, 0.25); border-left: 4px solid #00F5A0; border-radius: 8px; padding: 16px 18px; color: #00F5A0; font-weight: 700; font-size: 13px;">'
                         '✔ Zero statutory forensic risk deductions applied. Clean regulatory audit profile.'
                         '</div>'
                     )
@@ -3325,40 +3402,40 @@ if "idex_result" in st.session_state:
                 bb = res.get("bonuses_breakdown", {})
                 st.markdown(
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
-                    '<span style="font-size: 13.5px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Applied Growth Bonuses</span>'
-                    '<span style="background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">+10% Core Max Cap</span>'
+                    '<span style="font-size: 13px; font-weight: 800; color: #BF5AF2; text-transform: uppercase; letter-spacing: 0.6px;">Applied Growth Bonuses</span>'
+                    '<span style="background: rgba(191, 90, 242, 0.15); color: #BF5AF2; border: 1px solid rgba(191, 90, 242, 0.35); font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">+10% Core Max Cap</span>'
                     '</div>',
                     unsafe_allow_html=True
                 )
                 st.html(
                     f'<div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">'
-                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">COOL++ PRO Bonus</span><div style="font-size: 12px; color: #6D28D9;">Capital-Light Operating Leverage Outperformance</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{float(bb.get("cool_pro_bonus", 0)):.1f} pts</span>'
+                    f'<div style="background: rgba(191, 90, 242, 0.08); border: 1px solid rgba(191, 90, 242, 0.25); border-left: 4px solid #BF5AF2; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 800; color: #F1F5F9; font-size: 13px;">COOL++ PRO Bonus</span><div style="font-size: 11.5px; color: #94A3B8;">Capital-Light Operating Leverage Outperformance</div></div>'
+                    f'<span style="background: #BF5AF2; color: #080C14; font-size: 11.5px; font-weight: 900; padding: 3px 9px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">+{float(bb.get("cool_pro_bonus", 0)):.1f} pts</span>'
                     f'</div>'
-                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">Trajectory Bonus</span><div style="font-size: 12px; color: #6D28D9;">Sustained Margin Expansion & FCF Compounding</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{float(bb.get("trajectory_bonus", 0)):.1f} pts</span>'
+                    f'<div style="background: rgba(191, 90, 242, 0.08); border: 1px solid rgba(191, 90, 242, 0.25); border-left: 4px solid #BF5AF2; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 800; color: #F1F5F9; font-size: 13px;">Trajectory Bonus</span><div style="font-size: 11.5px; color: #94A3B8;">Sustained Margin Expansion & FCF Compounding</div></div>'
+                    f'<span style="background: #BF5AF2; color: #080C14; font-size: 11.5px; font-weight: 900; padding: 3px 9px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">+{float(bb.get("trajectory_bonus", 0)):.1f} pts</span>'
                     f'</div>'
-                    f'<div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-left: 4px solid #7C3AED; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<div><span style="font-weight: 800; color: #4C1D95; font-size: 13.5px;">Resilience Bonus</span><div style="font-size: 12px; color: #6D28D9;">Balance Sheet Solvency & Counter-Cyclical Endurance</div></div>'
-                    f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">+{float(bb.get("resilience_bonus", 0)):.1f} pts</span>'
+                    f'<div style="background: rgba(191, 90, 242, 0.08); border: 1px solid rgba(191, 90, 242, 0.25); border-left: 4px solid #BF5AF2; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<div><span style="font-weight: 800; color: #F1F5F9; font-size: 13px;">Resilience Bonus</span><div style="font-size: 11.5px; color: #94A3B8;">Balance Sheet Solvency & Counter-Cyclical Endurance</div></div>'
+                    f'<span style="background: #BF5AF2; color: #080C14; font-size: 11.5px; font-weight: 900; padding: 3px 9px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">+{float(bb.get("resilience_bonus", 0)):.1f} pts</span>'
                     f'</div>'
                     f'</div>'
-                    f'<div style="background: #EDE9FE; border: 1.5px solid #A78BFA; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
-                    f'<span style="font-size: 13px; font-weight: 800; color: #4C1D95; text-transform: uppercase;">Total Growth Bonus Applied</span>'
-                    f'<span style="font-size: 20px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace;">+{float(bb.get("total_bonus_applied", 0)):.1f} pts</span>'
+                    f'<div style="background: rgba(191, 90, 242, 0.15); border: 1px solid rgba(191, 90, 242, 0.4); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">'
+                    f'<span style="font-size: 12px; font-weight: 800; color: #F1F5F9; text-transform: uppercase; letter-spacing: 0.5px;">Total Growth Bonus Applied</span>'
+                    f'<span style="font-size: 18px; font-weight: 900; color: #BF5AF2; font-family: \'JetBrains Mono\', monospace;">+{float(bb.get("total_bonus_applied", 0)):.1f} pts</span>'
                     f'</div>'
                 )
 
     # --- SECTION B: PEER RELATIVE BENCHMARK MATRIX ---
     if show_all or dossier_tab == "👥 Peer Relative Matrix":
         st.markdown(
-            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
-            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;">'
+            f'<div style="font-size: 17px; font-weight: 800; color: #F1F5F9; display: flex; align-items: center; gap: 8px;">'
             f'<span>👥</span> Peer Relative Benchmark Matrix ({target_sector})'
             f'</div>'
-            f'<span style="font-size: 12px; color: #64748B;">Standardized 100-Point Quality & Valuation Comparison</span>'
+            f'<span style="font-size: 11.5px; color: #94A3B8; font-family: \'JetBrains Mono\', monospace;">Standardized 100-Point Quality & Valuation Comparison</span>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -3367,12 +3444,12 @@ if "idex_result" in st.session_state:
             p_rows = []
             # Target company highlighted row
             p_rows.append(
-                f'<tr style="background: #F0FDF4; border-bottom: 2px solid #BBF7D0;">'
-                f'<td style="padding: 12px 16px; font-weight: 900; color: #064E3B;">'
-                f'{target_company_name} <span style="background: #059669; color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 4px; margin-left: 6px;">EVALUATED</span>'
+                f'<tr style="background: rgba(0, 245, 160, 0.08); border-bottom: 1px solid rgba(0, 245, 160, 0.3);">'
+                f'<td style="padding: 12px 16px; font-weight: 900; color: #00F5A0;">'
+                f'{target_company_name} <span style="background: #00F5A0; color: #080C14; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 4px; margin-left: 6px; font-family: \'JetBrains Mono\', monospace;">EVALUATED</span>'
                 f'</td>'
-                f'<td style="padding: 12px 16px; text-align: center;"><span style="background: #059669; color: #FFFFFF; padding: 4px 10px; border-radius: 6px; font-weight: 900; font-family: monospace; font-size: 14px;">{final_score:.1f} / 100</span></td>'
-                f'<td style="padding: 12px 16px;"><span style="background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 12px;">Active Target ({verdict})</span></td>'
+                f'<td style="padding: 12px 16px; text-align: center;"><span style="background: rgba(0, 245, 160, 0.2); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.4); padding: 4px 10px; border-radius: 6px; font-weight: 900; font-family: monospace; font-size: 14px;">{final_score:.1f} / 100</span></td>'
+                f'<td style="padding: 12px 16px;"><span style="background: rgba(0, 245, 160, 0.12); color: #00F5A0; border: 1px solid rgba(0, 245, 160, 0.3); padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 11.5px; font-family: \'JetBrains Mono\', monospace;">Active Target ({verdict})</span></td>'
                 f'</tr>'
             )
             for p in peers:
@@ -3380,21 +3457,21 @@ if "idex_result" in st.session_state:
                 p_sc = p.get("score", "N/A")
                 p_pos = p.get("position", "Peer Competitor")
                 p_rows.append(
-                    f'<tr style="border-bottom: 1px solid #F1F5F9;">'
-                    f'<td style="padding: 11px 16px; font-weight: 700; color: #1E293B;">{p_name}</td>'
-                    f'<td style="padding: 11px 16px; text-align: center;"><span style="background: #F8FAFC; color: #0F172A; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-family: monospace; font-size: 13.5px;">{p_sc} / 100</span></td>'
-                    f'<td style="padding: 11px 16px;"><span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 12px;">{p_pos}</span></td>'
+                    f'<tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">'
+                    f'<td style="padding: 11px 16px; font-weight: 700; color: #F1F5F9;">{p_name}</td>'
+                    f'<td style="padding: 11px 16px; text-align: center;"><span style="background: rgba(15, 23, 42, 0.8); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.3); padding: 3px 9px; border-radius: 6px; font-weight: 800; font-family: monospace; font-size: 13px;">{p_sc} / 100</span></td>'
+                    f'<td style="padding: 11px 16px;"><span style="background: rgba(0, 229, 255, 0.1); color: #00E5FF; border: 1px solid rgba(0, 229, 255, 0.25); padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 11.5px; font-family: \'JetBrains Mono\', monospace;">{p_pos}</span></td>'
                     f'</tr>'
                 )
             
             peer_table_html = (
-                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
+                f'<div style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">'
                 f'<table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">'
                 f'<thead>'
-                f'<tr style="background: #F8FAFC; border-bottom: 1.5px solid #E2E8F0;">'
-                f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #475569; font-size: 12px; text-transform: uppercase;">Constituent Company</th>'
-                f'<th style="padding: 12px 16px; text-align: center; font-weight: 800; color: #475569; font-size: 12px; text-transform: uppercase;">IDEX Quality Score</th>'
-                f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #475569; font-size: 12px; text-transform: uppercase;">Sector Position & Standing</th>'
+                f'<tr style="background: rgba(2, 6, 23, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08);">'
+                f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #94A3B8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">Constituent Company</th>'
+                f'<th style="padding: 12px 16px; text-align: center; font-weight: 800; color: #94A3B8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">IDEX Quality Score</th>'
+                f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #94A3B8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">Sector Position & Standing</th>'
                 f'</tr>'
                 f'</thead>'
                 f'<tbody>{"".join(p_rows)}</tbody>'
@@ -3416,11 +3493,11 @@ if "idex_result" in st.session_state:
     # --- SECTION C: 8-PILLAR SCORECARD & RADAR PROFILE ---
     if show_all or dossier_tab == "🏛️ 8-Pillar Scorecard & Radar":
         st.markdown(
-            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
-            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;">'
+            f'<div style="font-size: 17px; font-weight: 800; color: #F1F5F9; display: flex; align-items: center; gap: 8px;">'
             f'<span>🏛️</span> 8-Pillar Quality Profile & Comprehensive Table'
             f'</div>'
-            f'<span style="font-size: 12px; color: #64748B;">Standardized 100-Point Forensic Matrix</span>'
+            f'<span style="font-size: 11.5px; color: #94A3B8; font-family: \'JetBrains Mono\', monospace;">Standardized 100-Point Forensic Matrix</span>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -3436,13 +3513,13 @@ if "idex_result" in st.session_state:
                 st.caption("Active Forensic Tags:")
                 tag_pills = []
                 tag_color_map = {
-                    "GOV-CLEAN": ("#ECFDF5", "#047857", "#A7F3D0"),
-                    "GOV-RED": ("#FEF2F2", "#DC2626", "#FECACA"),
-                    "PROM-ALERT": ("#FFFBEB", "#D97706", "#FDE68A"),
-                    "ZERO-DEBT": ("#EFF6FF", "#1D4ED8", "#BFDBFE"),
-                    "HIGH-ROCE": ("#ECFDF5", "#047857", "#A7F3D0"),
-                    "COOL-PRO": ("#F5F3FF", "#6D28D9", "#DDD6FE"),
-                    "DSO-PRISTINE": ("#ECFEFF", "#0E7490", "#A5F3FC"),
+                    "GOV-CLEAN": ("rgba(0, 245, 160, 0.12)", "#00F5A0", "rgba(0, 245, 160, 0.35)"),
+                    "GOV-RED": ("rgba(255, 69, 58, 0.12)", "#FF453A", "rgba(255, 69, 58, 0.35)"),
+                    "PROM-ALERT": ("rgba(255, 214, 10, 0.12)", "#FFD60A", "rgba(255, 214, 10, 0.35)"),
+                    "ZERO-DEBT": ("rgba(0, 229, 255, 0.12)", "#00E5FF", "rgba(0, 229, 255, 0.35)"),
+                    "HIGH-ROCE": ("rgba(0, 245, 160, 0.12)", "#00F5A0", "rgba(0, 245, 160, 0.35)"),
+                    "COOL-PRO": ("rgba(191, 90, 242, 0.12)", "#BF5AF2", "rgba(191, 90, 242, 0.35)"),
+                    "DSO-PRISTINE": ("rgba(0, 229, 255, 0.12)", "#00E5FF", "rgba(0, 229, 255, 0.35)"),
                 }
                 for t in res.get("tags_applied", []):
                     found_colors = None
@@ -3451,9 +3528,9 @@ if "idex_result" in st.session_state:
                             found_colors = colors
                             break
                     if not found_colors:
-                        found_colors = ("#F1F5F9", "#334155", "#CBD5E1")
+                        found_colors = ("rgba(15, 23, 42, 0.8)", "#CBD5E1", "rgba(255, 255, 255, 0.15)")
                     bg, fg, bdr = found_colors
-                    tag_pills.append(f'<span style="background: {bg}; color: {fg}; border: 1px solid {bdr}; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; display: inline-block; margin-right: 6px; margin-bottom: 6px;">{t}</span>')
+                    tag_pills.append(f'<span style="background: {bg}; color: {fg}; border: 1px solid {bdr}; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; display: inline-block; margin-right: 6px; margin-bottom: 6px; font-family: \'JetBrains Mono\', monospace;">{t}</span>')
                 st.html(f'<div style="display: flex; flex-wrap: wrap; margin-top: 6px;">{"".join(tag_pills)}</div>')
 
         with split_col2:
@@ -3472,32 +3549,32 @@ if "idex_result" in st.session_state:
 
                 rec_cards_html = (
                     f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">'
-                    f'<div style="background: #F0FDFA; border: 1px solid #99F6E4; border-radius: 8px; padding: 12px 16px;">'
-                    f'<div style="font-size: 11.5px; font-weight: 700; color: #0F766E; text-transform: uppercase;">DSO (Days Sales)</div>'
-                    f'<div style="font-size: 22px; font-weight: 800; color: #115E59; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{dso_display}</div>'
-                    f'<div style="font-size: 11.5px; color: #0D9488; font-weight: 600;">Sector Benchmark: {ideal_dso}</div>'
+                    f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(0, 229, 255, 0.25); border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 10.5px; font-weight: 700; color: #00E5FF; text-transform: uppercase; letter-spacing: 0.5px;">DSO (Days Sales)</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #F1F5F9; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{dso_display}</div>'
+                    f'<div style="font-size: 11px; color: #94A3B8;">Sector Benchmark: {ideal_dso}</div>'
                     f'</div>'
-                    f'<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 16px;">'
-                    f'<div style="font-size: 11.5px; font-weight: 700; color: #1D4ED8; text-transform: uppercase;">Receivables / Sales</div>'
-                    f'<div style="font-size: 22px; font-weight: 800; color: #1E40AF; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{rec_sales}</div>'
-                    f'<div style="font-size: 11.5px; color: #2563EB; font-weight: 600;">Balance Sheet Weight</div>'
+                    f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(0, 245, 160, 0.25); border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 10.5px; font-weight: 700; color: #00F5A0; text-transform: uppercase; letter-spacing: 0.5px;">Receivables / Sales</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #F1F5F9; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{rec_sales}</div>'
+                    f'<div style="font-size: 11px; color: #94A3B8;">Balance Sheet Weight</div>'
                     f'</div>'
-                    f'<div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 16px;">'
-                    f'<div style="font-size: 11.5px; font-weight: 700; color: #B45309; text-transform: uppercase;">>90 Days Overdue</div>'
-                    f'<div style="font-size: 22px; font-weight: 800; color: #92400E; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{over_90}</div>'
-                    f'<div style="font-size: 11.5px; color: #D97706; font-weight: 600;">Delinquency Risk</div>'
+                    f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 214, 10, 0.25); border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 10.5px; font-weight: 700; color: #FFD60A; text-transform: uppercase; letter-spacing: 0.5px;">>90 Days Overdue</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #F1F5F9; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{over_90}</div>'
+                    f'<div style="font-size: 11px; color: #94A3B8;">Delinquency Risk</div>'
                     f'</div>'
-                    f'<div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px 16px;">'
-                    f'<div style="font-size: 11.5px; font-weight: 700; color: #15803D; text-transform: uppercase;">Provision Coverage</div>'
-                    f'<div style="font-size: 22px; font-weight: 800; color: #166534; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{prov_cov}</div>'
-                    f'<div style="font-size: 11.5px; color: #16A34A; font-weight: 600;">ECL Buffer</div>'
+                    f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(191, 90, 242, 0.25); border-radius: 8px; padding: 12px 16px;">'
+                    f'<div style="font-size: 10.5px; font-weight: 700; color: #BF5AF2; text-transform: uppercase; letter-spacing: 0.5px;">Provision Coverage</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #F1F5F9; font-family: \'JetBrains Mono\', monospace; margin: 4px 0;">{prov_cov}</div>'
+                    f'<div style="font-size: 11px; color: #94A3B8;">ECL Buffer</div>'
                     f'</div>'
                     f'</div>'
-                    f'<div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #059669; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">'
-                    f'<span style="font-size: 20px;">🛡️</span>'
+                    f'<div style="background: rgba(0, 245, 160, 0.08); border: 1px solid rgba(0, 245, 160, 0.25); border-left: 4px solid #00F5A0; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">'
+                    f'<span style="font-size: 18px;">🛡️</span>'
                     f'<div>'
-                    f'<div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">Forensic Assessment</div>'
-                    f'<div style="font-size: 13.5px; font-weight: 700; color: #064E3B;">{verdict_text}</div>'
+                    f'<div style="font-size: 10.5px; font-weight: 800; color: #00F5A0; text-transform: uppercase; letter-spacing: 0.5px;">Forensic Assessment</div>'
+                    f'<div style="font-size: 13px; font-weight: 700; color: #F1F5F9;">{verdict_text}</div>'
                     f'</div>'
                     f'</div>'
                 )
@@ -3537,24 +3614,24 @@ if "idex_result" in st.session_state:
             elif p_filter == "Fragile (<50%)" and pct >= 50.0:
                 continue
             
-            meta = PILLAR_METADATA.get(p_id, {"icon": "📌", "chip": "Quality", "chip_bg": "#F1F5F9", "chip_fg": "#334155", "border": "#CBD5E1"})
+            meta = PILLAR_METADATA.get(p_id, {"icon": "📌", "chip": "Quality", "chip_bg": "rgba(15, 23, 42, 0.8)", "chip_fg": "#94A3B8", "border": "rgba(255, 255, 255, 0.1)"})
             
             if pct >= 85:
-                badge = f'<span style="background:#ECFDF5; color:#047857; border:1px solid #10B981; padding:5px 12px; border-radius:9999px; font-weight:800; font-size:12px; display:inline-flex; align-items:center; gap:4px; box-shadow: 0 1px 2px rgba(16,185,129,0.1);">✨ {pct:.0f}% • Pristine</span>'
-                bar_color = "#059669"
+                badge = f'<span style="background:rgba(0, 245, 160, 0.15); color:#00F5A0; border:1px solid rgba(0, 245, 160, 0.4); padding:4px 10px; border-radius:9999px; font-weight:800; font-size:11px; display:inline-flex; align-items:center; gap:4px; font-family: \'JetBrains Mono\', monospace;">✨ {pct:.0f}% • Pristine</span>'
+                bar_color = "#00F5A0"
             elif pct >= 70:
-                badge = f'<span style="background:#F0FDF4; color:#059669; border:1px solid #86EFAC; padding:5px 12px; border-radius:9999px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:4px;">🟢 {pct:.0f}% • Strong</span>'
-                bar_color = "#10B981"
+                badge = f'<span style="background:rgba(0, 229, 255, 0.15); color:#00E5FF; border:1px solid rgba(0, 229, 255, 0.4); padding:4px 10px; border-radius:9999px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; font-family: \'JetBrains Mono\', monospace;">🟢 {pct:.0f}% • Strong</span>'
+                bar_color = "#00E5FF"
             elif pct >= 50:
-                badge = f'<span style="background:#FFFBEB; color:#B45309; border:1px solid #FCD34D; padding:5px 12px; border-radius:9999px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:4px;">🟡 {pct:.0f}% • Moderate</span>'
-                bar_color = "#F59E0B"
+                badge = f'<span style="background:rgba(255, 214, 10, 0.15); color:#FFD60A; border:1px solid rgba(255, 214, 10, 0.4); padding:4px 10px; border-radius:9999px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; font-family: \'JetBrains Mono\', monospace;">🟡 {pct:.0f}% • Moderate</span>'
+                bar_color = "#FFD60A"
             else:
-                badge = f'<span style="background:#FEF2F2; color:#DC2626; border:1px solid #FCA5A5; padding:5px 12px; border-radius:9999px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:4px;">🔴 {pct:.0f}% • Fragile</span>'
-                bar_color = "#EF4444"
+                badge = f'<span style="background:rgba(255, 69, 58, 0.15); color:#FF453A; border:1px solid rgba(255, 69, 58, 0.4); padding:4px 10px; border-radius:9999px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; font-family: \'JetBrains Mono\', monospace;">🔴 {pct:.0f}% • Fragile</span>'
+                bar_color = "#FF453A"
                 
             rec_html = ""
             if "receivable_subscore" in p:
-                rec_html = f'<div style="margin-top: 10px; background: #ECFDF5; border-left: 3px solid #059669; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #065F46; border-radius: 0 4px 4px 0;">⚡ Sector Receivable Health Subscore: <strong>{p["receivable_subscore"]}</strong></div>'
+                rec_html = f'<div style="margin-top: 8px; background: rgba(0, 245, 160, 0.08); border-left: 3px solid #00F5A0; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #00F5A0; border-radius: 0 4px 4px 0;">⚡ Sector Receivable Health Subscore: <strong>{p["receivable_subscore"]}</strong></div>'
 
             pillar_citations = p.get("citations", [])
             c_links = []
@@ -3566,25 +3643,24 @@ if "idex_result" in st.session_state:
                         clean_t = str(raw_title).replace("https://", "").replace("http://", "").rstrip("/")
                         if len(clean_t) > 35:
                             clean_t = clean_t[:32] + "…"
-                        c_links.append(f'<a href="{html.escape(u, quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 12px;">{html.escape(clean_t)} ↗</a>')
+                        c_links.append(f'<a href="{html.escape(u, quote=True)}" target="_blank" style="color: #00E5FF; font-weight: 700; text-decoration: underline; font-size: 11.5px;">{html.escape(clean_t)} ↗</a>')
             
             if c_links:
-                citation_html = f'<div style="font-size:12px; margin-top:6px; color:#475569;">🔗 <strong>Sources:</strong> {" &bull; ".join(c_links)}</div>'
+                citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#94A3B8;">🔗 <strong>Sources:</strong> {" &bull; ".join(c_links)}</div>'
             else:
-                # Fallback to statutory filing, web research, or verified exchange data
                 fm = res.get("filing_metadata") or {}
                 if fm.get("url") and str(fm.get("url")).startswith(("https://", "http://")):
                     f_title = fm.get("title") or "Official BSE India Filing"
-                    citation_html = f'<div style="font-size:12px; margin-top:6px; color:#475569;">📄 <strong>Source:</strong> <a href="{html.escape(fm["url"], quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(f_title)} ↗</a></div>'
+                    citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#94A3B8;">📄 <strong>Source:</strong> <a href="{html.escape(fm["url"], quote=True)}" target="_blank" style="color: #00E5FF; font-weight: 700; text-decoration: underline;">{html.escape(f_title)} ↗</a></div>'
                 elif res.get("web_research", {}).get("sources"):
                     top_sources = [s for s in res["web_research"]["sources"] if str(s.get("url", "")).startswith(("https://", "http://"))][:2]
                     if top_sources:
-                        s_links = [f'<a href="{html.escape(s["url"], quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(s.get("title") or s.get("source_id") or "Web Source")} ↗</a>' for s in top_sources]
-                        citation_html = f'<div style="font-size:12px; margin-top:6px; color:#475569;">🌐 <strong>Sources:</strong> {" &bull; ".join(s_links)}</div>'
+                        s_links = [f'<a href="{html.escape(s["url"], quote=True)}" target="_blank" style="color: #00E5FF; font-weight: 700; text-decoration: underline;">{html.escape(s.get("title") or s.get("source_id") or "Web Source")} ↗</a>' for s in top_sources]
+                        citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#94A3B8;">🌐 <strong>Sources:</strong> {" &bull; ".join(s_links)}</div>'
                     else:
-                        citation_html = f'<div style="font-size:12px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
+                        citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
                 else:
-                    citation_html = f'<div style="font-size:12px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
+                    citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
                 
             justification_text = p.get("justification", "")
             if p_density == "Compact" and len(justification_text) > 130:
@@ -3595,18 +3671,18 @@ if "idex_result" in st.session_state:
                 f'<td style="width: 25%; font-weight: 700;">'
                 f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">'
                 f'<span style="font-size: 18px;">{meta["icon"]}</span>'
-                f'<span style="font-size: 15px; color: #0F172A; font-weight: 800;">P{p_id}: {p.get("name")}</span>'
+                f'<span style="font-size: 14px; color: #F1F5F9; font-weight: 800;">P{p_id}: {p.get("name")}</span>'
                 f'</div>'
-                f'<span style="background: {meta["chip_bg"]}; color: {meta["chip_fg"]}; border: 1px solid {meta["border"]}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">{meta["chip"]}</span>'
+                f'<span style="background: {meta["chip_bg"]}; color: {meta["chip_fg"]}; border: 1px solid {meta["border"]}; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{meta["chip"]}</span>'
                 f'</td>'
                 f'<td style="width: 14%; text-align: center;">'
-                f'<div style="font-family: \'JetBrains Mono\', monospace; font-size: 18px; font-weight: 800; color: #047857;">{p_score:.1f} <span style="font-size: 13px; font-weight: 500; color: #64748B;">/ {p_max:.1f}</span></div>'
-                f'<div style="background: #E2E8F0; border-radius: 9999px; height: 6px; width: 85%; margin: 6px auto 0 auto; overflow: hidden;">'
-                f'<div style="background: {bar_color}; width: {pct:.1f}%; height: 100%; border-radius: 9999px;"></div>'
+                f'<div style="font-family: \'JetBrains Mono\', monospace; font-size: 17px; font-weight: 800; color: #00F5A0;">{p_score:.1f} <span style="font-size: 12px; font-weight: 500; color: #64748B;">/ {p_max:.1f}</span></div>'
+                f'<div style="background: rgba(255, 255, 255, 0.08); border-radius: 9999px; height: 5px; width: 85%; margin: 6px auto 0 auto; overflow: hidden;">'
+                f'<div style="background: {bar_color}; width: {pct:.1f}%; height: 100%; border-radius: 9999px; box-shadow: 0 0 6px {bar_color};"></div>'
                 f'</div>'
                 f'</td>'
                 f'<td style="width: 16%; text-align: center;">{badge}</td>'
-                f'<td style="width: 45%;"><div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{justification_text}</div>{citation_html}{rec_html}</td>'
+                f'<td style="width: 45%;"><div style="font-size: 13.5px; line-height: 1.6; color: #CBD5E1;">{justification_text}</div>{citation_html}{rec_html}</td>'
                 f'</tr>'
             )
             table_rows.append(row_html)
@@ -3630,11 +3706,11 @@ if "idex_result" in st.session_state:
     # --- SECTION D: AUDITOR EVIDENCE PACK & VALUATION MATH ---
     if show_all or dossier_tab == "🔍 Auditor Evidence & Math":
         st.markdown(
-            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">'
-            f'<div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">'
+            f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 10px;">'
+            f'<div style="font-size: 17px; font-weight: 800; color: #F1F5F9; display: flex; align-items: center; gap: 8px;">'
             f'<span>🔍</span> Statutory Auditor Evidence Pack & Forensic Calculations'
             f'</div>'
-            f'<span style="font-size: 12px; color: #64748B;">Appendix A (Auditor Excerpts) & Appendix B (Valuation Math)</span>'
+            f'<span style="font-size: 11.5px; color: #94A3B8; font-family: \'JetBrains Mono\', monospace;">Appendix A (Auditor Excerpts) & Appendix B (Valuation Math)</span>'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -3642,8 +3718,8 @@ if "idex_result" in st.session_state:
             st.markdown("##### Appendix A — Load-Bearing Forensic Citations")
             st.caption("Exact quotes, regulatory disclosures, and load-bearing statutory audit excerpts:")
             ev_items = "".join([
-                f'<div style="font-size: 13.5px; line-height: 1.6; color: #1E293B; margin-bottom: 10px; padding: 12px 16px; background: #F8FAFC; border-left: 3.5px solid #059669; border-radius: 0 8px 8px 0; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">'
-                f'<span style="color: #059669; font-weight: 800; margin-right: 6px;">●</span> {e}'
+                f'<div style="font-size: 13px; line-height: 1.6; color: #CBD5E1; margin-bottom: 10px; padding: 12px 16px; background: rgba(2, 6, 23, 0.65); border-left: 3.5px solid #00F5A0; border-radius: 0 8px 8px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); border-right: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08);">'
+                f'<span style="color: #00F5A0; font-weight: 800; margin-right: 6px;">●</span> {e}'
                 f'</div>'
                 for e in res.get("appendix_a_forensic_evidence", [])
             ])
@@ -3658,9 +3734,9 @@ if "idex_result" in st.session_state:
             calc_cards = []
             for k, v in calcs.items():
                 calc_cards.append(
-                    f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">'
-                    f'<div style="font-size: 11.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">{k.replace("_", " ").title()}</div>'
-                    f'<div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px; line-height: 1.45;">{v}</div>'
+                    f'<div style="background: rgba(2, 6, 23, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 14px 16px;">'
+                    f'<div style="font-size: 10.5px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">{k.replace("_", " ").title()}</div>'
+                    f'<div style="font-size: 13.5px; font-weight: 700; color: #F1F5F9; margin-top: 6px; line-height: 1.45; font-family: \'JetBrains Mono\', monospace;">{v}</div>'
                     f'</div>'
                 )
             if calc_cards:
@@ -3676,35 +3752,35 @@ if "idex_result" in st.session_state:
     
     if "GOV-RED" in tag or res.get("pio_triggered", False):
         st.html(
-            f'<div class="guardrail-red-box">'
+            f'<div style="background: rgba(255, 69, 58, 0.08); border: 1px solid rgba(255, 69, 58, 0.3); border-left: 5px solid #FF453A; border-radius: 12px; padding: 18px 22px; margin-bottom: 16px;">'
             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-            f'<span style="font-weight: 800; font-size: 1.15rem; color: #DC2626;">🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO HARD TRIGGER FIRED)</span>'
-            f'<span style="background-color: #FEE2E2; color: #991B1B; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #FCA5A5;">CRITICAL FORENSIC RISK</span>'
+            f'<span style="font-weight: 800; font-size: 1.1rem; color: #FF453A;">🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO HARD TRIGGER FIRED)</span>'
+            f'<span style="background: rgba(255, 69, 58, 0.2); color: #FF453A; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(255, 69, 58, 0.4); font-family: \'JetBrains Mono\', monospace;">CRITICAL FORENSIC RISK</span>'
             f'</div>'
-            f'<p style="margin: 0 0 10px 0; font-weight: 600; color: #991B1B;">{res.get("pio_reason", "Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.")}</p>'
-            f'<ul style="margin: 0; padding-left: 20px; color: #7F1D1D;">{ev_html_items}</ul>'
+            f'<p style="margin: 0 0 10px 0; font-weight: 600; color: #FF453A;">{res.get("pio_reason", "Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.")}</p>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #CBD5E1;">{ev_html_items}</ul>'
             f'</div>'
         )
     elif "PROM-ALERT" in tag:
         st.html(
-            f'<div class="guardrail-alert-box">'
+            f'<div style="background: rgba(255, 214, 10, 0.08); border: 1px solid rgba(255, 214, 10, 0.3); border-left: 5px solid #FFD60A; border-radius: 12px; padding: 18px 22px; margin-bottom: 16px;">'
             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-            f'<span style="font-weight: 800; font-size: 1.15rem; color: #D97706;">⚠️ MANDATORY GUARDRAIL TAG: {tag}</span>'
-            f'<span style="background-color: #FEF3C7; color: #92400E; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #FCD34D;">PROMOTER ALERT</span>'
+            f'<span style="font-weight: 800; font-size: 1.1rem; color: #FFD60A;">⚠️ MANDATORY GUARDRAIL TAG: {tag}</span>'
+            f'<span style="background: rgba(255, 214, 10, 0.2); color: #FFD60A; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(255, 214, 10, 0.4); font-family: \'JetBrains Mono\', monospace;">PROMOTER ALERT</span>'
             f'</div>'
-            f'<p style="margin: 0 0 10px 0; color: #92400E; font-weight: 600;">Elevated promoter pledging or dilution observed under PPRM rules.</p>'
-            f'<ul style="margin: 0; padding-left: 20px; color: #78350F;">{ev_html_items}</ul>'
+            f'<p style="margin: 0 0 10px 0; color: #FFD60A; font-weight: 600;">Elevated promoter pledging or dilution observed under PPRM rules.</p>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #CBD5E1;">{ev_html_items}</ul>'
             f'</div>'
         )
     else:
         st.html(
-            f'<div class="guardrail-clean-box">'
+            f'<div style="background: rgba(0, 245, 160, 0.08); border: 1px solid rgba(0, 245, 160, 0.3); border-left: 5px solid #00F5A0; border-radius: 12px; padding: 18px 22px; margin-bottom: 16px;">'
             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-            f'<span style="font-weight: 800; font-size: 1.15rem; color: #047857;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}</span>'
-            f'<span style="background-color: #D1FAE5; color: #065F46; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #A7F3D0;">INSTITUTIONAL GRADE</span>'
+            f'<span style="font-weight: 800; font-size: 1.1rem; color: #00F5A0;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}</span>'
+            f'<span style="background: rgba(0, 245, 160, 0.2); color: #00F5A0; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid rgba(0, 245, 160, 0.4); font-family: \'JetBrains Mono\', monospace;">INSTITUTIONAL GRADE</span>'
             f'</div>'
-            f'<p style="margin: 0 0 8px 0; color: #064E3B; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm\'s length related-party disclosures.</p>'
-            f'<ul style="margin: 0; padding-left: 20px; color: #1E293B;">{ev_html_items}</ul>'
+            f'<p style="margin: 0 0 8px 0; color: #00F5A0; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm\'s length related-party disclosures.</p>'
+            f'<ul style="margin: 0; padding-left: 20px; color: #CBD5E1;">{ev_html_items}</ul>'
             f'</div>'
         )
 

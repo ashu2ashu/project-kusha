@@ -1,4 +1,4 @@
-# StockSage - Professional Green & White Institutional Theme (Screener.in Inspired)
+# StockSage - Cyber-Dark Institutional HUD Theme (Future of Stock Screeners)
 
 [server]
 port = 8501
@@ -11,45 +11,76 @@ runOnSave = true
 gatherUsageStats = false
 
 [theme]
-base = "light"
-primaryColor = "#059669"             # Signature Dalal Street Emerald Green
-backgroundColor = "#FFFFFF"          # Pure crisp white background
-secondaryBackgroundColor = "#F8FAFC" # Subtle slate/off-white for containers and cards
-codeBackgroundColor = "#F0FDF4"
-textColor = "#0F172A"                # Deep rich charcoal / black typography
-linkColor = "#059669"                # Emerald green links
-borderColor = "#E2E8F0"              # Crisp subtle border outlines
-codeTextColor = "#065F46"
+base = "dark"
+primaryColor = "#00F5A0"             # Cyber Neon Emerald / Dalal Street Alpha
+backgroundColor = "#080C14"          # Deep Obsidian Space
+secondaryBackgroundColor = "#0F172A" # Cyber Slate Glass Surface
+codeBackgroundColor = "#0B111E"
+textColor = "#F1F5F9"                # High-contrast Crisp Typography
+linkColor = "#00E5FF"                # Cyber Cyan Hologram
+borderColor = "#1E293B"              # Subtle Cyber Outline
+codeTextColor = "#38BDF8"
 showWidgetBorder = true
 showSidebarBorder = true
-baseRadius = "8px"                   # Modern clean radius
-buttonRadius = "8px"
+baseRadius = "10px"                  # Modern Glass Radius
+buttonRadius = "10px"
 
-# Typography - Clean, professional institutional fonts
-font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
-codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
-baseFontSize = 15
+# Typography - Ultra-clean High-Density Financial Fonts
+font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+baseFontSize = 14
 baseFontWeight = 400
-codeFontSize = "14px"
-headingFontSizes = ["34px", "26px", "22px", "18px", "15px", "13px"]
+codeFontSize = "13px"
+headingFontSizes = ["32px", "24px", "20px", "16px", "14px", "12px"]
 headingFontWeights = [800, 700, 600, 600, 500, 500]
 linkUnderline = false
 
 # Semantic colors for financial indicators
-greenColor = "#059669"  # Positive/gains
-redColor = "#DC2626"    # Negative/losses
-yellowColor = "#D97706" # Warnings
-orangeColor = "#EA580C" # Alerts
-blueColor = "#059669"   # Emerald brand
-violetColor = "#334155" # Accent
-grayColor = "#64748B"   # Neutral slate
+greenColor = "#00F5A0"  # Gains / Positive Telemetry
+redColor = "#FF453A"    # Losses / Red Flags
+yellowColor = "#FFD60A" # Warnings / Cautions
+orangeColor = "#FF9F0A" # Watchlist Alerts
+blueColor = "#00E5FF"   # Cyber Cyan Hologram
+violetColor = "#BF5AF2" # Quantum Accents
+grayColor = "#94A3B8"   # High-Tech Neutral
 
-# Sidebar - Clean Green & White
+# Chart colors - Neon Multi-Factor Palettes
+chartCategoricalColors = [
+    "#00F5A0",
+    "#00E5FF",
+    "#BF5AF2",
+    "#FF9F0A",
+    "#FF453A",
+    "#64D2FF",
+    "#30D158",
+    "#94A3B8",
+]
+
+# Sequential colors for financial heatmaps (Cyan to Emerald)
+chartSequentialColors = [
+    "#042F2E",
+    "#064E3B",
+    "#065F46",
+    "#047857",
+    "#059669",
+    "#10B981",
+    "#34D399",
+    "#6EE7B7",
+    "#00E5FF",
+    "#00F5A0",
+]
+
+# Dataframe styling
+dataframeBorderColor = "#1E293B"
+dataframeHeaderBackgroundColor = "#0F172A"
+dataframeHeaderTextColor = "#F8FAFC"
+
+# Sidebar - Deep Obsidian Terminal
 [theme.sidebar]
-backgroundColor = "#F8FAFC"
-secondaryBackgroundColor = "#FFFFFF"
-codeBackgroundColor = "#F0FDF4"
-textColor = "#0F172A"
-borderColor = "#E2E8F0"
-primaryColor = "#059669"
+backgroundColor = "#06090F"
+secondaryBackgroundColor = "#0B111E"
+codeBackgroundColor = "#080C14"
+textColor = "#F1F5F9"
+borderColor = "#1E293B"
+primaryColor = "#00F5A0"

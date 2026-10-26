@@ -677,17 +677,17 @@ st.markdown("""
     }
     /* StockSage workspace polish */
     [data-testid="stAppViewContainer"] { background: #F6F8FB; }
-    [data-testid="stMainBlockContainer"] { max-width: 1480px; padding-top: 1.4rem; padding-bottom: 3rem; }
-    .ss-hero { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(310px,.9fr); gap:28px; align-items:center; padding:28px 32px; margin:8px 0 22px; color:#F8FAFC; border:1px solid rgba(255,255,255,.12); border-radius:20px; background:radial-gradient(ellipse at 78% 8%,rgba(52,211,153,.22),transparent 34%),linear-gradient(125deg,#071F1A 0%,#064E3B 54%,#102B2A 100%); box-shadow:0 14px 34px rgba(15,23,42,.12); }
-    .ss-hero-kicker { display:inline-flex; gap:8px; align-items:center; color:#A7F3D0; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
-    .ss-hero-title { margin:10px 0 8px; color:#FFF; font-size:clamp(28px,3vw,38px); font-weight:800; letter-spacing:-.04em; line-height:1.08; }
-    .ss-hero-subtitle { max-width:650px; margin:0; color:#D1FAE5; font-size:14px; line-height:1.6; }
-    .ss-hero-meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
-    .ss-hero-meta span { padding:5px 9px; border:1px solid rgba(255,255,255,.16); border-radius:999px; color:#E2E8F0; background:rgba(255,255,255,.07); font-size:11px; font-weight:600; }
-    .ss-hero-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
-    .ss-hero-stat { min-height:84px; display:flex; flex-direction:column; justify-content:center; padding:12px 13px; border:1px solid rgba(255,255,255,.15); border-radius:13px; background:rgba(255,255,255,.075); }
-    .ss-hero-stat-label { color:#A7F3D0; font-size:9px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
-    .ss-hero-stat-value { margin-top:6px; color:#FFF; font-size:15px; font-weight:750; line-height:1.25; }
+    [data-testid="stMainBlockContainer"] { max-width: 1480px; padding-top: 1.2rem; padding-bottom: 2.5rem; }
+    .ss-hero { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr); gap:20px; align-items:center; padding:18px 24px; margin:4px 0 16px; color:#F8FAFC; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:radial-gradient(ellipse at 78% 8%,rgba(52,211,153,.22),transparent 34%),linear-gradient(125deg,#071F1A 0%,#064E3B 54%,#102B2A 100%); box-shadow:0 8px 24px rgba(15,23,42,.08); }
+    .ss-hero-kicker { display:inline-flex; gap:6px; align-items:center; color:#A7F3D0; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .ss-hero-title { margin:6px 0 4px; color:#FFF; font-size:clamp(22px,2.4vw,30px); font-weight:800; letter-spacing:-.03em; line-height:1.15; }
+    .ss-hero-subtitle { max-width:650px; margin:0; color:#D1FAE5; font-size:13px; line-height:1.5; }
+    .ss-hero-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+    .ss-hero-meta span { padding:3px 8px; border:1px solid rgba(255,255,255,.16); border-radius:999px; color:#E2E8F0; background:rgba(255,255,255,.07); font-size:10.5px; font-weight:600; }
+    .ss-hero-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .ss-hero-stat { min-height:60px; display:flex; flex-direction:column; justify-content:center; padding:8px 11px; border:1px solid rgba(255,255,255,.15); border-radius:10px; background:rgba(255,255,255,.075); }
+    .ss-hero-stat-label { color:#A7F3D0; font-size:8.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .ss-hero-stat-value { margin-top:3px; color:#FFF; font-size:13.5px; font-weight:750; line-height:1.2; }
     .ss-source-card { padding:12px 14px; border:1px solid #DCE5E8; border-radius:12px; background:linear-gradient(135deg,#F7FBF9,#FFF); }
     .ss-source-label { margin-bottom:8px; color:#64748B; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
     .ss-source-row { display:flex; justify-content:space-between; gap:12px; margin:5px 0; color:#334155; font-size:11px; }
@@ -2498,6 +2498,12 @@ def render_valuation_compass_html(res, live_data):
         f'<div style="font-size: 12px; color: #475569; margin-top: 2px;">{asymmetry_desc}</div>'
         f'</div>'
         f'</div>'
+        # Micro-Legend for Valuation Compass
+        f'<div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px dashed #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B;">'
+        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: #2563EB; border-radius: 2px;"></span> CMP Active Price Pin</span>'
+        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: rgba(16, 185, 129, 0.3); border: 1.5px solid #10B981; border-radius: 2px;"></span> DCF Fair Value Zone</span>'
+        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 2px;"></span> 52-Week Range Bounds</span>'
+        f'</div>'
         f'</div>'
     )
     return html
@@ -3443,13 +3449,39 @@ if "idex_result" in st.session_state:
                 )
                 st.html(rec_cards_html)
 
-        # 8-Pillar Table
+        # 8-Pillar Table with Quality Tier Filter & Density Toggle
+        tbl_c1, tbl_c2 = st.columns([3, 1])
+        with tbl_c1:
+            p_filter = st.segmented_control(
+                "Filter Quality Tier",
+                options=["All Pillars", "Pristine (≥80%)", "Moderate (50-79%)", "Fragile (<50%)"],
+                default="All Pillars",
+                key="p_filter_ctrl",
+                label_visibility="collapsed"
+            )
+        with tbl_c2:
+            p_density = st.segmented_control(
+                "Table Density",
+                options=["Detailed", "Compact"],
+                default="Detailed",
+                key="p_density_ctrl",
+                label_visibility="collapsed"
+            )
+
         table_rows = []
         for p in res.get("pillars", []):
             p_id = p.get("id", 1)
             p_score = p.get("score", 0)
             p_max = p.get("max_score", 1)
             pct = (p_score / p_max) * 100 if p_max > 0 else 0
+
+            # Apply quality filter
+            if p_filter == "Pristine (≥80%)" and pct < 80.0:
+                continue
+            elif p_filter == "Moderate (50-79%)" and not (50.0 <= pct < 80.0):
+                continue
+            elif p_filter == "Fragile (<50%)" and pct >= 50.0:
+                continue
             
             meta = PILLAR_METADATA.get(p_id, {"icon": "📌", "chip": "Quality", "chip_bg": "#F1F5F9", "chip_fg": "#334155", "border": "#CBD5E1"})
             
@@ -3500,6 +3532,10 @@ if "idex_result" in st.session_state:
                 else:
                     citation_html = f'<div style="font-size:12px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
                 
+            justification_text = p.get("justification", "")
+            if p_density == "Compact" and len(justification_text) > 130:
+                justification_text = justification_text[:126].rsplit(" ", 1)[0] + "…"
+
             row_html = (
                 f'<tr>'
                 f'<td style="width: 25%; font-weight: 700;">'
@@ -3516,10 +3552,13 @@ if "idex_result" in st.session_state:
                 f'</div>'
                 f'</td>'
                 f'<td style="width: 16%; text-align: center;">{badge}</td>'
-                f'<td style="width: 45%;"><div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{p.get("justification", "")}</div>{citation_html}{rec_html}</td>'
+                f'<td style="width: 45%;"><div style="font-size: 14.5px; line-height: 1.6; color: #334155;">{justification_text}</div>{citation_html}{rec_html}</td>'
                 f'</tr>'
             )
             table_rows.append(row_html)
+            
+        if not table_rows:
+            table_rows.append('<tr><td colspan="4" style="text-align: center; padding: 28px; color: #64748B; font-weight: 600;">No pillars match the selected quality tier filter.</td></tr>')
             
         full_table_html = (
             f'<table class="pillar-table">'

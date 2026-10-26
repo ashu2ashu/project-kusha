@@ -1301,10 +1301,25 @@ def render_head_to_head_comparison_html(
                     target_p["fcf_3yr"] = round(sum(valid_fcf), 1)
 
             roe_v = cagr.get("latest_roe")
-            if roe_v is not None and roe_v > 0:
+            if cagr.get("latest_roce") is not None:
+                target_p["roce"] = round(float(cagr["latest_roce"]), 2)
+            elif roe_v is not None and roe_v > 0:
+                target_p["roce"] = round(float(roe_v), 2)
+
+            if cagr.get("latest_roic") is not None:
+                target_p["roic"] = round(float(cagr["latest_roic"]), 2)
+            elif roe_v is not None and roe_v > 0:
                 target_p["roic"] = round(float(roe_v), 2)
-                target_p["croic"] = round(float(roe_v) * 0.90, 2)
-                target_p["roce"] = round(float(roe_v) * 1.15, 2)
+
+            bs = financial_data.get("bs", {})
+            nw_vals = bs.get("Total Net Worth / Equity", {}).get("values", [])
+            debt_vals = bs.get("Total Borrowings / Debt", {}).get("values", [])
+            if fcf_v and nw_vals and fcf_v[-1] is not None and nw_vals[-1] is not None:
+                inv_cap = nw_vals[-1] + (debt_vals[-1] if debt_vals and debt_vals[-1] is not None else 0.0)
+                if inv_cap > 0:
+                    target_p["croic"] = round((fcf_v[-1] / inv_cap) * 100, 2)
+            elif roe_v is not None and roe_v > 0:
+                target_p["croic"] = round(float(roe_v), 2)
 
             # Reconcile PEG if still default 1.0 or 0
             if (target_p.get("peg") in (1.0, 0.0, None)) and target_p.get("pe", 0) > 0 and target_p.get("profit_var_3yr", 0) > 0:

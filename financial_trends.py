@@ -111,6 +111,7 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
         ("Capital WIP", ["Construction In Progress"], False),
         ("Investments", ["Investments And Advances", "Other Investments"], False),
         ("Current & Other Assets", ["Current Assets", "Other Current Assets"], False),
+        ("Current Liabilities", ["Current Liabilities", "Other Current Liabilities"], False),
         ("Cash & Equivalents", ["Cash And Cash Equivalents", "Cash Cash Equivalents And Short Term Investments"], True)
     ]
 
@@ -161,10 +162,13 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             reconciled_fcf.append(None)
     extracted_cf["Free Cash Flow (FCF)"]["values"] = reconciled_fcf
 
+    # Reconcile CFO to PAT by exact matching fiscal dates to prevent period drift
+    pat_by_date = {c: p for c, p in zip(valid_cols, pat_vals)}
     cfo_to_pat = []
-    for cfo, pat in zip(cfo_vals, pat_vals[-len(cfo_vals):]):
-        if cfo is not None and pat is not None and pat > 0:
-            cfo_to_pat.append(round((cfo / pat) * 100, 1))
+    for c, cfo in zip(cf_cols, cfo_vals):
+        pat_matched = pat_by_date.get(c)
+        if cfo is not None and pat_matched is not None and pat_matched > 0:
+            cfo_to_pat.append(round((cfo / pat_matched) * 100, 1))
         else:
             cfo_to_pat.append(None)
     extracted_cf["CFO / PAT Conversion %"] = {"values": cfo_to_pat, "highlight": False, "is_pct": True}
@@ -214,6 +218,48 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
     debt_vals = extracted_bs.get("Total Borrowings / Debt", {}).get("values", [])
     latest_de = round((debt_vals[-1] / nw_vals[-1]), 2) if nw_vals and debt_vals and nw_vals[-1] is not None and debt_vals[-1] is not None and nw_vals[-1] > 0 else None
 
+    # Calculate ROCE (Return on Capital Employed) = EBIT / Capital Employed * 100
+    ebit_last = ebitda_vals[-1] if (ebitda_vals and ebitda_vals[-1] is not None) else None
+    nw_last = nw_vals[-1] if (nw_vals and nw_vals[-1] is not None) else None
+    debt_last = debt_vals[-1] if (debt_vals and debt_vals[-1] is not None) else 0.0
+    cap_emp = (nw_last + debt_last) if (nw_last is not None and nw_last > 0) else None
+    latest_roce = round((ebit_last / cap_emp * 100), 2) if (ebit_last is not None and cap_emp is not None and cap_emp > 0) else None
+
+    # Calculate ROIC (Return on Invested Capital) = NOPAT / Invested Capital * 100
+    cash_vals = extracted_bs.get("Cash & Equivalents", {}).get("values", [])
+    cash_last = cash_vals[-1] if (cash_vals and cash_vals[-1] is not None) else 0.0
+    inv_cap = max(1.0, cap_emp - cash_last) if cap_emp is not None else None
+    pbt_vals = extracted_pnl.get("Profit Before Tax (PBT)", {}).get("values", [])
+    tax_vals = extracted_pnl.get("Tax Provision", {}).get("values", [])
+    pbt_last = pbt_vals[-1] if (pbt_vals and pbt_vals[-1] is not None) else None
+    tax_last = tax_vals[-1] if (tax_vals and tax_vals[-1] is not None) else None
+    eff_tax_rate = (tax_last / pbt_last) if (pbt_last and tax_last and pbt_last > 0 and 0 <= tax_last <= pbt_last) else 0.25
+    nopat = (ebit_last * (1.0 - eff_tax_rate)) if ebit_last is not None else None
+    latest_roic = round((nopat / inv_cap * 100), 2) if (nopat is not None and inv_cap is not None and inv_cap > 0) else None
+
+    # Interest Coverage = EBIT / Interest Expense
+    int_vals = extracted_pnl.get("Interest & Finance Costs", {}).get("values", [])
+    int_last = int_vals[-1] if (int_vals and int_vals[-1] is not None) else None
+    if ebit_last is not None and int_last is not None and int_last > 0:
+        latest_int_coverage = round(ebit_last / int_last, 2)
+    elif ebit_last is not None and ebit_last > 0 and (debt_last is None or debt_last < 50.0):
+        latest_int_coverage = 99.0
+    else:
+        latest_int_coverage = None
+
+    # Asset Turnover = Total Revenue / Total Assets
+    assets_vals = extracted_bs.get("Total Liabilities & Assets", {}).get("values", [])
+    asset_last = assets_vals[-1] if (assets_vals and assets_vals[-1] is not None) else None
+    rev_last = rev_vals[-1] if (rev_vals and rev_vals[-1] is not None) else None
+    latest_asset_turnover = round(rev_last / asset_last, 2) if (rev_last and asset_last and asset_last > 0) else None
+
+    # Current Ratio = Current Assets / Current Liabilities
+    ca_vals = extracted_bs.get("Current & Other Assets", {}).get("values", [])
+    cl_vals = extracted_bs.get("Current Liabilities", {}).get("values", [])
+    ca_last = ca_vals[-1] if (ca_vals and ca_vals[-1] is not None) else None
+    cl_last = cl_vals[-1] if (cl_vals and cl_vals[-1] is not None) else None
+    latest_current_ratio = round(ca_last / cl_last, 2) if (ca_last and cl_last and cl_last > 0) else None
+
     fetch_time = datetime.now(timezone.utc)
     return {
         "symbol": sym,
@@ -235,6 +281,11 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             "avg_cfo_pat": avg_cfo_pat,
             "latest_roe": latest_roe,
             "latest_de": latest_de,
+            "latest_roce": latest_roce,
+            "latest_roic": latest_roic,
+            "latest_int_coverage": latest_int_coverage,
+            "latest_asset_turnover": latest_asset_turnover,
+            "latest_current_ratio": latest_current_ratio,
             "n_years": n_years,
             "latest_opm": opm_vals[-1] if (opm_vals and opm_vals[-1] is not None) else None,
             "opm_expansion": round(opm_vals[-1] - opm_vals[0], 1) if len(opm_vals) >= 2 and opm_vals[-1] is not None and opm_vals[0] is not None else None

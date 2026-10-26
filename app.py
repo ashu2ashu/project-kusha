@@ -1266,7 +1266,29 @@ if terminal_mode == "🌐 Explore":
 
 # --- STOCKSAGE BESPOKE COMPANY INTELLIGENCE & 27 KEY METRICS MATRIX ---
 if live_data:
-    sm = live_data.get("screener_metrics", {})
+    if target_ticker and not fin_res:
+        fin_res = get_cached_financial_statements(target_ticker)
+
+    sm = dict(live_data.get("screener_metrics", {}))
+    # Enrich screener metrics with audited statements when available
+    if fin_res and "cagr" in fin_res and not fin_res.get("error"):
+        cagr_d = fin_res.get("cagr", {})
+        if sm.get("roce") in ("N/A", None) and cagr_d.get("latest_roce") is not None:
+            sm["roce"] = f"{cagr_d['latest_roce']:.2f} %"
+        if sm.get("roe") in ("N/A", None) and cagr_d.get("latest_roe") is not None:
+            sm["roe"] = f"{cagr_d['latest_roe']:.1f} %"
+        if sm.get("roic") in ("N/A", None) and cagr_d.get("latest_roic") is not None:
+            sm["roic"] = f"{cagr_d['latest_roic']:.2f} %"
+        if sm.get("current_ratio") in ("N/A", None) and cagr_d.get("latest_current_ratio") is not None:
+            sm["current_ratio"] = f"{cagr_d['latest_current_ratio']:.2f}"
+        if sm.get("int_coverage") in ("N/A", None) and cagr_d.get("latest_int_coverage") is not None:
+            ic_v = cagr_d["latest_int_coverage"]
+            sm["int_coverage"] = "Net Cash (Debt-Free)" if ic_v >= 99.0 else f"{ic_v:.2f}"
+        if sm.get("asset_turnover") in ("N/A", None) and cagr_d.get("latest_asset_turnover") is not None:
+            sm["asset_turnover"] = f"{cagr_d['latest_asset_turnover']:.2f}"
+        if sm.get("debt_to_equity") in ("N/A", None) and cagr_d.get("latest_de") is not None:
+            sm["debt_to_equity"] = f"{cagr_d['latest_de']:.2f}"
+
     cur_p = live_data.get("current_price", 0)
     cur_str = f"₹ {cur_p:,.2f}" if isinstance(cur_p, (int, float)) else "N/A"
     chg_pct = live_data.get("change_pct", 0)
@@ -1289,8 +1311,13 @@ if live_data:
     # 52-Week Range Slider Math
     h52_num = live_data.get("high_52w", cur_p)
     l52_num = live_data.get("low_52w", cur_p)
-    if isinstance(cur_p, (int, float)) and isinstance(h52_num, (int, float)) and isinstance(l52_num, (int, float)) and h52_num > l52_num:
-        range_pct = min(max(((cur_p - l52_num) / (h52_num - l52_num)) * 100, 0), 100)
+    if isinstance(cur_p, (int, float)) and isinstance(h52_num, (int, float)) and isinstance(l52_num, (int, float)):
+        hi_val = max(h52_num, l52_num)
+        lo_val = min(h52_num, l52_num)
+        if hi_val > lo_val:
+            range_pct = min(max(((cur_p - lo_val) / (hi_val - lo_val)) * 100, 0), 100)
+        else:
+            range_pct = 50.0
     else:
         range_pct = 50.0
 
@@ -2899,7 +2926,7 @@ if "idex_result" in st.session_state:
         f'<span style="font-size: 20px;">🚀</span>'
         f'</div>'
         f'<div style="font-size: 32px; font-weight: 900; color: #4C1D95; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">'
-        f'+{total_bonus:.1f}%'
+        f'+{total_bonus:.1f} pts'
         f'</div>'
         f'<div style="margin-top: 10px;">'
         f'<span style="background: #7C3AED; color: #FFFFFF; font-size: 12.5px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">Max +10.0 pts</span>'
@@ -3230,7 +3257,7 @@ if "idex_result" in st.session_state:
             f'<span>🛡️</span> Forensic Score Bridge: Risk Deductions & Applied Bonuses'
             f'</div>'
             f'<span style="font-size: 12px; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 6px; font-weight: 600;">'
-            f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f}%) → Final IDEX ({final_score:.1f})'
+            f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f} pts) → Final IDEX ({final_score:.1f})'
             f'</span>'
             f'</div>',
             unsafe_allow_html=True

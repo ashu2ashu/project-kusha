@@ -762,8 +762,8 @@ with st.sidebar:
         </div>
         """)
 
-    st.markdown("### StockSage")
-    st.caption("Institutional Financial Terminal • Ashu Elite Edition")
+    st.markdown("### Project KUSHA")
+    st.caption("Autonomous AI for Finance • Ashu Elite Edition")
     
     st.html(f"""
     <div class="ss-source-card">
@@ -901,10 +901,10 @@ def render_terminal_top_telemetry_hud():
     <section class="ss-hero">
       <div>
         <div class="ss-hero-kicker">
-          <span>⚡</span> StockSage // Quantum Institutional Terminal • V2.5
+          <span>⚡</span> Project KUSHA // Autonomous AI for Finance
         </div>
         <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
-        <p class="ss-hero-subtitle">Autonomous 8-pillar due diligence, high-density multi-factor screening, holographic forensic shields, and real-time valuation radar in one unified workstation.</p>
+        <p class="ss-hero-subtitle">Autonomous AI for finance: 8-pillar fundamental due diligence, high-density multi-factor screening, holographic forensic shields, and real-time valuation radar in one unified workstation.</p>
         <div class="ss-hero-meta">
           <span>Fundamental & Forensic Dual-Engine</span>
           <span>16 Canonical Factors</span>
@@ -936,17 +936,20 @@ def render_project_kusha_welcome_page():
     <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 26px 30px; border-top: 5px solid #059669; box-shadow: 0 4px 16px rgba(0,0,0,0.03); margin-top: 4px; margin-bottom: 22px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
         <span style="font-size: 11.5px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;">
-          🇮🇳 DALAL STREET FORENSIC SURVEILLANCE // PROJECT KUSHA
+          🇮🇳 AUTONOMOUS AI FOR FINANCE // PROJECT KUSHA
         </span>
         <span style="font-size: 11.5px; font-weight: 700; color: #64748B; font-family: 'JetBrains Mono', monospace;">
           FUNDAMENTAL & FORENSIC DUAL ENGINE • ZERO BLACK-BOX MATH
         </span>
       </div>
-      <div style="font-size: 30px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 10px;">
+      <div style="font-size: 30px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 6px;">
         Welcome to Project KUSHA.
       </div>
-      <p style="font-size: 15.5px; font-weight: 500; color: #475569; line-height: 1.6; max-width: 960px; margin-bottom: 18px;">
-        Autonomous Dalal Street institutional equity research & forensic surveillance engine designed to protect retail and institutional capital against accounting manipulation, channel stuffing, promoter pledging, and inflated accruals.
+      <div style="font-size: 15px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; letter-spacing: -0.2px;">
+        Autonomous AI for Finance &amp; Forensic Equity Intelligence
+      </div>
+      <p style="font-size: 15px; font-weight: 500; color: #475569; line-height: 1.6; max-width: 960px; margin-bottom: 18px;">
+        An autonomous AI for finance designed to conduct institutional equity research, cross-examine statutory filings, and protect retail and institutional capital against accounting manipulation, channel stuffing, promoter pledging, and inflated accruals.
       </p>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid #F1F5F9;">
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
@@ -995,7 +998,7 @@ def render_project_kusha_welcome_page():
               Crucially, traditional tools are <b>blind to non-cash accruals</b>, <b>promoter share pledging liquidation triggers</b>, <b>aggressive capitalization of expenses into Capital Work-in-Progress (CWIP)</b>, and <b>related-party transactions (RPTs)</b> that systematically siphon minority shareholder capital.
             </p>
             <div style="background: #F0FDF4; border-left: 4px solid #059669; padding: 10px 14px; border-radius: 6px; font-size: 13px; color: #065F46; line-height: 1.5;">
-              <b>Project KUSHA's Core Purpose:</b> To act as an autonomous, uncompromising institutional watchdog that cross-examines statutory cash flows against reported accruals, enforces deterministic penalties for accounting red flags, and protects investment capital before capital is allocated.
+              <b>Project KUSHA's Core Purpose:</b> To act as an autonomous AI for finance and uncompromising institutional watchdog that cross-examines statutory cash flows against reported accruals, enforces deterministic penalties for accounting red flags, and protects investment capital before capital is allocated.
             </div>
             """, unsafe_allow_html=True)
 
@@ -1180,6 +1183,14 @@ def render_project_kusha_welcome_page():
         - Toggle **Demo Mode** in the sidebar.
         - Select any tracked bluechip and click **Quick Demo**.
         - The terminal will generate a full holographic dossier evaluation using verified synthetic reference data, showcasing the 8-pillar radial chart, forensic risk shield, DCF valuation corridor, and peer comparison matrix.
+        """)
+
+    with st.expander("🤖 The Vision: Next-Gen Autonomous AI for Finance", expanded=False):
+        st.markdown("""
+        Project KUSHA is architected from the ground up as an **autonomous AI for finance**:
+        - **Autonomous Forensic Due Diligence**: Combining multi-pillar fundamental modeling with automated regulatory audits.
+        - **Continuous Intelligence & Feedback (Next Stage)**: Designed for active feedback learning, where analyst corrections, audited footnote discoveries, and sector nuances make every future search progressively sharper.
+        - **Open-Source Reasoning (Next Stage)**: Engineered to plug into next-generation open-source reasoning models (such as DeepSeek-R1) for test-time verification without proprietary lock-in.
         """)
 
     # Section: Primary Terminal Workstation Gateway Action

@@ -904,7 +904,7 @@ def render_terminal_top_telemetry_hud():
           <span>⚡</span> Project KUSHA // Autonomous AI for Finance
         </div>
         <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
-        <p class="ss-hero-subtitle">Autonomous AI for finance: 8-pillar fundamental due diligence, high-density multi-factor screening, holographic forensic shields, and real-time valuation radar in one unified workstation.</p>
+        <p class="ss-hero-subtitle">Autonomous AI for finance: Spotting corporate trouble and fine-print fraud before it makes the news, distilled into a simple no-nonsense score for capital protection.</p>
         <div class="ss-hero-meta">
           <span>Fundamental & Forensic Dual-Engine</span>
           <span>16 Canonical Factors</span>
@@ -945,8 +945,23 @@ def render_project_kusha_welcome_page():
       <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 4px;">
         Welcome to Project KUSHA.
       </div>
-      <div style="font-size: 14.5px; font-weight: 700; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 16px; letter-spacing: -0.2px;">
+      <div style="font-size: 14.5px; font-weight: 700; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 14px; letter-spacing: -0.2px;">
         Autonomous AI for Finance &amp; Forensic Equity Intelligence
+      </div>
+      
+      <!-- Core Investor Philosophy Card -->
+      <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F0FDF4 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+          <div style="font-size: 22px; line-height: 1; margin-top: 2px;">💡</div>
+          <div>
+            <div style="font-size: 12.5px; font-weight: 800; color: #065F46; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 4px;">
+              The Mission: Spot Trouble Before the Headlines
+            </div>
+            <div style="font-size: 12.5px; color: #334155; line-height: 1.55;">
+              In the world of AI, investors are still screening companies the old way—drowning in raw data where normal investors can't read between fine-print numbers. <strong>Project KUSHA was built to solve this:</strong> it doesn't chase hyped multibaggers; its core purpose is <strong>capital preservation</strong>. By cross-examining balance sheet accruals and hidden promoter risks, it spots early fraud and internal distress <em>before it's on the news</em>—helping you avoid companies like <strong>YES Bank</strong> before the crisis starts, delivered in a <strong>simple, no-nonsense forensic score</strong>.
+            </div>
+          </div>
+        </div>
       </div>
       
       <!-- 4 Visual KPI Metric Cards -->
@@ -1012,9 +1027,9 @@ def render_project_kusha_welcome_page():
             </div>
 
             <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 16px;">⚡</span>
+              <span style="font-size: 16px;">🛡️</span>
               <div style="font-size: 12px; font-weight: 700; color: #065F46;">
-                Autonomous AI Cross-Examination: Enforces deterministic penalties before capital is allocated.
+                Early Crisis Detection: Reads fine-print footnotes to catch company trouble long before it hits the news.
               </div>
             </div>
             """, unsafe_allow_html=True)
@@ -1045,14 +1060,14 @@ def render_project_kusha_welcome_page():
                   <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ PPRM &gt;50% PIO Hard Penalty</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #F1F5F9;">
-                  <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Capex &amp; CWIP</td>
-                  <td style="padding: 6px 8px; color: #DC2626;">❌ Treated as growth</td>
-                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ CWIP / Gross Block Aging Audit</td>
+                  <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Crisis Prevention</td>
+                  <td style="padding: 6px 8px; color: #DC2626;">❌ Trapped when news breaks</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ Flags YES Bank-style rot before crisis</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #F1F5F9;">
                   <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Scoring Engine</td>
                   <td style="padding: 6px 8px; color: #DC2626;">❌ Black-box opinion</td>
-                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ 100% Deterministic Forensic Model</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ Simple No-Nonsense Score (100% Deterministic Forensic Model)</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Provenance</td>
@@ -1261,16 +1276,20 @@ def render_project_kusha_welcome_page():
         st.markdown("""
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
-            <div style="font-size: 12px; font-weight: 800; color: #059669;">🤖 Deterministic AI Dual Engine</div>
-            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Combining multi-pillar fundamental modeling with forensic audits and zero black-box math.</div>
+            <div style="font-size: 12px; font-weight: 800; color: #059669;">🛡️ Capital Protection Over Hype</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Engineered to spot YES Bank-style collapses before they make the news, rather than promising speculative multibaggers.</div>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
-            <div style="font-size: 12px; font-weight: 800; color: #2563EB;">🔄 Continuous Feedback Loop</div>
-            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Next stage: Analyst edits and audited footnote discoveries improve every subsequent search.</div>
+            <div style="font-size: 12px; font-weight: 800; color: #2563EB;">🔍 Fine-Print Footnote Auditing</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">AI that reads between the lines of 10-year financials and regulatory filings so normal investors don't have to.</div>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
-            <div style="font-size: 12px; font-weight: 800; color: #7C3AED;">🧠 Open-Source Reasoning</div>
-            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Next stage: Plug-and-play DeepSeek-R1 test-time verification without proprietary API lock-in.</div>
+            <div style="font-size: 12px; font-weight: 800; color: #7C3AED;">⚡ Simple No-Nonsense Score</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">A single, deterministic 0–100 score bridging 8 core pillars with immediate forensic risk deductions.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #D97706;">🔄 Continuous Feedback (Next Stage)</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Analyst edits and audited footnote discoveries improve every subsequent search through active feedback loops.</div>
           </div>
         </div>
         """, unsafe_allow_html=True)

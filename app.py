@@ -2002,7 +2002,7 @@ if terminal_mode == "Research":
                 if not hist_df.empty:
                     stk_fig = build_ticker_chart(hist_df, target_ticker, "Area", show_dma=True)
                     if stk_fig:
-                        st.plotly_chart(stk_fig, width="stretch")
+                        st.plotly_chart(stk_fig, width="stretch", key=f"intake_price_chart_{target_ticker}")
 
                 # 27 Key Screener Ratios
                 metric_cards_html = render_dalal_street_metric_cards_html(live_data, fin_res)
@@ -3738,7 +3738,7 @@ if "idex_result" in st.session_state:
             st.markdown(f"##### 📈 {target_company_name} ({target_ticker}) Price Action (1 Year)")
             stk_fig = build_ticker_chart(hist_df, target_ticker, "Area", show_dma=True)
             if stk_fig:
-                st.plotly_chart(stk_fig, width="stretch")
+                st.plotly_chart(stk_fig, width="stretch", key=f"tab_financials_price_chart_{target_ticker}")
 
         # 27 Dalal Street Canonical Screening Ratios
         st.markdown("##### 🏛️ Dalal Street Screening Ratios (27 Canonical Factors)")
@@ -3805,7 +3805,7 @@ if "idex_result" in st.session_state:
                 st.markdown("##### 8-Pillar Quality Profile")
                 radar_fig = build_radar_chart(res.get("pillars", []))
                 if radar_fig:
-                    st.plotly_chart(radar_fig, width="stretch")
+                    st.plotly_chart(radar_fig, width="stretch", key=f"tab_heuristics_radar_chart_{target_ticker}")
 
                 st.caption("Active Forensic Tags:")
                 tag_pills = []

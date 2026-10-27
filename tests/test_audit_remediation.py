@@ -441,19 +441,23 @@ class TestProductDesignAndEvidenceExperience(unittest.TestCase):
         from app import workspace_options, nav_alias_map
 
         expected_options = [
-            "Market Screener",
-            "Company Analysis",
-            "Filings Vault",
-            "Overview & Guide"
+            "Research",
+            "Market screener",
+            "Company filings",
+            "How it works"
         ]
         self.assertEqual(workspace_options, expected_options)
 
         # Aliases must resolve legacy labels seamlessly
-        self.assertEqual(nav_alias_map.get("⚡ Screener & Market Matrix"), "Market Screener")
-        self.assertEqual(nav_alias_map.get("🔬 Holographic Stock Dossier"), "Company Analysis")
-        self.assertEqual(nav_alias_map.get("📑 Audited Filings Vault"), "Filings Vault")
-        self.assertEqual(nav_alias_map.get("👋 Welcome Guide"), "Overview & Guide")
-        self.assertEqual(nav_alias_map.get("🔬 Company Analysis"), "Company Analysis")
+        self.assertEqual(nav_alias_map.get("⚡ Screener & Market Matrix"), "Market screener")
+        self.assertEqual(nav_alias_map.get("🔬 Holographic Stock Dossier"), "Research")
+        self.assertEqual(nav_alias_map.get("📑 Audited Filings Vault"), "Company filings")
+        self.assertEqual(nav_alias_map.get("👋 Welcome Guide"), "How it works")
+        self.assertEqual(nav_alias_map.get("🔬 Company Analysis"), "Research")
+        self.assertEqual(nav_alias_map.get("Company Analysis"), "Research")
+        self.assertEqual(nav_alias_map.get("Market Screener"), "Market screener")
+        self.assertEqual(nav_alias_map.get("Filings Vault"), "Company filings")
+        self.assertEqual(nav_alias_map.get("Overview & Guide"), "How it works")
 
     def test_welcome_page_product_hypothesis(self):
         """Verify that app.py contains the calm product hypothesis statement."""

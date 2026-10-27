@@ -931,203 +931,216 @@ def render_terminal_top_telemetry_hud():
 
 # --- PROJECT KUSHA WELCOME & GREETING VIEW ---
 def render_project_kusha_welcome_page():
-    # Hero Welcome Greeting Card
+    # Hero Welcome Greeting Card - Visual Infographic
     st.markdown("""
-    <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 26px 30px; border-top: 5px solid #059669; box-shadow: 0 4px 16px rgba(0,0,0,0.03); margin-top: 4px; margin-bottom: 22px;">
+    <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 24px 28px; border-top: 5px solid #059669; box-shadow: 0 4px 16px rgba(0,0,0,0.03); margin-top: 4px; margin-bottom: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
         <span style="font-size: 11.5px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;">
           🇮🇳 AUTONOMOUS AI FOR FINANCE // PROJECT KUSHA
         </span>
-        <span style="font-size: 11.5px; font-weight: 700; color: #64748B; font-family: 'JetBrains Mono', monospace;">
-          FUNDAMENTAL & FORENSIC DUAL ENGINE • ZERO BLACK-BOX MATH
+        <span style="font-size: 11px; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 4px 10px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">
+          FUNDAMENTAL &amp; FORENSIC DUAL ENGINE • ZERO BLACK-BOX MATH
         </span>
       </div>
-      <div style="font-size: 30px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 6px;">
+      <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 4px;">
         Welcome to Project KUSHA.
       </div>
-      <div style="font-size: 15px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; letter-spacing: -0.2px;">
+      <div style="font-size: 14.5px; font-weight: 700; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 16px; letter-spacing: -0.2px;">
         Autonomous AI for Finance &amp; Forensic Equity Intelligence
       </div>
-      <p style="font-size: 15px; font-weight: 500; color: #475569; line-height: 1.6; max-width: 960px; margin-bottom: 18px;">
-        An autonomous AI for finance designed to conduct institutional equity research, cross-examine statutory filings, and protect retail and institutional capital against accounting manipulation, channel stuffing, promoter pledging, and inflated accruals.
-      </p>
+      
+      <!-- 4 Visual KPI Metric Cards -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid #F1F5F9;">
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
-          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Core Evaluation</div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #059669;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Core Evaluation</div>
           <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">8-Pillar Forensic Model</div>
+          <div style="font-size: 11px; color: #059669; font-weight: 700; margin-top: 2px;">100-Point Rule Engine</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
-          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Fraud Shield</div>
-          <div style="font-size: 15px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace;">8 Forensic Engines</div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #DC2626;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Fraud Shield</div>
+          <div style="font-size: 15px; font-weight: 800; color: #DC2626; font-family: 'JetBrains Mono', monospace;">8 Forensic Engines</div>
+          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">Accrual &amp; Pledging Guard</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
-          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Coverage Universe</div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #2563EB;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Universe</div>
           <div style="font-size: 15px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace;">50 Nifty Bluechips</div>
+          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">16 Canonical Ratios</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
-          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Exchange Filings</div>
-          <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">BSE India Statutory</div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #7C3AED;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Regulatory Filings</div>
+          <div style="font-size: 15px; font-weight: 800; color: #7C3AED; font-family: 'JetBrains Mono', monospace;">BSE India Statutory</div>
+          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">Direct 1-Click PDFs</div>
         </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Section 1: What is Project KUSHA & What is Its Purpose?
+    # Section 1: Visual Contrast Matrix
     st.markdown("""
-    <div style="margin-top: 24px; margin-bottom: 12px;">
-      <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-        <span style="color: #2563EB;">🎯</span> What is Project KUSHA &amp; What is Its Purpose?
+    <div style="margin-top: 20px; margin-bottom: 12px;">
+      <div style="font-size: 17px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #2563EB;">🎯</span> Why Project KUSHA? Visual Head-to-Head Comparison
       </div>
-      <p style="font-size: 13px; color: #64748B; margin-top: 2px;">
-        The Dalal Street Forensic Dilemma: Moving from superficial P/E multiples to statutory reality.
-      </p>
     </div>
     """, unsafe_allow_html=True)
 
-    col_purpose_text, col_purpose_comp = st.columns([1.1, 0.9])
+    col_purpose_text, col_purpose_comp = st.columns([1, 1])
     with col_purpose_text:
         with st.container(border=True):
             st.markdown("""
-            <div style="font-size: 15px; font-weight: 800; color: #0F172A; margin-bottom: 10px;">
-              Eliminating Dalal Street Accounting Blindspots
+            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+              <span>🛡️</span> Eliminating Dalal Street Accounting Blindspots
             </div>
-            <p style="font-size: 13.5px; color: #334155; line-height: 1.6; margin-bottom: 12px;">
-              The Indian equity market is witnessing historic retail and institutional capital expansion. However, conventional stock screeners evaluate companies based on <b>backward-looking multiples</b> like trailing P/E, revenue growth, or promotional management commentary.
-            </p>
-            <p style="font-size: 13.5px; color: #334155; line-height: 1.6; margin-bottom: 12px;">
-              Crucially, traditional tools are <b>blind to non-cash accruals</b>, <b>promoter share pledging liquidation triggers</b>, <b>aggressive capitalization of expenses into Capital Work-in-Progress (CWIP)</b>, and <b>related-party transactions (RPTs)</b> that systematically siphon minority shareholder capital.
-            </p>
-            <div style="background: #F0FDF4; border-left: 4px solid #059669; padding: 10px 14px; border-radius: 6px; font-size: 13px; color: #065F46; line-height: 1.5;">
-              <b>Project KUSHA's Core Purpose:</b> To act as an autonomous AI for finance and uncompromising institutional watchdog that cross-examines statutory cash flows against reported accruals, enforces deterministic penalties for accounting red flags, and protects investment capital before capital is allocated.
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+              <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px;">
+                <div style="font-size: 11px; font-weight: 800; color: #DC2626; text-transform: uppercase;">Non-Cash Accruals</div>
+                <div style="font-size: 12px; color: #7F1D1D; margin-top: 2px;">CFO vs PAT Divergence</div>
+              </div>
+              <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px;">
+                <div style="font-size: 11px; font-weight: 800; color: #DC2626; text-transform: uppercase;">Promoter Pledging</div>
+                <div style="font-size: 12px; color: #7F1D1D; margin-top: 2px;">Margin Call Liquidation Risk</div>
+              </div>
+              <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px;">
+                <div style="font-size: 11px; font-weight: 800; color: #DC2626; text-transform: uppercase;">CWIP Asset Inflation</div>
+                <div style="font-size: 12px; color: #7F1D1D; margin-top: 2px;">Capitalized Expense Parking</div>
+              </div>
+              <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px;">
+                <div style="font-size: 11px; font-weight: 800; color: #DC2626; text-transform: uppercase;">Related-Party Deals</div>
+                <div style="font-size: 12px; color: #7F1D1D; margin-top: 2px;">RPT Minority Siphoning</div>
+              </div>
+            </div>
+
+            <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 16px;">⚡</span>
+              <div style="font-size: 12px; font-weight: 700; color: #065F46;">
+                Autonomous AI Cross-Examination: Enforces deterministic penalties before capital is allocated.
+              </div>
             </div>
             """, unsafe_allow_html=True)
 
     with col_purpose_comp:
         with st.container(border=True):
             st.markdown("""
-            <div style="font-size: 15px; font-weight: 800; color: #0F172A; margin-bottom: 10px;">
-              Conventional Screener vs. Project KUSHA
+            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <span>⚖️</span> Conventional Screener vs. Project KUSHA
             </div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
               <thead>
-                <tr style="border-bottom: 1.5px solid #E2E8F0;">
-                  <th style="text-align: left; padding: 6px 8px; color: #64748B;">Evaluation Vector</th>
-                  <th style="text-align: left; padding: 6px 8px; color: #DC2626;">Conventional</th>
-                  <th style="text-align: left; padding: 6px 8px; color: #059669;">Project KUSHA</th>
+                <tr style="border-bottom: 1.5px solid #E2E8F0; background: #F8FAFC;">
+                  <th style="text-align: left; padding: 6px 8px; color: #64748B; font-weight: 700;">Vector</th>
+                  <th style="text-align: left; padding: 6px 8px; color: #DC2626; font-weight: 700;">Conventional</th>
+                  <th style="text-align: left; padding: 6px 8px; color: #059669; font-weight: 700;">Project KUSHA</th>
                 </tr>
               </thead>
               <tbody>
                 <tr style="border-bottom: 1px solid #F1F5F9;">
-                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Earnings Sanity</td>
-                  <td style="padding: 7px 8px; color: #64748B;">Accepts reported PAT</td>
-                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">CFO vs PAT Accrual Reconcilement</td>
+                  <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Earnings Quality</td>
+                  <td style="padding: 6px 8px; color: #DC2626;">❌ Reported PAT</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ CFO vs PAT Accrual Reconcilement</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #F1F5F9;">
-                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Promoter Pledging</td>
-                  <td style="padding: 7px 8px; color: #64748B;">Ignored or footnote</td>
-                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">PPRM &gt;50% PIO Hard Penalty</td>
+                  <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Promoter Pledging</td>
+                  <td style="padding: 6px 8px; color: #DC2626;">❌ Ignored footnote</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ PPRM &gt;50% PIO Hard Penalty</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #F1F5F9;">
-                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Capex &amp; CWIP</td>
-                  <td style="padding: 7px 8px; color: #64748B;">Treated as growth</td>
-                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">CWIP / Gross Block Aging Audit</td>
+                  <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Capex &amp; CWIP</td>
+                  <td style="padding: 6px 8px; color: #DC2626;">❌ Treated as growth</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ CWIP / Gross Block Aging Audit</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #F1F5F9;">
-                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Scoring Engine</td>
-                  <td style="padding: 7px 8px; color: #64748B;">Black-box rating</td>
-                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">100% Deterministic Forensic Model</td>
+                  <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Scoring Engine</td>
+                  <td style="padding: 6px 8px; color: #DC2626;">❌ Black-box opinion</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ 100% Deterministic Forensic Model</td>
                 </tr>
                 <tr>
-                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Filing Provenance</td>
-                  <td style="padding: 7px 8px; color: #64748B;">Uncited summaries</td>
-                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">Direct BSE India Annual Report PDFs</td>
+                  <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Provenance</td>
+                  <td style="padding: 6px 8px; color: #DC2626;">❌ Uncited summaries</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ Direct BSE India Annual Report PDFs</td>
                 </tr>
               </tbody>
             </table>
             """, unsafe_allow_html=True)
 
-    # Section 2: How Does It Work? The 5-Step Architecture
+    # Section 2: Visual 5-Step Pipeline (Concise & Graphic)
     st.markdown("""
-    <div style="margin-top: 24px; margin-bottom: 14px;">
-      <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-        <span style="color: #059669;">⚙️</span> How Does It Work? The 5-Step Autonomous Pipeline
+    <div style="margin-top: 22px; margin-bottom: 12px;">
+      <div style="font-size: 17px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #059669;">⚙️</span> The 5-Step Autonomous Pipeline
       </div>
-      <p style="font-size: 13px; color: #64748B; margin-top: 2px;">
-        From statutory exchange filing ingestion to deterministic forensic risk scoring and intrinsic DCF corridors.
-      </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # 5 Step Horizontal Cards
     p1, p2, p3, p4, p5 = st.columns(5)
     with p1:
         with st.container(border=True):
             st.markdown("""
-            <div style="font-size: 11px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
-              STEP 01
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 10px; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">STEP 01</span>
+              <span style="font-size: 16px;">📥</span>
             </div>
-            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-              📥 Ingestion
+            <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">Ingestion</div>
+            <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
+              • 10-Yr Audited Financials<br/>
+              • 6 Sanity Checks
             </div>
-            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
-              Ingests 10-year P&amp;L, Balance Sheet, and Cash Flow statements. 6 internal sanity checks test balance sheet balance, accrual limits, and statement hierarchy.
-            </p>
             """, unsafe_allow_html=True)
 
     with p2:
         with st.container(border=True):
             st.markdown("""
-            <div style="font-size: 11px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
-              STEP 02
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 10px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">STEP 02</span>
+              <span style="font-size: 16px;">🏛️</span>
             </div>
-            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-              🏛️ 8-Pillar Matrix
+            <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">8-Pillar Matrix</div>
+            <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
+              • 100-Point Rule Engine<br/>
+              • Zero Black-Box Math
             </div>
-            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
-              Deterministic 100-pt evaluation: Governance (20), Forensic Cash Flow (20), Solvency (12), Moat (13), Valuation (6), Simplicity (5), Innovation (18), Insider Risk (6).
-            </p>
             """, unsafe_allow_html=True)
 
     with p3:
         with st.container(border=True):
             st.markdown("""
-            <div style="font-size: 11px; font-weight: 800; color: #DC2626; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
-              STEP 03
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 10px; font-weight: 800; color: #DC2626; background: #FEF2F2; border: 1px solid #FECACA; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">STEP 03</span>
+              <span style="font-size: 16px;">🛡️</span>
             </div>
-            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-              🛡️ Fraud Shield
+            <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">Fraud Shield</div>
+            <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
+              • 8 Forensic Tests<br/>
+              • Accruals &amp; Pledging Guard
             </div>
-            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
-              8 multi-year forensic tests: Accrual divergence (CFO vs PAT), CWIP asset inflation, tax discrepancy, promoter pledging (PPRM), and trade receivable debtor aging.
-            </p>
             """, unsafe_allow_html=True)
 
     with p4:
         with st.container(border=True):
             st.markdown("""
-            <div style="font-size: 11px; font-weight: 800; color: #D97706; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
-              STEP 04
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 10px; font-weight: 800; color: #D97706; background: #FFFBEB; border: 1px solid #FDE68A; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">STEP 04</span>
+              <span style="font-size: 16px;">⚡</span>
             </div>
-            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-              ⚡ Forensic Scoring Bridge
+            <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">Forensic Bridge</div>
+            <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
+              • Core − Penalties + Bonus<br/>
+              • PIO Circuit Breaker
             </div>
-            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
-              Zero black-box bridge: Core Quality &minus; Forensic Penalties (cap &minus;7.5) + Bonuses (cap +10%). Promoter Integrity Overrides clamp score &lt;50 on severe red flags.
-            </p>
             """, unsafe_allow_html=True)
 
     with p5:
         with st.container(border=True):
             st.markdown("""
-            <div style="font-size: 11px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
-              STEP 05
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 10px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">STEP 05</span>
+              <span style="font-size: 16px;">🎯</span>
             </div>
-            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-              🎯 DCF Fair Value
+            <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">DCF Fair Value</div>
+            <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
+              • 3-Stage DCF Intrinsic Value<br/>
+              • Safety Margin Corridors
             </div>
-            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
-              Computes 3-stage DCF intrinsic fair value vs Current Market Price (CMP), calibrating safety margin (Deep Undervaluation, Fair Value, or Rich Multiple).
-            </p>
             """, unsafe_allow_html=True)
 
     # Section 3: Operational & Technical Architecture FAQ
@@ -1141,57 +1154,126 @@ def render_project_kusha_welcome_page():
 
     with st.expander("🏛️ How is the 8-Pillar Fundamental & Forensic framework calculated deterministically?", expanded=False):
         st.markdown("""
-        Every tracked equity starts with a clean baseline across 8 fundamental pillars totaling 100 maximum points:
-        - **Governance & Capital Allocation (20.0 pts)**: Capital reinvestment discipline, board independence, dilution control, and M&A track record.
-        - **Forensic Accounting & Cash Flow (20.0 pts)**: Cash conversion (CFO / PAT), accrual quality, working capital cycle, and receivable health.
-        - **Risk, Solvency & Fragility (12.0 pts)**: Net Debt/EBITDA, interest coverage ratio, liquidity buffer, and balance sheet leverage.
-        - **Valuation & Sanity Layer (6.0 pts)**: Relative multiples (P/E, EV/EBITDA, P/B) vs historical corridors and DCF margin of safety.
-        - **Moat Durability & Scalability (13.0 pts)**: Pricing power, distribution reach, network effects, and brand durability.
-        - **Simplicity & Repeatability (5.0 pts)**: Business clarity, revenue predictability, and low subsidiary complexity.
-        - **Innovation & TAM Optionality (18.0 pts)**: R&D reinvestment rate, new market adjacency expansion, and addressable TAM.
-        - **Insider & Minority Shareholder Risk (6.0 pts)**: Promoter share pledging (PPRM), insider trades, and RPT transparency.
-        
-        The final score bridges Core Quality minus Forensic Risk Deductions (capped at &minus;7.5) plus Resilience Bonuses (capped at +10%).
-        """)
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">🏛️</span> <strong style="font-size: 12px; color: #0F172A;">Governance &amp; Capital</strong><br/><span style="font-size: 11px; color: #64748B;">Reinvestment &amp; Board Independence</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">20.0 pts</span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">🔍</span> <strong style="font-size: 12px; color: #0F172A;">Forensics &amp; Cash Flow</strong><br/><span style="font-size: 11px; color: #64748B;">CFO / PAT &amp; Accrual Reconcile</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">20.0 pts</span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">🛡️</span> <strong style="font-size: 12px; color: #0F172A;">Risk, Solvency &amp; Fragility</strong><br/><span style="font-size: 11px; color: #64748B;">Net Debt/EBITDA &amp; Liquidity</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">12.0 pts</span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">🚀</span> <strong style="font-size: 12px; color: #0F172A;">Innovation &amp; TAM Optionality</strong><br/><span style="font-size: 11px; color: #64748B;">R&amp;D Runway &amp; Market Scale</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">18.0 pts</span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">🏰</span> <strong style="font-size: 12px; color: #0F172A;">Moat Durability &amp; Scale</strong><br/><span style="font-size: 11px; color: #64748B;">Pricing Power &amp; Network Effects</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">13.0 pts</span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">📈</span> <strong style="font-size: 12px; color: #0F172A;">Valuation &amp; Sanity Layer</strong><br/><span style="font-size: 11px; color: #64748B;">Multiples vs 10Y &amp; DCF Safety</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">6.0 pts</span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">⚠️</span> <strong style="font-size: 12px; color: #0F172A;">Insider &amp; Minority Risk</strong><br/><span style="font-size: 11px; color: #64748B;">PPRM Pledging &amp; RPT Clarity</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">6.0 pts</span>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div><span style="font-size: 13px;">⚡</span> <strong style="font-size: 12px; color: #0F172A;">Simplicity &amp; Repeatability</strong><br/><span style="font-size: 11px; color: #64748B;">Predictability &amp; Clean Structure</span></div>
+            <span style="font-size: 11.5px; font-weight: 800; color: #059669; font-family: monospace;">5.0 pts</span>
+          </div>
+        </div>
+        <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 700; color: #065F46; font-family: 'JetBrains Mono', monospace; text-align: center;">
+          Bridge Formula: Final Score = Core 8 Pillars (Max 100) − Forensic Deductions (Cap −7.5) + Resilience Bonus (Cap +10%)
+        </div>
+        """, unsafe_allow_html=True)
 
     with st.expander("🛡️ What triggers the Promoter Integrity Override (PIO)?", expanded=False):
         st.markdown("""
-        The **Promoter Integrity Override (PIO)** is an unbending institutional circuit breaker. If any of the following critical triggers are flagged:
-        1. **Promoter Share Pledging (PPRM) exceeds 50%** of total promoter equity.
-        2. **Auditor resignation or adverse CARO qualification** alleging accounting misstatements.
-        3. **Regulatory enforcement actions** (SEBI / ED / SFIO investigation).
-        4. **Material related-party transactions (RPTs)** that extract capital from minority shareholders.
-        
-        **Deterministic Enforcement:**
-        - Governance pillar is immediately clamped to &le; 6.0 / 20.0.
-        - All trajectory and resilience bonuses are permanently revoked.
-        - `GOV-RED 🔴` badge is enforced across the dossier.
-        - Overall composite score is hard-capped in fragile territory (&lt;50.0).
-        """)
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 11.5px; font-weight: 800; color: #DC2626; margin-bottom: 8px;">🚨 4 Hard Triggers</div>
+            <div style="font-size: 11.5px; color: #991B1B; line-height: 1.6;">
+              • <strong>PPRM &gt; 50%</strong> Promoter share pledging<br/>
+              • <strong>Auditor Resignation</strong> or adverse CARO qualification<br/>
+              • <strong>Regulatory Action</strong> SEBI / ED / SFIO enforcement<br/>
+              • <strong>Material RPTs</strong> Non-arm's length capital siphoning
+            </div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 11.5px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">⚡ Deterministic Enforcement</div>
+            <div style="font-size: 11.5px; color: #475569; line-height: 1.6;">
+              • <strong>Governance Clamped</strong> to &le; 6.0 / 20.0<br/>
+              • <strong>Bonuses Revoked</strong> All trajectory upside cancelled<br/>
+              • <strong>GOV-RED 🔴</strong> Institutional risk alert badge<br/>
+              • <strong>Hard Cap</strong> Composite score locked in Fragile (&lt;50.0)
+            </div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with st.expander("📑 Where does Project KUSHA source filings and market data?", expanded=False):
         st.markdown("""
-        - **Statutory Annual Reports**: Streamed directly from official **BSE India** regulatory archives (<code>bseindia.com/xml-data/corpfiling/AttachHis/...</code>) with 1-click verified HTTPS links.
-        - **Audited Financial Statements**: Canonical 10-year audited P&L, Balance Sheet, and Cash Flow statements reconciled with **Screener.in** dataset.
-        - **Credit Ratings**: Canonical agency disclosures from **CRISIL, ICRA, CARE, and India Ratings**.
-        - **Live Market Telemetry**: NSE/BSE delayed market quotes via Yahoo Finance with day range telemetry and 52-week channels.
-        """)
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #0F172A;">🏛️ BSE India</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Official statutory annual reports with 1-click verified PDF URLs.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #0F172A;">📊 Screener.in</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Canonical 10-year audited P&amp;L, Balance Sheet, and Cash Flow datasets.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #0F172A;">⭐ CRISIL / ICRA</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Official credit rating disclosures and institutional safety ratings.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #0F172A;">📈 NSE / Yahoo</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Delayed market quotes, 52-week channels, and intraday range telemetry.</div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with st.expander("🧪 Can I use Project KUSHA in Demo Mode without an API key?", expanded=False):
         st.markdown("""
-        **Yes!** If you do not have a Google Gemini API key configured:
-        - Toggle **Demo Mode** in the sidebar.
-        - Select any tracked bluechip and click **Quick Demo**.
-        - The terminal will generate a full holographic dossier evaluation using verified synthetic reference data, showcasing the 8-pillar radial chart, forensic risk shield, DCF valuation corridor, and peer comparison matrix.
-        """)
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+            <div style="font-size: 11.5px; font-weight: 800; color: #2563EB;">1️⃣ Enable Demo Mode</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Toggle "Demo Mode" in the sidebar with zero API key requirement.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+            <div style="font-size: 11.5px; font-weight: 800; color: #059669;">2️⃣ Select Bluechip</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Choose any Nifty 50 constituent from the dropdown or peer matrix.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
+            <div style="font-size: 11.5px; font-weight: 800; color: #7C3AED;">3️⃣ Instant Dossier</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Radial charts, fraud shield, and DCF valuation corridors in 1 second.</div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with st.expander("🤖 The Vision: Next-Gen Autonomous AI for Finance", expanded=False):
         st.markdown("""
-        Project KUSHA is architected from the ground up as an **autonomous AI for finance**:
-        - **Autonomous Forensic Due Diligence**: Combining multi-pillar fundamental modeling with automated regulatory audits.
-        - **Continuous Intelligence & Feedback (Next Stage)**: Designed for active feedback learning, where analyst corrections, audited footnote discoveries, and sector nuances make every future search progressively sharper.
-        - **Open-Source Reasoning (Next Stage)**: Engineered to plug into next-generation open-source reasoning models (such as DeepSeek-R1) for test-time verification without proprietary lock-in.
-        """)
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #059669;">🤖 Deterministic AI Dual Engine</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Combining multi-pillar fundamental modeling with forensic audits and zero black-box math.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #2563EB;">🔄 Continuous Feedback Loop</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Next stage: Analyst edits and audited footnote discoveries improve every subsequent search.</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #7C3AED;">🧠 Open-Source Reasoning</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Next stage: Plug-and-play DeepSeek-R1 test-time verification without proprietary API lock-in.</div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Section: Primary Terminal Workstation Gateway Action
     if not st.session_state.get("entered_terminal", False):

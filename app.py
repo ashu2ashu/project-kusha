@@ -745,6 +745,23 @@ def get_cached_financial_statements(ticker_sym: str):
 
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
+    if st.session_state.get("entered_terminal", False):
+        if st.button("⬅️ Exit to Welcome Screen", width="stretch", help="Return to the Project KUSHA Welcome Gate"):
+            st.session_state["entered_terminal"] = False
+            st.rerun()
+        st.divider()
+    else:
+        st.html("""
+        <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
+          <div style="font-size: 11px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">
+            ● Gateway Mode
+          </div>
+          <div style="font-size: 12px; color: #475569; margin-top: 3px;">
+            Click <b>"Enter Project KUSHA Terminal"</b> on the main page to unlock all workspaces.
+          </div>
+        </div>
+        """)
+
     st.markdown("### StockSage")
     st.caption("Institutional Financial Terminal • Ashu Elite Edition")
     
@@ -952,59 +969,6 @@ def render_project_kusha_welcome_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # Section: Interactive Workspace Launchpad
-    st.markdown("""
-    <div style="font-size: 17px; font-weight: 800; color: #0F172A; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-      <span style="color: #059669;">🚀</span> Quick Launch Workspace Pad
-    </div>
-    """, unsafe_allow_html=True)
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        with st.container(border=True):
-            st.markdown("""
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              <span style="font-size: 20px;">⚡</span>
-              <span style="font-size: 16px; font-weight: 800; color: #0F172A;">Quantum Screener</span>
-            </div>
-            <p style="font-size: 13px; color: #475569; line-height: 1.5; min-height: 58px; margin-bottom: 14px;">
-              Scan 50 premier Nifty bluechips across 16 canonical valuation, growth, and efficiency ratios with institutional traffic-light filters.
-            </p>
-            """, unsafe_allow_html=True)
-            if st.button("Launch Quantum Screener ⚡", type="primary", key="cta_launch_screener", width="stretch"):
-                st.session_state["pending_nav_mode"] = "⚡ Screener & Market Matrix"
-                st.rerun()
-
-    with c2:
-        with st.container(border=True):
-            st.markdown("""
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              <span style="font-size: 20px;">🔬</span>
-              <span style="font-size: 16px; font-weight: 800; color: #0F172A;">Holographic Dossier</span>
-            </div>
-            <p style="font-size: 13px; color: #475569; line-height: 1.5; min-height: 58px; margin-bottom: 14px;">
-              Deep-dive into an individual company with 8-pillar radial radar, forensic risk scorecard, peer comparison, and DCF compass.
-            </p>
-            """, unsafe_allow_html=True)
-            if st.button("Inspect Stock Dossier 🔬", key="cta_launch_dossier", width="stretch"):
-                st.session_state["pending_nav_mode"] = "🔬 Holographic Stock Dossier"
-                st.rerun()
-
-    with c3:
-        with st.container(border=True):
-            st.markdown("""
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              <span style="font-size: 20px;">📑</span>
-              <span style="font-size: 16px; font-weight: 800; color: #0F172A;">Audited Filings Vault</span>
-            </div>
-            <p style="font-size: 13px; color: #475569; line-height: 1.5; min-height: 58px; margin-bottom: 14px;">
-              Direct access to official BSE India annual reports, statutory auditor disclosures, CARO statements, and exchange filings.
-            </p>
-            """, unsafe_allow_html=True)
-            if st.button("Explore Filings Vault 📑", key="cta_launch_vault", width="stretch"):
-                st.session_state["pending_nav_mode"] = "📑 Audited Filings Vault"
-                st.rerun()
-
     # Section 1: What is Project KUSHA & What is Its Purpose?
     st.markdown("""
     <div style="margin-top: 24px; margin-bottom: 12px;">
@@ -1163,40 +1127,7 @@ def render_project_kusha_welcome_page():
             </p>
             """, unsafe_allow_html=True)
 
-    # Section 3: Fast 1-Click Bluechip Launcher
-    st.markdown("""
-    <div style="margin-top: 24px; margin-bottom: 12px;">
-      <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-        <span style="color: #2563EB;">⚡</span> Fast Bluechip Inspection Launchpad
-      </div>
-      <p style="font-size: 13px; color: #64748B; margin-top: 2px;">
-        Click any Dalal Street market stalwart below to immediately launch its full Holographic Stock Dossier:
-      </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    presets = [
-        ("Reliance Industries", "RELIANCE", "⚡"),
-        ("HDFC Bank", "HDFCBANK", "🏦"),
-        ("Tata Consultancy Services", "TCS", "💻"),
-        ("Infosys", "INFY", "🌐"),
-        ("ITC Limited", "ITC", "📦"),
-        ("Larsen & Toubro", "LT", "🏗️"),
-        ("Tata Motors", "TATAMOTORS", "🚗"),
-        ("Sun Pharma", "SUNPHARMA", "💊"),
-    ]
-    
-    preset_cols = st.columns(4)
-    for idx, (label, sym, emoji) in enumerate(presets):
-        col_target = preset_cols[idx % 4]
-        with col_target:
-            if st.button(f"{emoji} {sym}", help=f"Inspect {label} ({sym})", key=f"welcome_bluechip_{sym}", width="stretch"):
-                info = find_company_info(sym)
-                st.session_state["selected_company_choice"] = info["display"]
-                st.session_state["pending_nav_mode"] = "🔬 Holographic Stock Dossier"
-                st.rerun()
-
-    # Section 4: Operational & Technical Architecture FAQ
+    # Section 3: Operational & Technical Architecture FAQ
     st.markdown("""
     <div style="margin-top: 28px; margin-bottom: 10px;">
       <div style="font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 6px;">
@@ -1250,6 +1181,45 @@ def render_project_kusha_welcome_page():
         - Select any tracked bluechip and click **Quick Demo**.
         - The terminal will generate a full holographic dossier evaluation using verified synthetic reference data, showcasing the 8-pillar radial chart, forensic risk shield, DCF valuation corridor, and peer comparison matrix.
         """)
+
+    # Section: Primary Terminal Workstation Gateway Action
+    if not st.session_state.get("entered_terminal", False):
+        st.markdown("""
+        <div style="margin-top: 36px; margin-bottom: 16px; text-align: center; border-top: 1.5px solid #E2E8F0; padding-top: 32px;">
+          <div style="font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px;">
+            Ready to Begin Institutional Screening?
+          </div>
+          <div style="font-size: 13.5px; color: #64748B; margin-top: 6px; margin-bottom: 22px;">
+            Enter the terminal workstation to access live market telemetry, the 50-bluechip factor matrix, statutory BSE filings, and forensic dossiers.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🚀 Enter Project KUSHA Terminal ↗", type="primary", key="btn_enter_terminal_main", width="stretch"):
+            st.session_state["entered_terminal"] = True
+            st.session_state["pending_nav_mode"] = "⚡ Screener & Market Matrix"
+            st.rerun()
+    else:
+        st.markdown("""
+        <div style="margin-top: 32px; margin-bottom: 16px; text-align: center; border-top: 1.5px solid #E2E8F0; padding-top: 24px;">
+          <div style="font-size: 14.5px; font-weight: 800; color: #0F172A;">
+            Terminal Workstation Active
+          </div>
+          <div style="font-size: 12.5px; color: #64748B; margin-top: 4px; margin-bottom: 18px;">
+            You can return to the live screening matrices or exit back to the standalone welcome screen.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_w1, col_w2 = st.columns(2)
+        with col_w1:
+            if st.button("⚡ Open Quantum Screener", type="primary", key="btn_guide_screener", width="stretch"):
+                st.session_state["pending_nav_mode"] = "⚡ Screener & Market Matrix"
+                st.rerun()
+        with col_w2:
+            if st.button("⬅️ Exit to Welcome Screen", key="btn_guide_exit", width="stretch"):
+                st.session_state["entered_terminal"] = False
+                st.rerun()
 
 # --- AUDITED STATUTORY FILINGS VAULT VIEW ---
 def render_audited_filings_vault_view():
@@ -1349,12 +1319,18 @@ def render_audited_filings_vault_view():
     </div>
     """, unsafe_allow_html=True)
 
-# --- TOP-LEVEL WORKSPACE NAVIGATION ---
+# --- TOP-LEVEL WORKSPACE GATEWAY CHECK ---
+# If user has not yet entered the terminal, display strictly the Welcome page and stop.
+if not st.session_state.get("entered_terminal", False):
+    render_project_kusha_welcome_page()
+    st.stop()
+
+# --- TOP-LEVEL WORKSPACE NAVIGATION (INSIDE TERMINAL) ---
 workspace_options = [
-    "👋 Welcome to Project KUSHA",
     "⚡ Screener & Market Matrix",
     "🔬 Holographic Stock Dossier",
-    "📑 Audited Filings Vault"
+    "📑 Audited Filings Vault",
+    "👋 Welcome Guide"
 ]
 
 # Smooth alias mapping for existing session states
@@ -1362,9 +1338,10 @@ nav_alias_map = {
     "🌐 Explore": "⚡ Screener & Market Matrix",
     "📊 Nifty 50": "⚡ Screener & Market Matrix",
     "🔬 Company Analysis": "🔬 Holographic Stock Dossier",
-    "Welcome": "👋 Welcome to Project KUSHA",
-    "Greeting": "👋 Welcome to Project KUSHA",
-    "Home": "👋 Welcome to Project KUSHA",
+    "Welcome": "👋 Welcome Guide",
+    "Greeting": "👋 Welcome Guide",
+    "Home": "👋 Welcome Guide",
+    "👋 Welcome to Project KUSHA": "👋 Welcome Guide",
     "Screener": "⚡ Screener & Market Matrix",
     "Dossier": "🔬 Holographic Stock Dossier",
     "Vault": "📑 Audited Filings Vault"
@@ -1376,7 +1353,10 @@ if "pending_nav_mode" in st.session_state:
 
 current_nav = st.session_state.get("active_nav_mode")
 if current_nav not in workspace_options:
-    st.session_state["active_nav_mode"] = nav_alias_map.get(current_nav, "👋 Welcome to Project KUSHA")
+    st.session_state["active_nav_mode"] = nav_alias_map.get(current_nav, "⚡ Screener & Market Matrix")
+
+# --- ACTIVE TERMINAL TELEMETRY HUD & HEADER ---
+render_terminal_top_telemetry_hud()
 
 terminal_mode = st.segmented_control(
     "Workspace",
@@ -1385,12 +1365,9 @@ terminal_mode = st.segmented_control(
     label_visibility="collapsed"
 )
 
-if terminal_mode == "👋 Welcome to Project KUSHA":
+if terminal_mode == "👋 Welcome Guide":
     render_project_kusha_welcome_page()
     st.stop()
-
-# --- ACTIVE TERMINAL TELEMETRY HUD & HEADER ---
-render_terminal_top_telemetry_hud()
 
 if terminal_mode == "⚡ Screener & Market Matrix":
     # Presets for the Quantum Screener

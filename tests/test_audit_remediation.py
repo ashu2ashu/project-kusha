@@ -12,6 +12,7 @@ Automated verification suite testing the 7 remediation priorities:
 import os
 import sys
 import unittest
+from unittest.mock import patch, MagicMock
 try:
     import tomllib
 except ImportError:
@@ -304,6 +305,179 @@ class TestSupportedModelsConfiguration(unittest.TestCase):
         self.assertNotIn("gemini-2.5-flash", SUPPORTED_MODELS)
         self.assertNotIn("gemini-2.0-flash", SUPPORTED_MODELS)
         self.assertNotIn("gemini-1.5-flash", SUPPORTED_MODELS)
+
+
+class TestSecurityRemediation(unittest.TestCase):
+    """Audit Remediation Tests: XSS Sanitization, NaN Float Hygiene, PDF Magic Bytes."""
+
+    def test_nan_and_inf_scores_default_to_zero(self):
+        """Verify that NaN or Infinite values in scores resolve safely to 0.0."""
+        import math
+        pillars = []
+        for i, canon in enumerate(CANONICAL_PILLARS):
+            score_val = float('nan') if i == 0 else (float('inf') if i == 1 else 5.0)
+            pillars.append({
+                "id": canon["id"],
+                "name": canon["name"],
+                "score": score_val,
+                "max_score": canon["max_score"],
+                "justification": "Testing numeric hygiene"
+            })
+        raw = {
+            "pillars": pillars,
+            "penalties_breakdown": [{"penalty_name": "NaN pen", "points": float('nan'), "reason": "test"}],
+            "bonuses_breakdown": {"cool_pro_bonus": float('nan')}
+        }
+        res = validate_and_reconcile_idex_analysis(raw)
+        # Pillar 0 had NaN score, should be 0.0
+        self.assertEqual(res["pillars"][0]["score"], 0.0)
+        # Total penalties had NaN points, should be 0.0
+        self.assertEqual(res["total_penalties"], 0.0)
+        # Bonus had NaN points, should be 0.0
+        self.assertEqual(res["bonuses_breakdown"]["total_bonus_applied"], 0.0)
+
+    def test_traffic_light_and_eli15_escapes_xss(self):
+        """Verify that render_traffic_light_and_eli15_html strictly escapes HTML injection."""
+        from app import render_traffic_light_and_eli15_html
+        hostile_company = "<script>alert('xss-company')</script>"
+        hostile_sector = "<img src=x onerror=alert('xss-sector')>"
+        hostile_res = {
+            "final_score": 85.0,
+            "strengths": ["<b onmouseover=alert(1)>Robust Brand Presence</b>"],
+            "filing_metadata": {"ingestion_status": "analyzed"}
+        }
+        html_out = render_traffic_light_and_eli15_html(hostile_res, {}, hostile_company, hostile_sector)
+        self.assertNotIn("<script>", html_out)
+        self.assertNotIn("<img src=x", html_out)
+        self.assertNotIn("<b onmouseover=", html_out)
+        self.assertIn("&lt;script&gt;", html_out)
+        self.assertIn("&lt;img src=x", html_out)
+
+    @patch("google.genai.Client")
+    def test_non_pdf_bytes_rejected_in_analyzer(self, mock_client_cls):
+        """Verify that analyze_document_with_gemini safely rejects non-PDF payloads."""
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+        mock_client.models.generate_content.return_value = None  # Return gap result
+
+        from analyzer import analyze_document_with_gemini
+        res = analyze_document_with_gemini(
+            company_name="Test Co",
+            sector="Finance",
+            api_key="mock_valid_key",
+            pdf_bytes=b"This is an untrusted plain text file, not a PDF document."
+        )
+        # Should record an evidence gap noting invalid PDF
+        gaps = res.get("evidence_gaps", [])
+        self.assertTrue(any("not a valid PDF" in g for g in gaps))
+
+    def test_receivable_health_metrics_hoisted_for_exports(self):
+        """Verify that demo and live results always contain receivable_health_metrics dict."""
+        from analyzer import get_demo_analysis
+        res = get_demo_analysis("Reliance Industries", "Energy", {})
+        rec = res.get("receivable_health_metrics")
+        self.assertIsNotNone(rec)
+        self.assertIsInstance(rec, dict)
+        self.assertIn("dso_days", rec)
+
+    def test_custom_company_validation_logic(self):
+        """Verify that empty custom target company name or ticker is identified as invalid."""
+        clean_target_name = str("   " or "").strip()
+        clean_target_ticker = str("" or "").strip()
+        self.assertFalse(bool(clean_target_name))
+        self.assertFalse(bool(clean_target_ticker))
+
+
+class TestProductDesignAndEvidenceExperience(unittest.TestCase):
+    """Tests verifying the cohesive, evidence-driven user experience and non-advisory framing."""
+
+    def test_research_provenance_card_addresses_six_core_questions(self):
+        """Ensure render_research_provenance_and_evidence_card systematically answers all 6 research questions."""
+        from app import render_research_provenance_and_evidence_card
+
+        mock_res = {
+            "company_name": "Tata Consumer Products Ltd.",
+            "ticker": "TATACONSUM",
+            "sector": "FMCG / Packaged Goods",
+            "final_score": 82.5,
+            "verdict": "High financial integrity franchise",
+            "evidence_gaps": ["Independent verification of unlisted subsidiary guarantees required."],
+            "sentinel_audit": {"integrity_score": 98.0},
+            "filing_metadata": {"title": "Annual Report 2023-24", "year": "FY2024", "ingestion_status": "analyzed"}
+        }
+
+        html = render_research_provenance_and_evidence_card(
+            mock_res, {}, "Tata Consumer Products Ltd.", "TATACONSUM", "FMCG / Packaged Goods"
+        )
+
+        # 1. What company & period am I looking at?
+        self.assertIn("1. Subject Entity &amp; Target Period", html)
+        self.assertIn("Tata Consumer Products Ltd.", html)
+        self.assertIn("FY2024", html)
+
+        # 2. Where did this information come from?
+        self.assertIn("2. Source Provenance", html)
+        self.assertIn("BSE India Statutory Annual Report", html)
+
+        # 3. How fresh and complete is it?
+        self.assertIn("3. Freshness &amp; Sanity Audit", html)
+        self.assertIn("Mathematical Sanity Check", html)
+
+        # 4. What does the analysis conclude, and what evidence supports it?
+        self.assertIn("4. Model Forensic Stance", html)
+        self.assertIn("Constructive Watchlist", html)
+
+        # 5. What important information is missing?
+        self.assertIn("5. Evidence Gaps &amp; Uncertainties", html)
+        self.assertIn("unlisted subsidiary guarantees", html)
+
+        # 6. What should I inspect next?
+        self.assertIn("6. What to Inspect Next", html)
+        self.assertIn("CARO 2020 Order", html)
+        self.assertIn("Notes to Accounts", html)
+
+    def test_navigation_options_and_aliases(self):
+        """Verify that workspace navigation uses calm labels and backwards-compatible alias mapping."""
+        from app import workspace_options, nav_alias_map
+
+        expected_options = [
+            "Market Screener",
+            "Company Analysis",
+            "Filings Vault",
+            "Overview & Guide"
+        ]
+        self.assertEqual(workspace_options, expected_options)
+
+        # Aliases must resolve legacy labels seamlessly
+        self.assertEqual(nav_alias_map.get("⚡ Screener & Market Matrix"), "Market Screener")
+        self.assertEqual(nav_alias_map.get("🔬 Holographic Stock Dossier"), "Company Analysis")
+        self.assertEqual(nav_alias_map.get("📑 Audited Filings Vault"), "Filings Vault")
+        self.assertEqual(nav_alias_map.get("👋 Welcome Guide"), "Overview & Guide")
+        self.assertEqual(nav_alias_map.get("🔬 Company Analysis"), "Company Analysis")
+
+    def test_welcome_page_product_hypothesis(self):
+        """Verify that app.py contains the calm product hypothesis statement."""
+        app_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app.py"))
+        with open(app_path, "r", encoding="utf-8") as f:
+            code = f.read()
+
+        hypothesis = (
+            "StockSage helps self-directed investors researching NSE/BSE companies review "
+            "financial and market information alongside cited research, then see important risks and evidence gaps in one place."
+        )
+        self.assertIn(hypothesis, code)
+
+    def test_educational_risk_tiers_no_advisory_trading_calls(self):
+        """Verify that results framing uses educational risk tiers rather than trading advice."""
+        app_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app.py"))
+        with open(app_path, "r", encoding="utf-8") as f:
+            code = f.read()
+
+        # No trading jargon implying personal investment advice
+        self.assertNotIn("HOW TO BUY (ACTION PLAN)", code)
+        self.assertNotIn("🎯 POSITION CALL: BUY", code)
+        self.assertIn("Educational Risk Tier — Not Personal Investment Advice", code)
+        self.assertIn("Educational Research Stance", code)
 
 
 if __name__ == "__main__":

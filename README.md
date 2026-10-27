@@ -1,26 +1,26 @@
-# 🇮🇳 StockSage / Project KUSHA — Institutional Equity Research & Forensic Intelligence Terminal
+# 🇮🇳 StockSage / Project KUSHA — Equity Research & Forensic Screening Terminal
 
-StockSage is an institutional-grade equity intelligence terminal designed for evaluating Indian NSE/BSE listed companies. It pairs automated data consistency checks and third-party market data feeds with the 8-Pillar IDEX-7.5SC evaluation framework powered by Google Gemini.
+StockSage is an equity intelligence and forensic screening terminal designed for evaluating Indian NSE/BSE listed companies. It pairs automated data consistency checks and public market data feeds with the 8-Pillar IDEX-7.5SC evaluation framework powered by Google Gemini.
 
 ---
 
-## 🏛️ The 8-Pillar IDEX-7.5SC Framework (Core Score: 100 Max)
+## 🏛️ The 8-Pillar IDEX-7.5SC Framework (Core Score: 0–100)
 
-StockSage scores companies deterministically across 8 canonical pillars:
+StockSage evaluates companies deterministically across 8 canonical vectors:
 
-1. **Governance & Capital Allocation (Max: 20.0 pts)** — Promoter integrity, capital reinvestment discipline, board independence, dilution control, and M&A track record.
-2. **Forensic Accounting & Cash Flow (Max: 20.0 pts)** — Cash flow conversion (CFO vs PAT), accrual quality, working capital sanity, and embedded **Sector-Specific Receivable Health Layer** (DSO, aging >90 days, provision coverage).
-3. **Risk, ESG & Fragility (Max: 12.0 pts)** — Balance sheet leverage (Net Debt/EBITDA), debt service coverage, environmental/litigation exposure, and raw material volatility.
-4. **Valuation & Sanity Layer (Max: 6.0 pts)** — Relative valuation multiples (P/E, EV/EBITDA, P/B), DCF margin of safety, and operational stress testing.
-5. **Moat Durability & Scalability (Max: 13.0 pts)** — Pricing power, distribution reach, network effects, cost advantage, and brand durability.
-6. **Simplicity & Repeatability (Max: 5.0 pts)** — Business clarity, revenue predictability, subsidiary hygiene, and low execution complexity.
-7. **Innovation & TAM Optionality (Max: 18.0 pts)** — R&D velocity, new market adjacency expansion, and addressable total market optionality.
-8. **Insider & Minority Shareholder Risk (Max: 6.0 pts)** — Promoter share pledging (PPRM), insider transactions, and related-party transaction (RPT) transparency.
+1. **Governance & Capital Allocation** — Promoter integrity, capital reinvestment discipline, board independence, dilution control, and M&A track record.
+2. **Forensic Accounting & Cash Flow** — Cash flow conversion (CFO vs PAT), accrual quality, working capital sanity, and embedded **Sector-Specific Receivable Health Layer** (DSO, aging >90 days, provision coverage).
+3. **Risk, ESG & Fragility** — Balance sheet leverage (Net Debt/EBITDA), debt service coverage, environmental/litigation exposure, and raw material volatility.
+4. **Valuation & Sanity Layer** — Relative valuation multiples (P/E, EV/EBITDA, P/B), DCF margin of safety corridors, and operational stress testing.
+5. **Moat Durability & Scalability** — Pricing power, distribution reach, network effects, cost advantage, and brand durability.
+6. **Simplicity & Repeatability** — Business clarity, revenue predictability, subsidiary hygiene, and low execution complexity.
+7. **Innovation & TAM Optionality** — R&D velocity, new market adjacency expansion, and addressable total market optionality.
+8. **Insider & Minority Shareholder Risk** — Promoter share pledging (PPRM), insider transactions, and related-party transaction (RPT) transparency.
 
 ### Deterministic Application Guardrails
-- **Promoter Integrity Override (PIO)**: Hard triggers (auditor resignations, SEBI/regulatory enforcement, material RPT misuse, or promoter pledging >50%) automatically clamp Governance to $\le 6.0/20$, revoke all bonuses, enforce `GOV-RED 🔴`, and cap the score in fragile territory (<50.0).
-- **Penalty Cap**: Risk deductions are deterministically capped at `-7.5` points maximum.
-- **Bonus Cap**: Trajectory and resilience bonuses are deterministically capped at `+10%` of core score (+10.0 points maximum).
+- **Promoter Integrity Override (PIO)**: Hard distress triggers (auditor qualifications/resignations, regulatory enforcement, material RPT misuse, or excessive promoter share pledging) automatically trigger a governance circuit breaker, revoke upside bonuses, enforce `GOV-RED 🔴`, and clamp the overall score into high-risk territory.
+- **Controlled Penalty & Bonus Curves**: Risk deductions and trajectory bonuses are mathematically bounded to prevent outsized distortions and eliminate black-box volatility.
+- **Trade Secret Protection**: Exact algorithmic weights, penalty multipliers, and non-linear scoring curves are compiled under internal IP safeguards.
 
 ---
 
@@ -114,5 +114,7 @@ StockSage supports Google Gemini models configurable directly from the sidebar:
 
 ---
 
-## ⚖️ Disclaimer
-StockSage is an educational and analytical research software tool. All valuations, scores, ratings, and estimates are generated algorithmically and do not constitute financial, investment, legal, tax, or accounting advice. Always consult a qualified SEBI-registered financial advisor before making investment decisions.
+## ⚖️ Regulatory Notice & Disclaimer
+StockSage / Project KUSHA is an automated analytical research and educational technology prototype. It is NOT registered with the Securities and Exchange Board of India (SEBI) as an Investment Adviser (under IA Regulations, 2013) or Research Analyst (under RA Regulations, 2014).
+
+All valuations, scores, ratings, traffic-light badges, and estimates are generated algorithmically for screening purposes and do NOT constitute financial, investment, legal, tax, or accounting advice. Always consult a qualified SEBI-registered financial advisor before making capital allocation decisions.

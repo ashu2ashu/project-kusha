@@ -414,22 +414,22 @@ class ForensicRiskEngine:
         elif de_val is not None:
             if float(de_val) <= 0.3:
                 cra_status = "PASS"
-                cra_rating = "INVESTMENT GRADE (Debt-Free Model)"
-                cra_detail = f"Virtually debt-free balance sheet (D/E: {float(de_val):.2f}x). Zero structural refinancing risk."
+                cra_rating = "SOLVENT (Low-Debt Model)"
+                cra_detail = f"Solvency Proxy: Low leverage balance sheet (D/E: {float(de_val):.2f}x). Ratio proxy, not rating agency certification."
             elif float(de_val) <= 0.8:
                 cra_status = "MONITOR"
                 cra_rating = "MODERATE LEVERAGE"
-                cra_detail = f"Manageable leverage (D/E: {float(de_val):.2f}x). Fully serviceable from operating cash."
+                cra_detail = f"Solvency Proxy: Manageable leverage (D/E: {float(de_val):.2f}x). Fully serviceable from operating cash."
             else:
                 cra_status = "CRITICAL"
                 cra_rating = "HIGH LEVERAGE"
                 forensic_penalties += 12.0
                 critical_red_flags.append(f"Excessive Leverage (D/E {float(de_val):.2f}x)")
-                cra_detail = f"Elevated leverage: D/E is {float(de_val):.2f}x; vulnerable to debt refinancing stress."
+                cra_detail = f"Solvency Proxy: Elevated leverage (D/E: {float(de_val):.2f}x); vulnerable to debt refinancing stress."
         else:
             cra_status = "PASS"
-            cra_rating = "INVESTMENT GRADE"
-            cra_detail = "Conservative debt posture with low risk of credit covenant breach."
+            cra_rating = "CONSERVATIVE POSTURE"
+            cra_detail = "Solvency Proxy: Conservative debt posture indicated by available balance sheet filings."
 
         checks.append({
             "id": "FOR_06_CREDIT_RATING_SOLVENCY",

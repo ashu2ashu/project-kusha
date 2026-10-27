@@ -6,3 +6,16 @@ __pycache__/
 .streamlit/secrets.toml
 .DS_Store
 scratch/
+*.pem
+*.key
+*.p12
+*.crt
+credentials.json
+client_secrets*.json
+service_account*.json
+*.log
+*.bak
+*.swp
+.pytest_cache/
+.coverage
+htmlcov/

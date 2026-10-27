@@ -392,6 +392,7 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
         if fcf_raw is not None and float(fcf_raw) > 0:
             fcf_float = float(fcf_raw)
             cmp_to_fcf = round((mcap / fcf_float), 1) if mcap else None
+            # Approximates a 5-year run-rate projection from single-year TTM FCF
             fcf_5y_cr = round((fcf_float / 1e7) * 5, 0)
         else:
             cmp_to_fcf = None
@@ -511,55 +512,92 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
 
 
 def fetch_live_indices_data() -> List[Dict[str, Any]]:
-    """Fetch live quotes for major Indian benchmark indices."""
+    """Fetch quotes for major Indian benchmark indices with resilient fallback."""
     indices_def = [
-        ("NIFTY 50", "^NSEI", "🇮🇳"),
-        ("SENSEX", "^BSESN", "🏛️"),
-        ("BANK NIFTY", "^NSEBANK", "🏦"),
-        ("NIFTY IT", "^CNXIT", "💻")
+        ("NIFTY 50", "^NSEI", "🇮🇳", 24350.0, -45.0, -0.18, 24450.0, 24300.0),
+        ("SENSEX", "^BSESN", "🏛️", 80150.0, -120.0, -0.15, 80400.0, 80000.0),
+        ("BANK NIFTY", "^NSEBANK", "🏦", 51800.0, -210.0, -0.40, 52100.0, 51700.0),
+        ("NIFTY IT", "^CNXIT", "💻", 38200.0, 110.0, 0.29, 38400.0, 38100.0)
     ]
-    syms = [s for _, s, _ in indices_def]
+    syms = [s for _, s, _, _, _, _, _, _ in indices_def]
+    out_map: Dict[str, Dict[str, Any]] = {}
+    
+    # 1. Batch download attempt
     try:
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df = yf.download(syms, period="5d", progress=False)
-            close_df = df["Close"]
-            high_df = df["High"]
-            low_df = df["Low"]
+            close_df = df.get("Close")
+            high_df = df.get("High")
+            low_df = df.get("Low")
             
-            out = []
-            for name, sym, icon in indices_def:
-                if sym in close_df:
-                    s_series = close_df[sym].dropna()
-                    if len(s_series) >= 2:
-                        cur = float(s_series.iloc[-1])
-                        prev = float(s_series.iloc[-2])
-                        chg = cur - prev
-                        pct = (chg / prev) * 100
-                        hi = float(high_df[sym].dropna().iloc[-1])
-                        lo = float(low_df[sym].dropna().iloc[-1])
-                        out.append({
-                            "name": name,
-                            "symbol": sym,
-                            "icon": icon,
-                            "cur": cur,
-                            "chg": chg,
-                            "pct": pct,
-                            "hi": hi,
-                            "lo": lo
-                        })
-            if len(out) == len(indices_def):
-                return out
+            if close_df is not None:
+                for name, sym, icon, _, _, _, _, _ in indices_def:
+                    if sym in close_df:
+                        s_series = close_df[sym].dropna()
+                        if len(s_series) >= 2:
+                            cur = float(s_series.iloc[-1])
+                            prev = float(s_series.iloc[-2])
+                            chg = cur - prev
+                            pct = (chg / prev) * 100
+                            hi = float(high_df[sym].dropna().iloc[-1]) if high_df is not None and sym in high_df else cur
+                            lo = float(low_df[sym].dropna().iloc[-1]) if low_df is not None and sym in low_df else cur
+                            out_map[sym] = {
+                                "name": name,
+                                "symbol": sym,
+                                "icon": icon,
+                                "cur": cur,
+                                "chg": chg,
+                                "pct": pct,
+                                "hi": hi,
+                                "lo": lo
+                            }
     except Exception:
         pass
-        
-    return [
-        {"name": "NIFTY 50", "symbol": "^NSEI", "icon": "🇮🇳", "cur": 22600.0, "chg": -87.65, "pct": -0.39, "hi": 22680.0, "lo": 22540.0},
-        {"name": "SENSEX", "symbol": "^BSESN", "icon": "🏛️", "cur": 73123.8, "chg": -125.56, "pct": -0.17, "hi": 73300.0, "lo": 72950.0},
-        {"name": "BANK NIFTY", "symbol": "^NSEBANK", "icon": "🏦", "cur": 54287.3, "chg": -638.35, "pct": -1.16, "hi": 54800.0, "lo": 54100.0},
-        {"name": "NIFTY IT", "symbol": "^CNXIT", "icon": "💻", "cur": 31995.5, "chg": -85.75, "pct": -0.27, "hi": 32150.0, "lo": 31850.0}
-    ]
+
+    # 2. Resilient individual fallback for any missing index
+    for name, sym, icon, def_cur, def_chg, def_pct, def_hi, def_lo in indices_def:
+        if sym not in out_map:
+            try:
+                t = yf.Ticker(sym)
+                fi = t.fast_info
+                cur = fi.get("lastPrice") or fi.get("regularMarketPreviousClose")
+                prev = fi.get("previousClose") or cur
+                if cur and prev:
+                    cur = float(cur)
+                    prev = float(prev)
+                    chg = cur - prev
+                    pct = (chg / prev) * 100 if prev else 0.0
+                    hi = float(fi.get("dayHigh") or cur)
+                    lo = float(fi.get("dayLow") or cur)
+                    out_map[sym] = {
+                        "name": name,
+                        "symbol": sym,
+                        "icon": icon,
+                        "cur": cur,
+                        "chg": chg,
+                        "pct": pct,
+                        "hi": hi,
+                        "lo": lo
+                    }
+                    continue
+            except Exception:
+                pass
+            
+            # Static reference if completely unreachable
+            out_map[sym] = {
+                "name": name,
+                "symbol": sym,
+                "icon": icon,
+                "cur": def_cur,
+                "chg": def_chg,
+                "pct": def_pct,
+                "hi": def_hi,
+                "lo": def_lo
+            }
+            
+    return [out_map[sym] for _, sym, _, _, _, _, _, _ in indices_def]
 
 
 def fetch_marquee_stocks_data() -> List[Dict[str, Any]]:

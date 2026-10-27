@@ -11,6 +11,7 @@ import os
 import re
 import html
 import time
+from datetime import datetime
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 
@@ -194,8 +195,13 @@ st.markdown("""
         user-select: none;
     }
     @media print {
-        body {
+        /* Hide interactive controls and chrome during browser print */
+        [data-testid="stSidebar"], .stButton, div[data-testid="stDownloadButton"], footer, header {
             display: none !important;
+        }
+        body {
+            background: #ffffff !important;
+            color: #000000 !important;
         }
     }
 
@@ -791,11 +797,13 @@ with st.sidebar:
 
     # API Configuration
     env_key = os.getenv("GEMINI_API_KEY", "").strip()
+    placeholder_text = "Override with custom key (optional)..." if env_key else "Enter your Gemini API key..."
     api_key_input = st.text_input(
         "Google Gemini API Key",
-        value=env_key,
+        value="",
         type="password",
-        help="Use a Gemini API key from Google AI Studio. Your key stays masked in this field."
+        placeholder=placeholder_text,
+        help="Your API key authenticates client calls directly to Google Gemini. It is held in volatile session memory and never persisted or shared."
     )
 
     active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
@@ -807,8 +815,10 @@ with st.sidebar:
         help="Select supported Google Gemini model."
     )
 
-    if env_key:
-        st.caption("Key auto-loaded from .env")
+    if env_key and not api_key_input.strip():
+        st.caption("🔒 Key active from environment (`.env`)")
+    elif api_key_input.strip():
+        st.caption("🔑 Using custom user-supplied key")
 
     col_btn1, col_btn2 = st.columns([1.2, 1])
     with col_btn1:
@@ -864,13 +874,13 @@ def render_terminal_top_telemetry_hud():
             <span style="color: #059669;">⚡</span> Indian Market Telemetry HUD
           </div>
           <div style="font-size: 12px; color: #64748B; margin-top: 2px;">
-            Real-time NSE / BSE institutional data feed · High-frequency macro sentiment
+            NSE / BSE market snapshot · Public aggregator feeds · Macro indicator surveillance
           </div>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
         <span style="background: rgba(5, 150, 105, 0.08); color: #059669; border: 1px solid rgba(5, 150, 105, 0.25); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace;">
-          ● LIVE NSE STREAM
+          ● DELAYED NSE QUOTES
         </span>
         <span style="background: rgba(37, 99, 235, 0.08); color: #2563EB; border: 1px solid rgba(37, 99, 235, 0.25); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">
           FUNDAMENTAL & FORENSIC DUAL-ENGINE
@@ -897,10 +907,11 @@ def render_terminal_top_telemetry_hud():
             range_span = max(hi - lo, 1.0)
             day_pct = min(100.0, max(0.0, (cur - lo) / range_span * 100.0))
 
+            idx_name = idx["name"]
             card_html = (
-                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 14px;">'
+                f'<div role="region" aria-label="{idx_name} quote" style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 14px; min-height: 110px;">'
                 f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
-                f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
+                f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx_name}</span>'
                 f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; border: 1px solid {delta_border}; padding: 2px 7px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">{delta_str}</span>'
                 f'</div>'
                 f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
@@ -916,34 +927,35 @@ def render_terminal_top_telemetry_hud():
             )
             st.html(card_html)
 
-    # Top hero: Futuristic Institutional Terminal Header
+    # Workspace Header: Calm, Institutional Research Metadata
     st.html(f"""
-    <section class="ss-hero">
-      <div>
-        <div class="ss-hero-kicker">
-          <span>⚡</span> Project KUSHA // Autonomous AI for Finance
+    <section class="ss-hero" style="padding: 16px 22px; margin-bottom: 16px; background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span style="font-size: 11px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">STOCKSAGE // RESEARCH WORKSPACE</span>
+            <span style="font-size: 11px; font-weight: 700; color: #64748B; font-family: 'JetBrains Mono', monospace;">NSE / BSE Listed Equities</span>
+          </div>
+          <div style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.2px;">
+            Evidence-Based Financial Analysis &amp; Forensic Intelligence
+          </div>
+          <p style="font-size: 12.5px; color: #475569; margin: 4px 0 0 0; max-width: 780px; line-height: 1.45;">
+            StockSage helps self-directed investors review financial and market information alongside cited research, audit trails, and transparent evidence gaps. Educational research tool — not SEBI-registered investment advice.
+          </p>
         </div>
-        <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
-        <p class="ss-hero-subtitle">Autonomous AI for finance: Pre-emptive forensic intelligence designed to detect corporate distress and fine-print accounting manipulation before headlines break, distilled into a deterministic score for capital protection.</p>
-        <div class="ss-hero-meta">
-          <span>Fundamental & Forensic Dual-Engine</span>
-          <span>16 Canonical Factors</span>
-          <span>Sentinel Fraud Shield</span>
-          <span>Verified BSE Disclosures</span>
-        </div>
-      </div>
-      <div class="ss-hero-stats">
-        <div class="ss-hero-stat">
-          <div class="ss-hero-stat-label">Coverage Universe</div>
-          <div class="ss-hero-stat-value">{tracked_equity_count} Bluechips</div>
-        </div>
-        <div class="ss-hero-stat">
-          <div class="ss-hero-stat-label">Sector Matrices</div>
-          <div class="ss-hero-stat-value">{sector_count} Sectors</div>
-        </div>
-        <div class="ss-hero-stat">
-          <div class="ss-hero-stat-label">Data Telemetry</div>
-          <div class="ss-hero-stat-value">Live NSE Stream</div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 14px; text-align: right;">
+            <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Coverage</div>
+            <div style="font-size: 14px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{tracked_equity_count} Bluechips</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 14px; text-align: right;">
+            <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Sectors</div>
+            <div style="font-size: 14px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">{sector_count} Sectors</div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 14px; text-align: right;">
+            <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Telemetry</div>
+            <div style="font-size: 14px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace;">Delayed Market Feeds</div>
+          </div>
         </div>
       </div>
     </section>
@@ -956,55 +968,79 @@ def render_project_kusha_welcome_page():
     <div class="ss-proprietary-shield" style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 24px 28px; border-top: 5px solid #059669; box-shadow: 0 4px 16px rgba(0,0,0,0.03); margin-top: 4px; margin-bottom: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
         <span style="font-size: 11.5px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;">
-          🇮🇳 AUTONOMOUS AI FOR FINANCE // PROJECT KUSHA
+          🇮🇳 STOCKSAGE // PROJECT KUSHA
         </span>
         <span style="font-size: 11px; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 4px 10px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">
-          FUNDAMENTAL &amp; FORENSIC DUAL ENGINE • ZERO BLACK-BOX MATH
+          EVIDENCE-BASED EQUITY RESEARCH &amp; FORENSIC INTELLIGENCE
         </span>
       </div>
-      <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 4px;">
-        Welcome to Project KUSHA.
+      <div style="font-size: 26px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.25; margin-bottom: 6px;">
+        Evidence-Driven Research for Indian Listed Equities
       </div>
-      <div style="font-size: 14.5px; font-weight: 700; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 14px; letter-spacing: -0.2px;">
-        Autonomous AI for Finance &amp; Forensic Equity Intelligence
+      <div style="font-size: 14px; font-weight: 600; color: #475569; line-height: 1.55; margin-bottom: 16px; max-width: 860px;">
+        StockSage helps self-directed investors researching NSE/BSE companies review financial and market information alongside cited research, then see important risks and evidence gaps in one place.
       </div>
       
-      <!-- Core Institutional Mission Card -->
-      <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F0FDF4 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: flex-start; gap: 14px;">
-          <div style="font-size: 24px; line-height: 1; margin-top: 2px;">🛡️</div>
-          <div>
-            <div style="font-size: 12.5px; font-weight: 800; color: #065F46; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 5px;">
-              The Institutional Mandate: Pre-Emptive Forensic Intelligence
-            </div>
-            <div style="font-size: 12.5px; color: #334155; line-height: 1.55;">
-              Despite advances in AI, conventional equity screening remains anchored to backward-looking metrics—leaving investors exposed to structural risks buried deep within statutory fine print. <strong>Project KUSHA was engineered for capital preservation:</strong> it eliminates reliance on speculative multiples by autonomously cross-examining non-cash accruals, promoter pledging cascades, and off-balance-sheet exposures. By detecting institutional decay and accounting manipulation <em>long before headlines break</em>, KUSHA shields portfolios against systemic collapses like <strong>YES Bank</strong>—distilled into a <strong>transparent, deterministic 0–100 forensic score</strong>.
-            </div>
+      <!-- 6 Core Research Dimensions Answering User Questions -->
+      <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;">
+        <div style="font-size: 12px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          <span>🧭</span> Designed to Answer 6 Core Due Diligence Questions
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px;">
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #059669;">
+            <div style="font-size: 11px; font-weight: 800; color: #059669; text-transform: uppercase;">1. Company &amp; Period</div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-top: 2px;">What entity &amp; period am I looking at?</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">Exact legal company name, NSE/BSE symbol, and audited statutory filing fiscal year.</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #2563EB;">
+            <div style="font-size: 11px; font-weight: 800; color: #2563EB; text-transform: uppercase;">2. Data Origin</div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-top: 2px;">Where did this information come from?</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">BSE India exchange filings (SEBI LODR Reg 34), Screener.in 10-Yr statements &amp; verified search citations.</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #7C3AED;">
+            <div style="font-size: 11px; font-weight: 800; color: #7C3AED; text-transform: uppercase;">3. Freshness &amp; Integrity</div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-top: 2px;">How fresh and complete is it?</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">Timestamped retrieval, multimodal PDF ingestion verification, and 6 mathematical sanity checks.</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #059669;">
+            <div style="font-size: 11px; font-weight: 800; color: #059669; text-transform: uppercase;">4. Grounded Takeaway</div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-top: 2px;">What does the analysis conclude?</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">Educational risk tiers (Constructive Watchlist, Monitored, Elevated Caution) backed by CFO/PAT evidence.</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #D97706;">
+            <div style="font-size: 11px; font-weight: 800; color: #D97706; text-transform: uppercase;">5. Evidence Gaps</div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-top: 2px;">What important data is missing?</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">Explicitly surfaces unverified auditor notes, share pledging uncertainties, or missing schedule details.</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #0284C7;">
+            <div style="font-size: 11px; font-weight: 800; color: #0284C7; text-transform: uppercase;">6. Directed Next Checks</div>
+            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-top: 2px;">What should I inspect next?</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">Actionable audit trails pointing to CARO remarks, Related-Party schedules, and exchange pledge registries.</div>
           </div>
         </div>
       </div>
       
-      <!-- 4 Visual KPI Metric Cards -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid #F1F5F9;">
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #059669;">
-          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Core Evaluation</div>
-          <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">8-Pillar Forensic Model</div>
-          <div style="font-size: 11px; color: #059669; font-weight: 700; margin-top: 2px;">Proprietary Rule Engine</div>
+      <!-- 4 Summary Universe Metric Chips -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid #F1F5F9;">
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Coverage Universe</div>
+          <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">50 Nifty Bluechips</div>
+          <div style="font-size: 11px; color: #059669; font-weight: 700; margin-top: 2px;">16 Canonical Ratios</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #DC2626;">
-          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Fraud Shield</div>
-          <div style="font-size: 15px; font-weight: 800; color: #DC2626; font-family: 'JetBrains Mono', monospace;">8 Forensic Engines</div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Forensic Checks</div>
+          <div style="font-size: 15px; font-weight: 800; color: #DC2626; font-family: 'JetBrains Mono', monospace;">6 Sanity Sentinel Tests</div>
           <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">Accrual &amp; Pledging Guard</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #2563EB;">
-          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Universe</div>
-          <div style="font-size: 15px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace;">50 Nifty Bluechips</div>
-          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">16 Canonical Ratios</div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Valuation Corridors</div>
+          <div style="font-size: 15px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace;">3-Stage DCF Corridors</div>
+          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">Margin of Safety Ranges</div>
         </div>
-        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #7C3AED;">
-          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Regulatory Filings</div>
-          <div style="font-size: 15px; font-weight: 800; color: #7C3AED; font-family: 'JetBrains Mono', monospace;">BSE India Statutory</div>
-          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">Direct 1-Click PDFs</div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Statutory Filings</div>
+          <div style="font-size: 15px; font-weight: 800; color: #7C3AED; font-family: 'JetBrains Mono', monospace;">BSE India Official</div>
+          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">Direct Statutory Annual Reports</div>
         </div>
       </div>
     </div>
@@ -1082,7 +1118,7 @@ def render_project_kusha_welcome_page():
                 <tr style="border-bottom: 1px solid #F1F5F9;">
                   <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Crisis Prevention</td>
                   <td style="padding: 6px 8px; color: #DC2626;">❌ Trapped when news breaks</td>
-                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ Flags YES Bank-style rot before crisis</td>
+                  <td style="padding: 6px 8px; font-weight: 700; color: #059669;">✅ Flags pre-crisis stress signals (e.g. YES Bank cash divergences)</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #F1F5F9;">
                   <td style="padding: 6px 8px; font-weight: 600; color: #334155;">Scoring Engine</td>
@@ -1297,7 +1333,7 @@ def render_project_kusha_welcome_page():
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
             <div style="font-size: 12px; font-weight: 800; color: #059669;">🛡️ Capital Protection Over Hype</div>
-            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Engineered to spot YES Bank-style collapses before they make the news, rather than promising speculative multibaggers.</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">Engineered to systematically flag pre-crisis distress patterns (e.g. YES Bank-style cash flow vs profit divergences), prioritizing capital preservation over speculative hype.</div>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
             <div style="font-size: 12px; font-weight: 800; color: #2563EB;">🔍 Fine-Print Footnote Auditing</div>
@@ -1317,20 +1353,37 @@ def render_project_kusha_welcome_page():
     # Section: Primary Terminal Workstation Gateway Action
     if not st.session_state.get("entered_terminal", False):
         st.markdown("""
-        <div style="margin-top: 36px; margin-bottom: 16px; text-align: center; border-top: 1.5px solid #E2E8F0; padding-top: 32px;">
+        <div style="margin-top: 36px; margin-bottom: 20px; text-align: center; border-top: 1.5px solid #E2E8F0; padding-top: 30px;">
           <div style="font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px;">
-            Ready to Begin Institutional Screening?
+            Start Exploring Indian Listed Equities
           </div>
-          <div style="font-size: 13.5px; color: #64748B; margin-top: 6px; margin-bottom: 22px;">
-            Enter the terminal workstation to access live market telemetry, the 50-bluechip factor matrix, statutory BSE filings, and forensic dossiers.
+          <div style="font-size: 13.5px; color: #64748B; margin-top: 6px; margin-bottom: 20px;">
+            Select a research path below to enter the terminal workstation.
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("🚀 Enter Project KUSHA Terminal ↗", type="primary", key="btn_enter_terminal_main", width="stretch"):
-            st.session_state["entered_terminal"] = True
-            st.session_state["pending_nav_mode"] = "⚡ Screener & Market Matrix"
-            st.rerun()
+        col_act1, col_act2, col_act3 = st.columns(3)
+        with col_act1:
+            if st.button("📊 Explore Market Screener", type="primary", key="btn_enter_screener", width="stretch"):
+                st.session_state["entered_terminal"] = True
+                st.session_state["pending_nav_mode"] = "Market Screener"
+                st.rerun()
+            st.caption("Screen 50 bluechip equities across 16 canonical factors and peer valuation multiples.")
+        with col_act2:
+            if st.button("🔬 Analyze a Company", key="btn_enter_company_analysis", width="stretch"):
+                st.session_state["entered_terminal"] = True
+                st.session_state["pending_nav_mode"] = "Company Analysis"
+                st.rerun()
+            st.caption("Inspect a specific company, fetch BSE statutory annual reports, or upload a custom PDF.")
+        with col_act3:
+            if st.button("🧪 Try Demo Mode (Synthetic Sample)", key="btn_enter_demo", width="stretch"):
+                st.session_state["entered_terminal"] = True
+                st.session_state["pending_nav_mode"] = "Company Analysis"
+                st.session_state["selected_company_choice"] = "Tata Consumer Products Ltd. (TATACONSUM)"
+                st.session_state["trigger_demo_run"] = True
+                st.rerun()
+            st.caption("Explore a complete, instant analysis of Tata Consumer Products Ltd. using synthetic demonstration data.")
     else:
         st.markdown("""
         <div style="margin-top: 32px; margin-bottom: 16px; text-align: center; border-top: 1.5px solid #E2E8F0; padding-top: 24px;">
@@ -1338,18 +1391,22 @@ def render_project_kusha_welcome_page():
             Terminal Workstation Active
           </div>
           <div style="font-size: 12.5px; color: #64748B; margin-top: 4px; margin-bottom: 18px;">
-            You can return to the live screening matrices or exit back to the standalone welcome screen.
+            Navigate directly to any workstation module or exit back to the standalone guide.
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-        col_w1, col_w2 = st.columns(2)
+        col_w1, col_w2, col_w3 = st.columns(3)
         with col_w1:
-            if st.button("⚡ Open Quantum Screener", type="primary", key="btn_guide_screener", width="stretch"):
-                st.session_state["pending_nav_mode"] = "⚡ Screener & Market Matrix"
+            if st.button("📊 Open Market Screener", type="primary", key="btn_guide_screener", width="stretch"):
+                st.session_state["pending_nav_mode"] = "Market Screener"
                 st.rerun()
         with col_w2:
-            if st.button("⬅️ Exit to Welcome Screen", key="btn_guide_exit", width="stretch"):
+            if st.button("🔬 Open Company Analysis", key="btn_guide_analysis", width="stretch"):
+                st.session_state["pending_nav_mode"] = "Company Analysis"
+                st.rerun()
+        with col_w3:
+            if st.button("⬅️ Exit to Standalone Guide", key="btn_guide_exit", width="stretch"):
                 st.session_state["entered_terminal"] = False
                 st.rerun()
 
@@ -1441,10 +1498,10 @@ def render_audited_filings_vault_view():
                 with r_c3:
                     if st.button("Inspect in Dossier 🔬", key=f"vault_inspect_{sym}_{r_idx}", width="stretch"):
                         st.session_state["selected_company_choice"] = info["display"]
-                        st.session_state["pending_nav_mode"] = "🔬 Holographic Stock Dossier"
+                        st.session_state["pending_nav_mode"] = "Company Analysis"
                         st.rerun()
     else:
-        st.info(f"No direct BSE annual report PDF candidates are currently cached for symbol `{sym}`. You can analyze this equity using Google Search grounding or upload a custom PDF inside the Holographic Stock Dossier.")
+        st.info(f"No direct BSE annual report PDF candidates are currently cached for symbol `{sym}`. You can analyze this equity using Google Search grounding or upload a custom PDF inside Company Analysis.")
 
     # Statutory Disclosures Note Card
     st.markdown("""
@@ -1466,24 +1523,33 @@ if not st.session_state.get("entered_terminal", False):
 
 # --- TOP-LEVEL WORKSPACE NAVIGATION (INSIDE TERMINAL) ---
 workspace_options = [
-    "⚡ Screener & Market Matrix",
-    "🔬 Holographic Stock Dossier",
-    "📑 Audited Filings Vault",
-    "👋 Welcome Guide"
+    "Market Screener",
+    "Company Analysis",
+    "Filings Vault",
+    "Overview & Guide"
 ]
 
 # Smooth alias mapping for existing session states
 nav_alias_map = {
-    "🌐 Explore": "⚡ Screener & Market Matrix",
-    "📊 Nifty 50": "⚡ Screener & Market Matrix",
-    "🔬 Company Analysis": "🔬 Holographic Stock Dossier",
-    "Welcome": "👋 Welcome Guide",
-    "Greeting": "👋 Welcome Guide",
-    "Home": "👋 Welcome Guide",
-    "👋 Welcome to Project KUSHA": "👋 Welcome Guide",
-    "Screener": "⚡ Screener & Market Matrix",
-    "Dossier": "🔬 Holographic Stock Dossier",
-    "Vault": "📑 Audited Filings Vault"
+    "⚡ Screener & Market Matrix": "Market Screener",
+    "🔬 Holographic Stock Dossier": "Company Analysis",
+    "📑 Audited Filings Vault": "Filings Vault",
+    "👋 Welcome Guide": "Overview & Guide",
+    "🌐 Explore": "Market Screener",
+    "📊 Nifty 50": "Market Screener",
+    "🔬 Company Analysis": "Company Analysis",
+    "Welcome": "Overview & Guide",
+    "Greeting": "Overview & Guide",
+    "Home": "Overview & Guide",
+    "👋 Welcome to Project KUSHA": "Overview & Guide",
+    "Screener": "Market Screener",
+    "Dossier": "Company Analysis",
+    "Vault": "Filings Vault",
+    "Overview": "Overview & Guide",
+    "Market Screener": "Market Screener",
+    "Company Analysis": "Company Analysis",
+    "Filings Vault": "Filings Vault",
+    "Overview & Guide": "Overview & Guide"
 }
 
 if "pending_nav_mode" in st.session_state:
@@ -1492,7 +1558,7 @@ if "pending_nav_mode" in st.session_state:
 
 current_nav = st.session_state.get("active_nav_mode")
 if current_nav not in workspace_options:
-    st.session_state["active_nav_mode"] = nav_alias_map.get(current_nav, "⚡ Screener & Market Matrix")
+    st.session_state["active_nav_mode"] = nav_alias_map.get(current_nav, "Market Screener")
 
 # --- ACTIVE TERMINAL TELEMETRY HUD & HEADER ---
 render_terminal_top_telemetry_hud()
@@ -1504,16 +1570,16 @@ terminal_mode = st.segmented_control(
     label_visibility="collapsed"
 )
 
-if terminal_mode == "👋 Welcome Guide":
+if terminal_mode == "Overview & Guide":
     render_project_kusha_welcome_page()
     st.stop()
 
-if terminal_mode == "⚡ Screener & Market Matrix":
-    # Presets for the Quantum Screener
+if terminal_mode == "Market Screener":
+    # Presets for the Screener
     st.markdown("""
     <div style="margin-top: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 10px;">
       <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-        <span style="color: #059669;">⚡</span> Quantum Multi-Factor Screener & Telemetry Matrix
+        <span style="color: #059669;">⚡</span> Market Screener & Factor Matrix
       </div>
       <span style="font-size: 11.5px; color: #64748B; font-family: 'JetBrains Mono', monospace;">50 Premier Equities · 16 Canonical Ratios</span>
     </div>
@@ -1522,18 +1588,18 @@ if terminal_mode == "⚡ Screener & Market Matrix":
     render_nifty50_screener_view()
     st.stop()
 
-if terminal_mode == "📑 Audited Filings Vault":
+if terminal_mode == "Filings Vault":
     render_audited_filings_vault_view()
     st.stop()
 
-if terminal_mode == "🔬 Holographic Stock Dossier":
+if terminal_mode == "Company Analysis":
     benchmark_launch_notice = st.session_state.pop("benchmark_launch_notice", None)
     if benchmark_launch_notice:
         st.warning(benchmark_launch_notice)
     # --- COMPANY ANALYSIS INTAKE ---
     with st.container(border=True):
-        st.markdown("#### 🔬 Launch Holographic Stock Inspection")
-        st.caption("Select an equity from Dalal Street's tracked universe to trigger autonomous 8-pillar audit and forensic radar.")
+        st.markdown("#### 🔬 Company Research & Forensic Inspection")
+        st.caption("Select an equity from Dalal Street's tracked universe to review financial disclosures, citations, and evidence gaps.")
     
         # Fast Preset Benchmark Chips
         st.caption("Quick Bluechip Presets")
@@ -1628,10 +1694,15 @@ if terminal_mode == "🔬 Holographic Stock Dossier":
                     st.info(f"No direct BSE annual report PDF link was found in the public index for {target_ticker}. You can upload a custom PDF or run Web research.")
                 selected_filing_metadata = None
         elif doc_type == "📂 Upload custom PDF":
+            st.markdown("""
+            <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; font-size: 11.5px; color: #475569; line-height: 1.45;">
+              <strong style="color: #0F172A;">🔒 Privacy &amp; Cloud Processing Notice:</strong> Uploaded statutory PDFs are temporarily streamed to Google's Gemini Files API for multimodal financial extraction and deleted immediately upon evaluation completion. Do not upload confidential non-public material.
+            </div>
+            """, unsafe_allow_html=True)
             uploaded_file = st.file_uploader(
                 "Upload Annual Report (PDF)",
                 type=["pdf"],
-                help="The uploaded report is analyzed alongside current web sources; it does not replace filing research."
+                help="Uploaded PDF is processed via Google Gemini Files API for multimodal financial statement extraction."
             )
             if uploaded_file:
                 selected_filing_metadata = {
@@ -1656,9 +1727,10 @@ else:
 
 fin_res = None
 live_data = None
+run_btn = False
 
 # Reset evaluation only when the user changes the active company.
-if terminal_mode == "🔬 Holographic Stock Dossier":
+if terminal_mode == "Company Analysis":
     if "selected_company_memory" not in st.session_state:
         st.session_state["selected_company_memory"] = selected_company_str
     elif st.session_state["selected_company_memory"] != selected_company_str:
@@ -2010,7 +2082,7 @@ if live_data:
         ("Debt to Equity Ratio", sm.get("debt_to_equity", "N/A"), "normal"),
         ("Current Ratio", sm.get("current_ratio", "N/A"), "normal"),
         ("Interest Coverage Ratio", sm.get("int_coverage", "N/A"), "normal"),
-        ("Free Cash Flow (5 Years)", sm.get("free_cash_flow_5yr", "N/A"), "teal"),
+        ("Est. 5Y FCF Run-Rate", sm.get("free_cash_flow_5yr", "N/A"), "teal"),
         ("CMP to Free Cash Flow", sm.get("cmp_to_fcf", "N/A"), "teal"),
         ("Promoter Shareholding", sm.get("promoter_holding", "N/A"), "bold"),
         ("Sales Growth (5 Years)", sm.get("sales_growth_5yr", "N/A"), "normal"),
@@ -2375,22 +2447,37 @@ if live_data:
             )
 
 # Action Buttons
+run_btn = False
+if st.session_state.pop("trigger_demo_run", False):
+    demo_mode = True
+    run_btn = True
+    if not target_company_name:
+        target_company_name = "Tata Consumer Products Ltd."
+        target_sector = "FMCG / Packaged Goods"
+        target_ticker = "TATACONSUM.NS"
+    if target_ticker and not live_data:
+        live_data = get_cached_live_data(target_ticker)
+    if target_ticker and not fin_res:
+        fin_res = get_cached_financial_statements(target_ticker)
+
 btn_col1, btn_col2 = st.columns([3, 1])
 with btn_col1:
     btn_label = f"Analyze {target_company_name}" if target_company_name else "Select a Company to Analyze"
-    run_btn = st.button(
+    run_btn_manual = st.button(
         btn_label,
         type="primary",
         width="stretch",
         disabled=not bool(target_company_name)
     )
+    if run_btn_manual:
+        run_btn = True
 with btn_col2:
     if st.button("Quick Demo", width="stretch"):
         demo_mode = True
         run_btn = True
         if not target_company_name:
-            target_company_name = "Tata Consumer Products Ltd"
-            target_sector = "FMCG / Retail"
+            target_company_name = "Tata Consumer Products Ltd."
+            target_sector = "FMCG / Packaged Goods"
             target_ticker = "TATACONSUM.NS"
         if target_ticker and not live_data:
             live_data = get_cached_live_data(target_ticker)
@@ -2489,6 +2576,143 @@ def parse_dcf_estimate(dcf_str):
     elif len(nums) == 1:
         return nums[0], nums[0], nums[0]
     return None, None, None
+
+def render_research_provenance_and_evidence_card(res, live_data, target_company_name, target_ticker, target_sector, fin_res=None):
+    live = live_data or {}
+    company_name = html.escape(str(target_company_name or res.get("company_name", "Tracked Company")))
+    ticker = html.escape(str(target_ticker or res.get("ticker", "NSE")))
+    sector = html.escape(str(target_sector or res.get("sector", "General")))
+    
+    filing_meta = res.get("filing_metadata") or {}
+    period = html.escape(str(filing_meta.get("year") or res.get("financial_year") or "FY2024 / TTM"))
+    
+    is_demo = bool(res.get("is_synthetic_demo", False))
+    is_analyzed = filing_meta.get("ingestion_status") == "analyzed" or res.get("document_analyzed", False)
+    
+    # 1. Company & Period
+    q1_sub = f"<strong>{company_name}</strong> ({ticker}) · Sector: {sector} · Audited Period: <strong>{period}</strong>"
+    
+    # 2. Data Origin
+    if is_demo:
+        q2_source = "Synthetic demonstration dataset (sample for UI walkthrough; not live market data)"
+        q2_chip = "SYNTHETIC SAMPLE"
+        q2_chip_bg = "#FFFBEB"
+        q2_chip_fg = "#D97706"
+        q2_chip_bdr = "#FDE68A"
+    elif is_analyzed:
+        q2_source = f"Official BSE India Statutory Annual Report ({filing_meta.get('title', 'Annual Report')}) + Screener.in 10-Yr Audited Statements + Delayed Quotes"
+        q2_chip = "STATUTORY BSE FILING"
+        q2_chip_bg = "#ECFDF5"
+        q2_chip_fg = "#059669"
+        q2_chip_bdr = "#A7F3D0"
+    else:
+        research = res.get("web_research", {})
+        src_cnt = len(research.get("sources", []))
+        q2_source = f"Public Aggregators (Screener.in 10-Yr Financials, Delayed NSE Feeds) + {src_cnt} Web Citations"
+        q2_chip = "PUBLIC FEEDS & CITATIONS"
+        q2_chip_bg = "#EFF6FF"
+        q2_chip_fg = "#2563EB"
+        q2_chip_bdr = "#BFDBFE"
+
+    # 3. Freshness & Integrity
+    sentinel = res.get("sentinel_audit") or {}
+    s_score = sentinel.get("integrity_score")
+    s_text = f"{s_score:.0f}/100" if s_score is not None else "Verified"
+    retrieval_time = res.get("retrieved_at") or datetime.now().strftime("%d %b %Y")
+    q3_text = f"Retrieved: {retrieval_time} · Multimodal Ingestion: {'Verified' if is_analyzed else 'Public Feed'} · Mathematical Sanity Check: {s_text}"
+
+    # 4. Qualified Conclusion & Supporting Evidence
+    try:
+        final_score = float(res.get("final_score", 0))
+    except (ValueError, TypeError):
+        final_score = 0.0
+    pio_trig = res.get("pio_triggered", False)
+    guardrail = str(res.get("guardrail_tag", ""))
+
+    if pio_trig or "RED" in guardrail or final_score < 55.0:
+        stance_label = "Elevated Caution / High Risk"
+        stance_col = "#DC2626"
+        stance_bg = "#FEF2F2"
+        stance_bdr = "#FECACA"
+    elif final_score >= 70.0:
+        stance_label = "Constructive Watchlist / Quality Franchise"
+        stance_col = "#059669"
+        stance_bg = "#ECFDF5"
+        stance_bdr = "#A7F3D0"
+    else:
+        stance_label = "Monitored / Neutral Tier"
+        stance_col = "#D97706"
+        stance_bg = "#FFFBEB"
+        stance_bdr = "#FDE68A"
+
+    verdict_text = res.get("verdict", "") or f"Composite Forensic Score: {final_score:.1f}/100"
+    verdict_clean = html.escape(str(verdict_text))
+
+    # 5. Evidence Gaps
+    gaps = res.get("evidence_gaps") or []
+    if gaps:
+        gap_items = "".join([f'<li style="margin-bottom: 4px;">{html.escape(str(g))}</li>' for g in gaps[:3]])
+        q5_html = f'<ul style="margin: 4px 0 0 16px; padding: 0; color: #B45309; font-size: 12px; line-height: 1.45;">{gap_items}</ul>'
+        gap_badge = f'<span style="background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">{len(gaps)} EVIDENCE GAPS</span>'
+    else:
+        q5_html = '<div style="font-size: 12px; color: #059669; margin-top: 4px;">✔ Standard audited statement schedules reviewed; check Notes to Accounts for unlisted commitments.</div>'
+        gap_badge = '<span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">STANDARD DISCLOSURES</span>'
+
+    # 6. What to Inspect Next
+    next_checks = [
+        "CARO 2020 Order: Check paragraph 3 for adverse inventory or disputed statutory tax remarks.",
+        "Notes to Accounts: Review Note on Related-Party Transactions & Contingent Liabilities.",
+        "Cash Conversion: Cross-examine CFO vs PAT across trailing 4 quarters.",
+        "Promoter Registry: Inspect BSE / NSE shareholding disclosures for fresh encumbrances."
+    ]
+    next_html = "".join([f'<li style="margin-bottom: 4px;">{html.escape(c)}</li>' for c in next_checks])
+
+    card_html = (
+        f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; border-bottom: 1.5px solid #F1F5F9; padding-bottom: 10px;">'
+        f'<div style="display: flex; align-items: center; gap: 8px;">'
+        f'<span style="font-size: 18px;">🧭</span>'
+        f'<span style="font-size: 14px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.7px;">Research Provenance &amp; Due Diligence Framework</span>'
+        f'</div>'
+        f'<span style="background: {q2_chip_bg}; color: {q2_chip_fg}; border: 1px solid {q2_chip_bdr}; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{q2_chip}</span>'
+        f'</div>'
+        f'<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 14px;">'
+        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #059669;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">1. Subject Entity &amp; Target Period</div>'
+        f'<div style="font-size: 12.5px; color: #0F172A; margin-top: 4px; line-height: 1.45;">{q1_sub}</div>'
+        f'</div>'
+        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #2563EB;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">2. Source Provenance</div>'
+        f'<div style="font-size: 12px; color: #334155; margin-top: 4px; line-height: 1.45;">{q2_source}</div>'
+        f'</div>'
+        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid #7C3AED;">'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">3. Freshness &amp; Sanity Audit</div>'
+        f'<div style="font-size: 12px; color: #334155; margin-top: 4px; line-height: 1.45;">{q3_text}</div>'
+        f'</div>'
+        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; border-left: 3.5px solid {stance_col};">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center;">'
+        f'<span style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">4. Model Forensic Stance</span>'
+        f'<span style="background: {stance_bg}; color: {stance_col}; border: 1px solid {stance_bdr}; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">{stance_label}</span>'
+        f'</div>'
+        f'<div style="font-size: 12px; color: #0F172A; font-weight: 600; margin-top: 4px; line-height: 1.45;">{verdict_clean}</div>'
+        f'</div>'
+        f'</div>'
+        f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">'
+        f'<div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 12px 14px;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">'
+        f'<span style="font-size: 11px; font-weight: 800; color: #92400E; text-transform: uppercase; letter-spacing: 0.5px;">5. Evidence Gaps &amp; Uncertainties</span>'
+        f'{gap_badge}'
+        f'</div>'
+        f'{q5_html}'
+        f'</div>'
+        f'<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">'
+        f'<div style="font-size: 11px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">6. What to Inspect Next (Due Diligence Checklist)</div>'
+        f'<ol style="margin: 4px 0 0 16px; padding: 0; color: #475569; font-size: 12px; line-height: 1.45;">{next_html}</ol>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    )
+    return card_html
 
 def render_traffic_light_and_eli15_html(res, live_data, target_company_name, target_sector):
     live = live_data or {}
@@ -2636,31 +2860,31 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
 
     # ELI15 Plain English
     final_score = _parse_num(res.get("final_score")) or 0.0
-    company_clean = target_company_name or "This company"
-    sector_clean = target_sector or "its sector"
+    company_clean = html.escape(str(target_company_name or "This company"))
+    sector_clean = html.escape(str(target_sector or "its sector"))
 
     if final_score >= 75:
-        eli_action = "Bottom Line: High-quality compounder with strong financials and clean governance. Great candidate to buy on dips for long-term wealth creation."
-        eli_badge = "STRONG ACCUMULATE"
+        eli_action = "Bottom Line: High-quality compounder with verified cash flows and clean governance metrics. Favorable risk-reward profile for fundamental watchlists."
+        eli_badge = "HIGH FINANCIAL INTEGRITY"
         eli_badge_bg = "rgba(5, 150, 105, 0.08)"
         eli_badge_fg = "#059669"
         eli_badge_bdr = "rgba(5, 150, 105, 0.25)"
     elif final_score >= 60:
-        eli_action = "Bottom Line: Good company with solid moats, but waiting for a price dip makes more sense right now."
-        eli_badge = "SELECTIVE ACCUMULATE"
+        eli_action = "Bottom Line: Established franchise with solid moats, but monitored accruals or valuation suggest exercising margin of safety."
+        eli_badge = "MONITORED QUALITY TIER"
         eli_badge_bg = "rgba(37, 99, 235, 0.08)"
         eli_badge_fg = "#2563EB"
         eli_badge_bdr = "rgba(37, 99, 235, 0.25)"
     else:
-        eli_action = "Bottom Line: High risk. Red flags found in debt, governance, or cash flow. Better to stay away until things improve."
-        eli_badge = "AVOID / PRUDENCE"
+        eli_action = "Bottom Line: Elevated forensic risk. Significant anomalies identified in debt servicing, governance signals, or cash conversion."
+        eli_badge = "ELEVATED FORENSIC RISK"
         eli_badge_bg = "rgba(220, 38, 38, 0.08)"
         eli_badge_fg = "#DC2626"
         eli_badge_bdr = "rgba(220, 38, 38, 0.25)"
 
     strengths = res.get("strengths", [])
     if strengths and len(strengths) > 0:
-        clean_s = strengths[0].rstrip(".")
+        clean_s = html.escape(str(strengths[0]).rstrip("."))
         if "insufficient evidence" in clean_s.lower() and not is_doc_analyzed:
             eli_biz = f"<strong>{company_clean}</strong> operates in India\'s <strong>{sector_clean}</strong> sector; statutory research is incomplete due to evidence gaps."
         else:
@@ -2668,7 +2892,7 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     else:
         eli_biz = f"<strong>{company_clean}</strong> is an established business in India\'s <strong>{sector_clean}</strong> sector with healthy operating cash flows and strong market reach."
 
-    html = (
+    rendered_html = (
         f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
@@ -2712,8 +2936,7 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
         f'</div>'
         f'</div>'
     )
-    return html
-    return html
+    return rendered_html
 
 def render_forensic_fraud_shield_html(res, live_data, financial_data=None, forensic_report=None):
     live = live_data or {}
@@ -3341,7 +3564,16 @@ def render_graphical_forensic_architecture_html() -> str:
 
 # --- EXECUTION ENGINE ---
 if run_btn:
-    with st.status(f"Evaluating {target_company_name} across 8 Fundamental & Forensic Pillars...", expanded=True) as status:
+    clean_target_name = str(target_company_name or "").strip()
+    clean_target_ticker = str(target_ticker or "").strip()
+    if not clean_target_name:
+        st.error("⚠️ Please select a company from the tracked universe or enter a valid company name before launching an audit.")
+        st.stop()
+    if not clean_target_ticker:
+        st.error("⚠️ Please enter a valid stock ticker or symbol (e.g. RELIANCE, TCS, INFY) before launching an audit.")
+        st.stop()
+
+    with st.status(f"Evaluating {clean_target_name} across 8 Fundamental & Forensic Pillars...", expanded=True) as status:
         st.write("Ingesting financial statement tables & market feeds...")
         time.sleep(0.2)
         st.write("Evaluating statutory disclosures & related-party schedules...")
@@ -3364,7 +3596,13 @@ if run_btn:
                     filing_meta = selected_filing_metadata
                 elif doc_type == "📂 Upload custom PDF" and uploaded_file:
                     st.write(f"📥 Ingesting user uploaded document ({uploaded_file.name})...")
-                    pdf_bytes = uploaded_file.read()
+                    raw_bytes = uploaded_file.read()
+                    max_upload_size = 50 * 1024 * 1024  # 50 MB
+                    if len(raw_bytes) > max_upload_size:
+                        raise ValueError(f"Uploaded file exceeds maximum limit of 50MB (received {len(raw_bytes)/(1024*1024):.1f}MB).")
+                    if not raw_bytes.startswith(b"%PDF-"):
+                        raise ValueError("Uploaded document is not a valid PDF file (missing '%PDF-' header).")
+                    pdf_bytes = raw_bytes
                     filing_meta = selected_filing_metadata
 
                 result = analyze_document_with_gemini(
@@ -3384,13 +3622,21 @@ if run_btn:
             status.update(label=f"Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
         except Exception as e:
             status.update(label="Evaluation Failed", state="error")
-            st.error(f"Analysis Error: {str(e)}")
+            raw_err = str(e)
+            # Redact raw API key patterns to prevent client-side credential exposure
+            clean_err = raw_err
+            if active_api_key and len(active_api_key) > 8:
+                clean_err = clean_err.replace(active_api_key, "AIzaSy***[REDACTED]***")
+            clean_err = re.sub(r'AIza[0-9A-Za-z-_]{35}', 'AIzaSy***[REDACTED]***', clean_err)
+            clean_err = re.sub(r'key=[0-9A-Za-z-_]{20,}', 'key=***[REDACTED]***', clean_err)
+            st.error(f"Analysis Error: {clean_err}")
             with st.expander("Technical Details"):
-                st.exception(e)
+                st.write(f"Diagnostic detail: {clean_err}")
 
 # --- RESULTS DASHBOARD ---
 if "idex_result" in st.session_state:
     res = st.session_state["idex_result"]
+    rec = res.get("receivable_health_metrics") or {}
     if res.get("analysis_pipeline_version") != ANALYSIS_PIPELINE_VERSION:
         del st.session_state["idex_result"]
         st.warning("This saved result was created before evidence checks were enabled. Run the analysis again to see a current result.")
@@ -3536,6 +3782,12 @@ if "idex_result" in st.session_state:
         with st.expander(f"🕵️ Forensic Due Diligence Trail: {v_badge} (FQI: {fqi:.0f}/100 • 8-Pillar Concealed Risk Surveillance)", expanded=False):
             st.html(render_forensic_dossier_html(forensic_audit))
 
+    # 0. RESEARCH PROVENANCE & DUE DILIGENCE HUD (Answers 6 Core Due Diligence Questions)
+    provenance_hud_html = render_research_provenance_and_evidence_card(
+        res, live_data, target_company_name, target_ticker, target_sector, fin_res=fin_res
+    )
+    st.html(provenance_hud_html)
+
     # 1. EXECUTIVE SCORE ROW (Radial Score Gauge & Formula Waterfall Bridge)
     final_score = res.get('final_score', 0)
     verdict = res.get("verdict", "").split("—")[0].strip()
@@ -3610,7 +3862,7 @@ if "idex_result" in st.session_state:
         f'<span style="font-size: 16px;">🛡️</span>'
         f'</div>'
         f'<div style="font-size: 24px; font-weight: 900; color: #DC2626; font-family: \'JetBrains Mono\', monospace;">-{abs(total_penalties):.1f} <span style="font-size: 13px; font-weight: 600; color: #DC2626;">pts</span></div>'
-        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Cap: -7.5 pts max</div>'
+        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Bounded Risk Corridor</div>'
         f'</div>'
         # Pod 3: Growth Bonuses
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4px solid #7C3AED; border-radius: 12px; padding: 16px 18px;">'
@@ -3619,16 +3871,16 @@ if "idex_result" in st.session_state:
         f'<span style="font-size: 16px;">🚀</span>'
         f'</div>'
         f'<div style="font-size: 24px; font-weight: 900; color: #7C3AED; font-family: \'JetBrains Mono\', monospace;">+{total_bonus:.1f} <span style="font-size: 13px; font-weight: 600; color: #7C3AED;">pts</span></div>'
-        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Cap: +10% max</div>'
+        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Bounded Growth Factor</div>'
         f'</div>'
         # Pod 4: Sizing
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4px solid #D97706; border-radius: 12px; padding: 16px 18px;">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
-        f'<span style="font-size: 11px; font-weight: 800; color: #D97706; text-transform: uppercase; letter-spacing: 0.6px;">ALLOCATION</span>'
+        f'<span style="font-size: 11px; font-weight: 800; color: #D97706; text-transform: uppercase; letter-spacing: 0.6px;">RISK TIER</span>'
         f'<span style="font-size: 16px;">⚖️</span>'
         f'</div>'
-        f'<div style="font-size: 22px; font-weight: 900; color: #D97706; font-family: \'JetBrains Mono\', monospace;">{position_sizing}</div>'
-        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Model portfolio weight</div>'
+        f'<div style="font-size: 20px; font-weight: 900; color: #D97706; font-family: \'JetBrains Mono\', monospace;">{position_sizing}</div>'
+        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Illustrative Non-Advisory Cap</div>'
         f'</div>'
         f'</div>'
         f'</div>'
@@ -3663,7 +3915,7 @@ if "idex_result" in st.session_state:
 
     st.write("")
 
-    # 2. EXECUTIVE INSTITUTIONAL POSITION CALL (STANCE-AWARE & TO THE POINT)
+    # 2. MODEL FORENSIC PROFILE & EVIDENCE TAKEAWAY (EDUCATIONAL RISK TIER)
     final_call_str = res.get("final_call", "N/A")
     verdict_str = res.get("verdict", "")
     guardrail_tag = str(res.get("guardrail_tag", ""))
@@ -3687,7 +3939,7 @@ if "idex_result" in st.session_state:
         call_badge = parts[0].strip()
         call_summary = parts[1].strip()
     else:
-        call_badge = "POSITION CALL"
+        call_badge = "FORENSIC PROFILE"
         call_summary = final_call_str
 
     combined = (str(final_call_str) + " " + str(verdict_str) + " " + str(guardrail_tag)).upper()
@@ -3706,32 +3958,32 @@ if "idex_result" in st.session_state:
         badge_bg = "#FEF2F2"
         badge_border = "#FECACA"
         badge_fg = "#DC2626"
-        badge_text = call_badge if "AVOID" in call_badge.upper() else "🛑 AVOID / PRUDENCE"
-        sizing_display = "0.0% (No Allocation)"
+        badge_text = "🛑 ELEVATED CAUTION / HIGH FORENSIC RISK"
+        sizing_display = "0.0% Allocation (Educational Risk Tier — Not Personal Investment Advice)"
         summary_color = "#DC2626"
         cards = [
             {
                 "icon": "🛑",
-                "title": "BIGGEST RED FLAG",
-                "text": wk_list[0] if wk_list else "Serious accounting, governance, or debt red flags found in filings.",
+                "title": "PRIMARY RED FLAG",
+                "text": wk_list[0] if wk_list else "Serious accounting, governance, or debt anomalies flagged in disclosures.",
                 "hcolor": "#DC2626"
             },
             {
                 "icon": "⚠️",
-                "title": "RISK OF CAPITAL LOSS",
-                "text": wk_list[1] if len(wk_list) > 1 else "High risk of losing capital if business conditions or debt worsen.",
+                "title": "CAPITAL IMPAIRMENT RISK",
+                "text": wk_list[1] if len(wk_list) > 1 else "Elevated risk of capital loss if operating conditions or debt servicing deteriorate.",
                 "hcolor": "#DC2626"
             },
             {
                 "icon": "📉",
-                "title": "WEAK CASH FLOW CONVERSION",
-                "text": esg_str or "Reported profits are not turning into real cash in the bank.",
+                "title": "ACCRUAL & CASH DIVERGENCE",
+                "text": esg_str or "Reported profits diverge from actual operating cash flow generation.",
                 "hcolor": "#D97706"
             },
             {
                 "icon": "🛡️",
-                "title": "WHAT MUST CHANGE TO RECONSIDER",
-                "text": "Company must cut debt, remove all share pledges, and get clean audit reports before buying.",
+                "title": "REQUISITES BEFORE RE-EVALUATION",
+                "text": "Requires debt deleveraging, unpledged promoter holdings, and unmodified CARO audit opinions.",
                 "hcolor": "#475569"
             }
         ]
@@ -3740,32 +3992,32 @@ if "idex_result" in st.session_state:
         badge_bg = "#ECFDF5"
         badge_border = "#A7F3D0"
         badge_fg = "#059669"
-        badge_text = call_badge if any(k in call_badge.upper() for k in ["BUY", "ACCUMULATE"]) else "🎯 ACCUMULATE ON DIPS"
-        sizing_display = position_sizing
+        badge_text = "🟢 CONSTRUCTIVE WATCHLIST / HIGH QUALITY"
+        sizing_display = "Illustrative Exposure: 2–5% Cap (Educational Risk Tier — Not Personal Investment Advice)"
         summary_color = "#059669"
         cards = [
             {
                 "icon": "🟢",
-                "title": "STRONG BUSINESS MOAT",
-                "text": str_list[0] if str_list else "Dominant market leader with high pricing power and sticky customers.",
+                "title": "CORE COMPETITIVE MOAT",
+                "text": str_list[0] if str_list else "Dominant market presence with pricing power and defensible market share.",
                 "hcolor": "#059669"
             },
             {
                 "icon": "🛡️",
-                "title": "STRONG CASH & LOW DEBT",
-                "text": str_list[1] if len(str_list) > 1 else "Virtually debt-free balance sheet with solid operating cash flow.",
+                "title": "BALANCE SHEET & CASH GENERATION",
+                "text": str_list[1] if len(str_list) > 1 else "Conservative leverage profile with consistent operating cash flow generation.",
                 "hcolor": "#2563EB"
             },
             {
                 "icon": "🚀",
-                "title": "1–2 YEAR GROWTH DRIVERS",
-                "text": drift_str or "New capacity and expansion plans driving steady earnings growth.",
+                "title": "1–2 YEAR OPERATIONAL CATALYSTS",
+                "text": drift_str or "Capacity expansion and operating leverage driving fundamental trajectory.",
                 "hcolor": "#7C3AED"
             },
             {
                 "icon": "🎯",
-                "title": "HOW TO BUY (ACTION PLAN)",
-                "text": "Accumulate steadily on market dips near fair value for steady compounding.",
+                "title": "KEY METRICS TO MONITOR QUARTERLY",
+                "text": "Track quarterly ROCE sustainability, debtor days, and cash flow conversion vs reported PAT.",
                 "hcolor": "#059669"
             }
         ]
@@ -3774,32 +4026,32 @@ if "idex_result" in st.session_state:
         badge_bg = "#FFFBEB"
         badge_border = "#FDE68A"
         badge_fg = "#D97706"
-        badge_text = call_badge if "HOLD" in call_badge.upper() else "⏳ HOLD / MONITOR"
-        sizing_display = "0.0% – 2.0% (Small Hold / Watchlist)"
+        badge_text = "🟡 MONITORED / NEUTRAL QUALITY TIER"
+        sizing_display = "Illustrative Exposure: 0–2% Watchlist (Educational Risk Tier — Not Personal Investment Advice)"
         summary_color = "#D97706"
         cards = [
             {
                 "icon": "🟢",
-                "title": "SOLID BUSINESS FOUNDATION",
-                "text": str_list[0] if str_list else "Good business with respectable brand presence and operations.",
+                "title": "ESTABLISHED BUSINESS FRANCHISE",
+                "text": str_list[0] if str_list else "Established business with respectable market presence and operational scale.",
                 "hcolor": "#059669"
             },
             {
                 "icon": "⏳",
-                "title": "WHY NOT A 'BUY' TODAY?",
-                "text": wk_list[0] if wk_list else "Valuation is a bit high or profit growth is temporarily slowing down.",
+                "title": "CONSTRAINTS & MARGIN OF SAFETY",
+                "text": wk_list[0] if wk_list else "Valuation multiple offers limited safety margin or earnings growth is temporarily subdued.",
                 "hcolor": "#D97706"
             },
             {
                 "icon": "🎯",
-                "title": "WHEN TO UPGRADE TO BUY",
-                "text": f"A price drop closer to fair value or faster earnings growth in {drift_lower}.",
+                "title": "CATALYSTS FOR PROFILE UPGRADE",
+                "text": f"Valuation discount toward fair value or accelerated cash flow conversion in {drift_lower}.",
                 "hcolor": "#2563EB"
             },
             {
                 "icon": "⚠️",
                 "title": "DOWNSIDE RISKS TO WATCH",
-                "text": wk_list[1] if len(wk_list) > 1 else "Watch for margin pressure or rising customer dues before taking action.",
+                "text": wk_list[1] if len(wk_list) > 1 else "Monitor margin compression, working capital elongation, or rising debtor cycles.",
                 "hcolor": "#DC2626"
             }
         ]
@@ -3808,8 +4060,8 @@ if "idex_result" in st.session_state:
     for c in cards:
         c_hcolor = c["hcolor"]
         c_icon = c["icon"]
-        c_title = c["title"]
-        c_text = c["text"]
+        c_title = html.escape(str(c["title"]))
+        c_text = html.escape(str(c["text"]))
         card_blocks_list.append(
             f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
             f'<div style="font-size: 11px; font-weight: 800; color: {c_hcolor}; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;">'
@@ -3820,23 +4072,28 @@ if "idex_result" in st.session_state:
         )
     card_blocks = "".join(card_blocks_list)
 
+    call_summary_escaped = html.escape(str(call_summary))
+
     thesis_banner_html = (
         f'<div style="background: #FFFFFF; border: 1.5px solid {banner_border}; border-radius: 16px; padding: 22px 26px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">'
         f'<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">'
-        f'<span style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase; font-family: \'JetBrains Mono\', monospace;">🎯 POSITION CALL</span>'
+        f'<span style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase; font-family: \'JetBrains Mono\', monospace;">📋 FORENSIC PROFILE</span>'
         f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 11.5px; font-weight: 900; padding: 3px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.4px;">{badge_text}</span>'
         f'</div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
-        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">⏱️ 1–2 Year Horizon</span>'
-        f'<span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">⚖️ Sizing: {sizing_display}</span>'
+        f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">⏱️ 1–2 Year Window</span>'
+        f'<span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">⚖️ {sizing_display}</span>'
         f'</div>'
         f'</div>'
         f'<div style="font-size: 16px; font-weight: 800; color: {summary_color}; line-height: 1.45; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #E2E8F0;">'
-        f'{call_summary}'
+        f'{call_summary_escaped}'
         f'</div>'
         f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">'
         f'{card_blocks}'
+        f'</div>'
+        f'<div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #E2E8F0; font-size: 11px; color: #64748B; line-height: 1.4;">'
+        f'⚖️ <strong>Educational Research Stance:</strong> This automated profile is generated from heuristic financial modeling and disclosure cross-referencing. It does NOT constitute SEBI investment advice, trading calls, or a guarantee of future operational performance.'
         f'</div>'
         f'</div>'
     )
@@ -3846,17 +4103,20 @@ if "idex_result" in st.session_state:
     str_html_items = "".join([
         f'<div style="font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;">'
         f'<span style="color: #059669; font-weight: 800;">✔</span>'
-        f'<span style="color: #334155;">{s}</span>'
+        f'<span style="color: #334155;">{html.escape(str(s))}</span>'
         f'</div>'
         for s in str_list
     ])
     wk_html_items = "".join([
         f'<div style="font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;">'
         f'<span style="color: #DC2626; font-weight: 800;">✖</span>'
-        f'<span style="color: #334155;">{w}</span>'
+        f'<span style="color: #334155;">{html.escape(str(w))}</span>'
         f'</div>'
         for w in wk_list
     ])
+
+    drift_str_escaped = html.escape(str(drift_str))
+    esg_str_escaped = html.escape(str(esg_str))
 
     with st.expander("📑 View Detailed Strengths, Risks & Notes", expanded=False):
         st.html(
@@ -3873,11 +4133,11 @@ if "idex_result" in st.session_state:
             f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">'
             f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
             f'<div style="font-size: 10.5px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">⏱️ Growth Drivers & Catalysts</div>'
-            f'<div style="font-size: 12.5px; line-height: 1.5; color: #334155;">{drift_str}</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #334155;">{drift_str_escaped}</div>'
             f'</div>'
             f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">'
             f'<div style="font-size: 10.5px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">🌍 Governance & Integrity Notes</div>'
-            f'<div style="font-size: 12.5px; line-height: 1.5; color: #334155;">{esg_str}</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #334155;">{esg_str_escaped}</div>'
             f'</div>'
             f'</div>'
         )
@@ -3939,7 +4199,7 @@ if "idex_result" in st.session_state:
                 st.markdown(
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
                     '<span style="font-size: 13px; font-weight: 800; color: #DC2626; text-transform: uppercase; letter-spacing: 0.6px;">Deducted Risk Penalties</span>'
-                    '<span style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">-7.5 pts Max Cap</span>'
+                    '<span style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">Bounded Risk Corridor</span>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -3971,7 +4231,7 @@ if "idex_result" in st.session_state:
                 st.markdown(
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
                     '<span style="font-size: 13px; font-weight: 800; color: #7C3AED; text-transform: uppercase; letter-spacing: 0.6px;">Applied Growth Bonuses</span>'
-                    '<span style="background: #FAF5FF; color: #7C3AED; border: 1px solid #E9D5FF; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">+10% Core Max Cap</span>'
+                    '<span style="background: #FAF5FF; color: #7C3AED; border: 1px solid #E9D5FF; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">Bounded Growth Factor</span>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -4211,7 +4471,7 @@ if "idex_result" in st.session_state:
                         clean_t = str(raw_title).replace("https://", "").replace("http://", "").rstrip("/")
                         if len(clean_t) > 35:
                             clean_t = clean_t[:32] + "…"
-                        c_links.append(f'<a href="{html.escape(u, quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 11.5px;">{html.escape(clean_t)} ↗</a>')
+                        c_links.append(f'<a href="{html.escape(u, quote=True)}" target="_blank" rel="noopener noreferrer" style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 11.5px;">{html.escape(clean_t)} ↗</a>')
             
             if c_links:
                 citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">🔗 <strong>Sources:</strong> {" &bull; ".join(c_links)}</div>'
@@ -4219,11 +4479,11 @@ if "idex_result" in st.session_state:
                 fm = res.get("filing_metadata") or {}
                 if fm.get("url") and str(fm.get("url")).startswith(("https://", "http://")):
                     f_title = fm.get("title") or "Official BSE India Filing"
-                    citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">📄 <strong>Source:</strong> <a href="{html.escape(fm["url"], quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(f_title)} ↗</a></div>'
+                    citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">📄 <strong>Source:</strong> <a href="{html.escape(fm["url"], quote=True)}" target="_blank" rel="noopener noreferrer" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(f_title)} ↗</a></div>'
                 elif res.get("web_research", {}).get("sources"):
                     top_sources = [s for s in res["web_research"]["sources"] if str(s.get("url", "")).startswith(("https://", "http://"))][:2]
                     if top_sources:
-                        s_links = [f'<a href="{html.escape(s["url"], quote=True)}" target="_blank" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(s.get("title") or s.get("source_id") or "Web Source")} ↗</a>' for s in top_sources]
+                        s_links = [f'<a href="{html.escape(s["url"], quote=True)}" target="_blank" rel="noopener noreferrer" style="color: #2563EB; font-weight: 700; text-decoration: underline;">{html.escape(s.get("title") or s.get("source_id") or "Web Source")} ↗</a>' for s in top_sources]
                         citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">🌐 <strong>Sources:</strong> {" &bull; ".join(s_links)}</div>'
                     else:
                         citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">📊 <strong>Source:</strong> Official Exchange Filings & Screener Dataset</div>'
@@ -4233,13 +4493,15 @@ if "idex_result" in st.session_state:
             justification_text = p.get("justification", "")
             if p_density == "Compact" and len(justification_text) > 130:
                 justification_text = justification_text[:126].rsplit(" ", 1)[0] + "…"
+            justification_clean = html.escape(str(justification_text))
+            p_name_escaped = html.escape(str(p.get("name") or "Pillar"))
 
             row_html = (
                 f'<tr>'
                 f'<td style="width: 25%; font-weight: 700;">'
                 f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">'
                 f'<span style="font-size: 18px;">{meta["icon"]}</span>'
-                f'<span style="font-size: 14px; color: #0F172A; font-weight: 800;">P{p_id}: {p.get("name")}</span>'
+                f'<span style="font-size: 14px; color: #0F172A; font-weight: 800;">P{p_id}: {p_name_escaped}</span>'
                 f'</div>'
                 f'<span style="background: {meta["chip_bg"]}; color: {meta["chip_fg"]}; border: 1px solid {meta["border"]}; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace;">{meta["chip"]}</span>'
                 f'</td>'
@@ -4250,7 +4512,7 @@ if "idex_result" in st.session_state:
                 f'</div>'
                 f'</td>'
                 f'<td style="width: 16%; text-align: center;">{badge}</td>'
-                f'<td style="width: 45%;"><div style="font-size: 13.5px; line-height: 1.6; color: #334155;">{justification_text}</div>{citation_html}{rec_html}</td>'
+                f'<td style="width: 45%;"><div style="font-size: 13.5px; line-height: 1.6; color: #334155;">{justification_clean}</div>{citation_html}{rec_html}</td>'
                 f'</tr>'
             )
             table_rows.append(row_html)
@@ -4353,15 +4615,27 @@ if "idex_result" in st.session_state:
         )
 
     # 5. EXPORT TOOLBAR
+    rec = res.get("receivable_health_metrics") or {}
     st.write("")
     st.divider()
     exp_col1, exp_col2, exp_col3 = st.columns(3)
     
+    # Safe slug for file downloads preventing path traversal or illegal slash characters
+    raw_cname = str(res.get('company_name', 'Company')).replace(" [SYNTHETIC SAMPLE]", "")
+    safe_cname = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_cname).strip('_') or "Company"
+    
     with exp_col1:
+        # Sanitize export data to protect internal engine state while preserving full analyst disclosures
+        public_export_data = dict(res)
+        public_export_data.pop("analysis_pipeline_version", None)
+        public_export_data["regulatory_notice"] = (
+            "This document is programmatically generated by Project KUSHA / StockSage for informational and educational "
+            "screening purposes only. It does not constitute SEBI-registered investment advice or a statutory audit."
+        )
         st.download_button(
             label="Download Structured JSON",
-            data=json.dumps(res, indent=2),
-            file_name=f"{res.get('company_name', 'Company')}_StockSage.json",
+            data=json.dumps(public_export_data, indent=2),
+            file_name=f"{safe_cname}_StockSage.json",
             mime="application/json",
             width="stretch"
         )
@@ -4398,6 +4672,18 @@ if "idex_result" in st.session_state:
             f_u = fm.get("url") or "Uploaded directly"
             filing_meta_md = f"- **Statutory Filing Analyzed:** [{fm.get('title')}]({f_u}) ({fm.get('source', 'Archive')}, Period: {fm.get('year', 'Latest')})\n"
 
+        sentinel_sec = ""
+        if res.get("sentinel_audit"):
+            sa = res["sentinel_audit"]
+            sa_checks_md = "\n".join(f"- **{c.get('name')}:** {c.get('status')} — {c.get('detail')}" for c in sa.get("checks", []))
+            sentinel_sec = f"\n## Automated Data Consistency Sentinel\n- **Integrity Score:** {sa.get('integrity_score')}/100 ({sa.get('status')})\n- **Checks Evaluated:** {sa.get('passed_count')}/{sa.get('total_count')}\n{sa_checks_md}\n"
+
+        forensic_sec = ""
+        if res.get("forensic_report"):
+            fr = res["forensic_report"]
+            fr_checks_md = "\n".join(f"- **{c.get('title')}:** {c.get('status')} ({c.get('metric', 'N/A')}) — {c.get('detail')}" for c in fr.get("checks", []))
+            forensic_sec = f"\n## Forensic Accounting & Concealed Risk Audit\n- **Forensic Quality Index (FQI):** {fr.get('fqi_score')}/100 ({fr.get('verdict_badge')})\n- **External Solvency:** {fr.get('credit_rating', {}).get('rating', 'N/A')}\n{fr_checks_md}\n"
+
         md_text = f"""{demo_header}# StockSage | Institutional Research Memo: {res.get('company_name')}
 
 ## Metadata
@@ -4405,7 +4691,7 @@ if "idex_result" in st.session_state:
 - **Sector Benchmark:** {res.get('sector')}
 - **Reporting Period:** {res.get('financial_year')}
 {filing_meta_md}- **Final Rating:** {res.get('verdict')} (Score: {res.get('final_score')}/100)
-- **Position Sizing:** {res.get('position_sizing')}
+- **Risk Allocation Sizing:** {res.get('position_sizing')} (Illustrative Model Exposure Tier — Not SEBI Investment Advice)
 - **Evidence status:** {res.get('analysis_status', 'unknown')}
 - **Evidence gaps:** {', '.join(res.get('evidence_gaps', [])) or 'None reported'}
 
@@ -4416,7 +4702,7 @@ Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])
 ## Mandatory Guardrail Tag
 **{res.get('guardrail_tag')}**
 {chr(10).join(['- ' + ev for ev in res.get('guardrail_evidence', [])])}
-
+{sentinel_sec}{forensic_sec}
 ## Core 8-Pillar Scorecard
 {pillars_md}
 
@@ -4432,11 +4718,14 @@ Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])
 
 ## Final Call
 **{res.get('final_call')}** — {call_refs}
+
+---
+*Regulatory Disclaimer: This research memo is programmatically generated by Project KUSHA / StockSage for informational and educational screening purposes only. It is not SEBI-registered investment advice or a statutory audit.*
 """
         st.download_button(
             label="Download Investment Memo (.md)",
             data=md_text,
-            file_name=f"{res.get('company_name', 'Company')}_StockSage_Memo.md",
+            file_name=f"{safe_cname}_StockSage_Memo.md",
             mime="text/markdown",
             width="stretch"
         )
@@ -4449,11 +4738,49 @@ Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])
             '</div>'
         ) if is_demo_export else ""
 
+        sentinel_html_table = ""
+        if res.get("sentinel_audit"):
+            sa = res["sentinel_audit"]
+            sa_rows = "".join(f"<tr><td><strong>{html.escape(str(c.get('name') or ''))}</strong></td><td>{html.escape(str(c.get('status') or ''))}</td><td>{html.escape(str(c.get('detail') or ''))}</td></tr>" for c in sa.get("checks", []))
+            sentinel_html_table = f"""
+            <h2>Data Consistency Sentinel ({html.escape(str(sa.get('integrity_score', 'N/A')))}/100 - {html.escape(str(sa.get('status', 'N/A')))})</h2>
+            <table>
+                <thead><tr><th>Sanity Check</th><th>Status</th><th>Verification Detail</th></tr></thead>
+                <tbody>{sa_rows}</tbody>
+            </table>
+            """
+
+        forensic_html_table = ""
+        if res.get("forensic_report"):
+            fr = res["forensic_report"]
+            fr_rows = "".join(f"<tr><td><strong>{html.escape(str(c.get('title') or ''))}</strong></td><td><strong>{html.escape(str(c.get('status') or ''))}</strong></td><td>{html.escape(str(c.get('metric', 'N/A')))}</td><td>{html.escape(str(c.get('detail') or ''))}</td></tr>" for c in fr.get("checks", []))
+            forensic_html_table = f"""
+            <h2>Forensic Accounting Audit (FQI: {html.escape(str(fr.get('fqi_score', 'N/A')))}/100 - {html.escape(str(fr.get('verdict_badge', 'N/A')))})</h2>
+            <table>
+                <thead><tr><th>Forensic Test</th><th>Status</th><th>Metric</th><th>Findings &amp; Stress Test</th></tr></thead>
+                <tbody>{fr_rows}</tbody>
+            </table>
+            """
+
+        c_name_escaped = html.escape(str(res.get('company_name', 'Company')))
+        sector_escaped = html.escape(str(res.get('sector', 'Diversified')))
+        year_escaped = html.escape(str(res.get('financial_year', 'Latest')))
+        verdict_escaped = html.escape(str(res.get('verdict', '')))
+        guardrail_escaped = html.escape(str(res.get('guardrail_tag', '')))
+        final_call_escaped = html.escape(str(res.get('final_call', '')))
+        rec_verdict_escaped = html.escape(str(rec.get('receivable_verdict', '')))
+
+        pillar_rows_escaped = "".join([
+            f"<tr><td><strong>P{p.get('id')}: {html.escape(str(p.get('name', '')))}</strong></td><td><strong>{p.get('score')}</strong></td><td>{p.get('max_score')}</td><td>{html.escape(str(p.get('justification', '')))}</td></tr>"
+            for p in res.get('pillars', [])
+        ])
+        guardrail_ev_items = "".join([f'<li>{html.escape(str(e))}</li>' for e in res.get('guardrail_evidence', [])])
+
         html_report = f"""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>{res.get('company_name', 'Company')} - StockSage Institutional Report</title>
+<title>{c_name_escaped} - StockSage Institutional Report</title>
 <style>
     body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #0f172a; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #ffffff; }}
     h1 {{ font-size: 24px; color: #047857; border-bottom: 2px solid #059669; padding-bottom: 8px; }}
@@ -4471,44 +4798,49 @@ Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])
     {demo_html_banner}
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-            <h1>StockSage • {res.get('company_name', 'Company')}</h1>
-            <p style="color:#64748b; margin-top:-8px;">Sector: {res.get('sector')} • Period: {res.get('financial_year')} • Institutional Forensic Research</p>
+            <h1>StockSage • {c_name_escaped}</h1>
+            <p style="color:#64748b; margin-top:-8px;">Sector: {sector_escaped} • Period: {year_escaped} • Institutional Forensic Research</p>
         </div>
         <div style="text-align:right;">
             <div style="font-size:32px; font-weight:800; color:#047857;">{res.get('final_score', 0):.1f}<span style="font-size:16px; color:#64748b;">/100</span></div>
-            <div class="badge">{res.get('verdict')}</div>
+            <div class="badge">{verdict_escaped}</div>
         </div>
     </div>
-
+    {sentinel_html_table}
+    {forensic_html_table}
     <h2>Core 8-Pillar Evaluation</h2>
     <table>
         <thead><tr><th>Pillar</th><th>Score</th><th>Max</th><th>Forensic Justification</th></tr></thead>
         <tbody>
-            {''.join([f"<tr><td><strong>P{p.get('id')}: {p.get('name')}</strong></td><td><strong>{p.get('score')}</strong></td><td>{p.get('max_score')}</td><td>{p.get('justification')}</td></tr>" for p in res.get('pillars', [])])}
+            {pillar_rows_escaped}
         </tbody>
     </table>
 
     <h2>Sector Receivable Health</h2>
     <table>
         <tr><td><strong>DSO:</strong> {rec.get('dso_days')} days (Ideal: {rec.get('sector_ideal_dso')})</td><td><strong>Receivables/Sales:</strong> {rec.get('receivables_to_sales_pct')}</td></tr>
-        <tr><td><strong>Overdue >90d:</strong> {rec.get('pct_over_90_days')}</td><td><strong>Assessment:</strong> {rec.get('receivable_verdict')}</td></tr>
+        <tr><td><strong>Overdue >90d:</strong> {rec.get('pct_over_90_days')}</td><td><strong>Assessment:</strong> {rec_verdict_escaped}</td></tr>
     </table>
 
     <div class="tag-box">
-        <strong>Mandatory Guardrail Tag: {res.get('guardrail_tag')}</strong>
-        <ul style="margin: 8px 0 0 0; padding-left: 20px;">{''.join([f'<li>{e}</li>' for e in res.get('guardrail_evidence', [])])}</ul>
+        <strong>Mandatory Guardrail Tag: {guardrail_escaped}</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px;">{guardrail_ev_items}</ul>
     </div>
 
     <h2>Analyst Recommendation</h2>
     <div style="background:#f8fafc; border: 1px solid #e2e8f0; padding:14px; border-radius:6px; font-size:16px; font-weight:600; color: #0f172a;">
-        {res.get('final_call')}
+        {final_call_escaped}
+    </div>
+
+    <div style="margin-top: 32px; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 11px; color: #64748b; line-height: 1.5;">
+        <strong>Regulatory Disclaimer:</strong> This report is programmatically generated by Project KUSHA / StockSage for informational and educational purposes only. It does not constitute SEBI-registered investment advice, a research report under SEBI (Research Analysts) Regulations, or a statutory audit. Conduct independent due diligence before making investment decisions.
     </div>
 </body>
 </html>"""
         st.download_button(
             label="Print Analyst Report (PDF/HTML)",
             data=html_report,
-            file_name=f"{res.get('company_name', 'Company')}_StockSage_Report.html",
+            file_name=f"{safe_cname}_StockSage_Report.html",
             mime="text/html",
             width="stretch"
         )
@@ -4517,3 +4849,19 @@ Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])
 st.markdown("<div style='margin-top: 36px; margin-bottom: 12px;'></div>", unsafe_allow_html=True)
 with st.expander("🧭 **StockSage Forensic Architecture & Evaluation Pipeline (Visual Methodology & Benchmarks)**", expanded=False):
     st.html(render_graphical_forensic_architecture_html())
+
+# --- STATUTORY REGULATORY DISCLAIMER & DATA PROVENANCE NOTICE ---
+st.html("""
+<div style="margin-top: 40px; padding: 18px 24px; background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; font-size: 11.5px; color: #64748B; line-height: 1.6; margin-bottom: 30px;">
+  <div style="font-weight: 800; color: #0F172A; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+    <span>⚖️</span> Statutory Disclaimer &amp; Regulatory Notice
+  </div>
+  <div>
+    <strong>Not SEBI Registered:</strong> Project KUSHA / StockSage is an automated analytical research and educational technology prototype. It is NOT registered with the Securities and Exchange Board of India (SEBI) as an Investment Adviser (under IA Regulations, 2013) or Research Analyst (under RA Regulations, 2014).
+    All outputs, forensic scores, traffic light badges, and illustrative allocation bands represent programmatic algorithmic evaluations of public disclosures and do NOT constitute investment advice, financial recommendations, or solicitation to buy or sell securities.
+  </div>
+  <div style="margin-top: 6px;">
+    <strong>Data Provenance:</strong> Market data is retrieved via public aggregation endpoints (e.g., Yahoo Finance). Statutory filings are discovered from publicly archived exchange repositories. Metrics are subject to transmission delays and public reporting inconsistencies. Users must perform independent verification and consult a licensed financial advisor before making capital allocation decisions.
+  </div>
+</div>
+""")

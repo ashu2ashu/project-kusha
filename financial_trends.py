@@ -20,7 +20,7 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
     Fetches annual and quarterly financial statements from yfinance for an Indian ticker,
     converts figures to ₹ Crores, and computes CAGR and forensic conversion ratios.
     """
-    sym = ticker_symbol if ticker_symbol.endswith(".NS") or ticker_symbol.startswith("^") else f"{ticker_symbol}.NS"
+    sym = ticker_symbol if ticker_symbol.endswith((".NS", ".BO")) or ticker_symbol.startswith("^") else f"{ticker_symbol}.NS"
     try:
         import warnings
         with warnings.catch_warnings():
@@ -30,6 +30,19 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             bs = t.balance_sheet
             cf = t.cashflow
             q_fin = t.quarterly_financials
+
+            # Graceful BSE (.BO) fallback if NSE (.NS) yields empty statements
+            if (fin is None or fin.empty) and sym.endswith(".NS"):
+                alt_sym = sym.replace(".NS", ".BO")
+                alt_t = yf.Ticker(alt_sym)
+                alt_fin = alt_t.financials
+                if alt_fin is not None and not alt_fin.empty:
+                    sym = alt_sym
+                    t = alt_t
+                    fin = alt_fin
+                    bs = alt_t.balance_sheet
+                    cf = alt_t.cashflow
+                    q_fin = alt_t.quarterly_financials
     except Exception as e:
         return {"error": f"Failed to fetch statements for {sym}: {str(e)}"}
 

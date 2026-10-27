@@ -904,7 +904,7 @@ def render_terminal_top_telemetry_hud():
           <span>⚡</span> Project KUSHA // Autonomous AI for Finance
         </div>
         <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
-        <p class="ss-hero-subtitle">Autonomous AI for finance: Spotting corporate trouble and fine-print fraud before it makes the news, distilled into a simple no-nonsense score for capital protection.</p>
+        <p class="ss-hero-subtitle">Autonomous AI for finance: Pre-emptive forensic intelligence designed to detect corporate distress and fine-print accounting manipulation before headlines break, distilled into a deterministic score for capital protection.</p>
         <div class="ss-hero-meta">
           <span>Fundamental & Forensic Dual-Engine</span>
           <span>16 Canonical Factors</span>
@@ -949,16 +949,16 @@ def render_project_kusha_welcome_page():
         Autonomous AI for Finance &amp; Forensic Equity Intelligence
       </div>
       
-      <!-- Core Investor Philosophy Card -->
-      <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F0FDF4 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: flex-start; gap: 12px;">
-          <div style="font-size: 22px; line-height: 1; margin-top: 2px;">💡</div>
+      <!-- Core Institutional Mission Card -->
+      <div style="background: linear-gradient(135deg, #F8FAFC 0%, #F0FDF4 100%); border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: flex-start; gap: 14px;">
+          <div style="font-size: 24px; line-height: 1; margin-top: 2px;">🛡️</div>
           <div>
-            <div style="font-size: 12.5px; font-weight: 800; color: #065F46; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 4px;">
-              The Mission: Spot Trouble Before the Headlines
+            <div style="font-size: 12.5px; font-weight: 800; color: #065F46; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 5px;">
+              The Institutional Mandate: Pre-Emptive Forensic Intelligence
             </div>
             <div style="font-size: 12.5px; color: #334155; line-height: 1.55;">
-              In the world of AI, investors are still screening companies the old way—drowning in raw data where normal investors can't read between fine-print numbers. <strong>Project KUSHA was built to solve this:</strong> it doesn't chase hyped multibaggers; its core purpose is <strong>capital preservation</strong>. By cross-examining balance sheet accruals and hidden promoter risks, it spots early fraud and internal distress <em>before it's on the news</em>—helping you avoid companies like <strong>YES Bank</strong> before the crisis starts, delivered in a <strong>simple, no-nonsense forensic score</strong>.
+              Despite advances in AI, conventional equity screening remains anchored to backward-looking metrics—leaving investors exposed to structural risks buried deep within statutory fine print. <strong>Project KUSHA was engineered for capital preservation:</strong> it eliminates reliance on speculative multiples by autonomously cross-examining non-cash accruals, promoter pledging cascades, and off-balance-sheet exposures. By detecting institutional decay and accounting manipulation <em>long before headlines break</em>, KUSHA shields portfolios against systemic collapses like <strong>YES Bank</strong>—distilled into a <strong>transparent, deterministic 0–100 forensic score</strong>.
             </div>
           </div>
         </div>
@@ -1029,7 +1029,7 @@ def render_project_kusha_welcome_page():
             <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 16px;">🛡️</span>
               <div style="font-size: 12px; font-weight: 700; color: #065F46;">
-                Early Crisis Detection: Reads fine-print footnotes to catch company trouble long before it hits the news.
+                Pre-Emptive Surveillance: Audits statutory disclosures to identify solvency strain and governance decay quarters before media coverage.
               </div>
             </div>
             """, unsafe_allow_html=True)

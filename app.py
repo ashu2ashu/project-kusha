@@ -58,18 +58,7 @@ from financial_trends import (
     generate_forensic_cagr_insights
 )
 
-from analyzer import (
-    analyze_document_with_gemini,
-    analyze_document_with_deepseek,
-    get_demo_analysis,
-    verify_gemini_api_key,
-    verify_deepseek_api_key,
-    SUPPORTED_MODELS,
-    DEFAULT_MODEL,
-    SUPPORTED_DEEPSEEK_MODELS,
-    DEFAULT_DEEPSEEK_MODEL,
-    ANALYSIS_PIPELINE_VERSION
-)
+from analyzer import analyze_document_with_gemini, get_demo_analysis, verify_gemini_api_key, SUPPORTED_MODELS, DEFAULT_MODEL, ANALYSIS_PIPELINE_VERSION
 from annual_report_fetcher import get_available_annual_reports, download_annual_report_bytes
 from nifty_universe import (
     get_company_list, find_company_info, fetch_live_market_data, get_sector_list,
@@ -798,93 +787,42 @@ with st.sidebar:
     """)
     st.divider()
 
-    # AI Engine Provider Selector
-    ai_provider = st.radio(
-        "AI Engine Provider",
-        options=["Google Gemini", "DeepSeek"],
-        horizontal=True,
-        index=0,
-        help="Select which AI engine powers the 8-pillar institutional equity research brief."
+    # API Configuration
+    env_key = os.getenv("GEMINI_API_KEY", "").strip()
+    placeholder_text = "Override with custom key (optional)..." if env_key else "Enter your Gemini API key..."
+    api_key_input = st.text_input(
+        "Google Gemini API Key",
+        value="",
+        type="password",
+        placeholder=placeholder_text,
+        help="Your API key authenticates client calls directly to Google Gemini. It is held in volatile session memory and never persisted or shared."
     )
 
-    if ai_provider == "DeepSeek":
-        env_deepseek_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
-        ds_placeholder = "Override with custom key (optional)..." if env_deepseek_key else "Paste your DeepSeek API key (sk-...)"
-        deepseek_key_input = st.text_input(
-            "DeepSeek API Key",
-            value="",
-            type="password",
-            placeholder=ds_placeholder,
-            help="Your DeepSeek API key from https://platform.deepseek.com. Held only in session memory and never persisted."
-        )
-        active_deepseek_key = deepseek_key_input.strip() if deepseek_key_input and deepseek_key_input.strip() else env_deepseek_key
-        active_api_key = active_deepseek_key
+    active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
 
-        selected_deepseek_model = st.selectbox(
-            "DeepSeek Model",
-            options=SUPPORTED_DEEPSEEK_MODELS,
-            index=0,
-            help="deepseek-chat (V3) is fast and structured; deepseek-reasoner (R1) uses deep chain-of-thought reasoning."
-        )
-        selected_gemini_model = selected_deepseek_model
+    selected_gemini_model = st.selectbox(
+        "Gemini Model",
+        options=SUPPORTED_MODELS,
+        index=0,
+        help="Select supported Google Gemini model."
+    )
 
-        if env_deepseek_key and not deepseek_key_input.strip():
-            st.caption("🔒 Key active from environment (`.env`)")
-        elif deepseek_key_input.strip():
-            st.caption("🔑 Using custom user-supplied DeepSeek key")
+    if env_key and not api_key_input.strip():
+        st.caption("🔒 Key active from environment (`.env`)")
+    elif api_key_input.strip():
+        st.caption("🔑 Using custom user-supplied key")
 
-        col_btn1, col_btn2 = st.columns([1.2, 1])
-        with col_btn1:
-            if st.button("Test Key", width="stretch", key="test_deepseek_btn"):
-                with st.spinner("Connecting to DeepSeek..."):
-                    is_valid, msg = verify_deepseek_api_key(active_deepseek_key, model_name=selected_deepseek_model)
-                    if is_valid:
-                        st.success(msg)
-                    else:
-                        st.error(msg)
-        with col_btn2:
-            demo_mode = st.toggle("Demo Mode", value=False if active_deepseek_key else True, key="demo_mode_toggle_ds")
-
-    else:
-        active_deepseek_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
-        selected_deepseek_model = DEFAULT_DEEPSEEK_MODEL
-
-        # Google Gemini Configuration
-        env_key = os.getenv("GEMINI_API_KEY", "").strip()
-        placeholder_text = "Override with custom key (optional)..." if env_key else "Enter your Gemini API key..."
-        api_key_input = st.text_input(
-            "Google Gemini API Key",
-            value="",
-            type="password",
-            placeholder=placeholder_text,
-            help="Your API key authenticates client calls directly to Google Gemini. It is held in volatile session memory and never persisted or shared."
-        )
-
-        active_api_key = api_key_input.strip() if api_key_input and api_key_input.strip() else env_key
-
-        selected_gemini_model = st.selectbox(
-            "Gemini Model",
-            options=SUPPORTED_MODELS,
-            index=0,
-            help="Select supported Google Gemini model."
-        )
-
-        if env_key and not api_key_input.strip():
-            st.caption("🔒 Key active from environment (`.env`)")
-        elif api_key_input.strip():
-            st.caption("🔑 Using custom user-supplied key")
-
-        col_btn1, col_btn2 = st.columns([1.2, 1])
-        with col_btn1:
-            if st.button("Test Key", width="stretch", key="test_gemini_btn"):
-                with st.spinner("Connecting to Google..."):
-                    is_valid, msg = verify_gemini_api_key(active_api_key, model_name=selected_gemini_model)
-                    if is_valid:
-                        st.success(msg)
-                    else:
-                        st.error(msg)
-        with col_btn2:
-            demo_mode = st.toggle("Demo Mode", value=False if active_api_key else True, key="demo_mode_toggle_gemini")
+    col_btn1, col_btn2 = st.columns([1.2, 1])
+    with col_btn1:
+        if st.button("Test Key", width="stretch"):
+            with st.spinner("Connecting to Google..."):
+                is_valid, msg = verify_gemini_api_key(active_api_key, model_name=selected_gemini_model)
+                if is_valid:
+                    st.success(msg)
+                else:
+                    st.error(msg)
+    with col_btn2:
+        demo_mode = st.toggle("Demo Mode", value=False if active_api_key else True)
 
     if demo_mode:
         st.caption("🧪 **Demo Mode Active**: The company assessment uses synthetic sample data and does not represent a real investment analysis.")
@@ -3258,41 +3196,18 @@ if run_btn:
                     pdf_bytes = raw_bytes
                     filing_meta = selected_filing_metadata
 
-                if ai_provider == "DeepSeek":
-                    if not active_deepseek_key:
-                        st.error("⚠️ DeepSeek API Key is missing. Please paste your key in the sidebar or set DEEPSEEK_API_KEY in your .env file.")
-                        st.stop()
-                    st.write(f"🧠 Dispatching evaluation entirely to DeepSeek ({selected_deepseek_model})...")
-                    result = analyze_document_with_deepseek(
-                        company_name=target_company_name,
-                        sector=target_sector,
-                        api_key=active_deepseek_key,
-                        pdf_bytes=pdf_bytes,
-                        live_data=live_data,
-                        custom_prompt=custom_prompt,
-                        sentinel_report=sentinel_rep,
-                        selected_model=selected_deepseek_model,
-                        filing_metadata=filing_meta,
-                        forensic_report=forensic_rep,
-                        financial_statements=fin_res
-                    )
-                else:
-                    if not active_api_key:
-                        st.error("⚠️ Google Gemini API Key is missing. Please configure your key in the sidebar.")
-                        st.stop()
-                    st.write(f"🧠 Dispatching evaluation to Google Gemini ({selected_gemini_model})...")
-                    result = analyze_document_with_gemini(
-                        company_name=target_company_name,
-                        sector=target_sector,
-                        api_key=active_api_key,
-                        pdf_bytes=pdf_bytes,
-                        live_data=live_data,
-                        custom_prompt=custom_prompt,
-                        sentinel_report=sentinel_rep,
-                        selected_model=selected_gemini_model,
-                        filing_metadata=filing_meta,
-                        forensic_report=forensic_rep
-                    )
+                result = analyze_document_with_gemini(
+                    company_name=target_company_name,
+                    sector=target_sector,
+                    api_key=active_api_key,
+                    pdf_bytes=pdf_bytes,
+                    live_data=live_data,
+                    custom_prompt=custom_prompt,
+                    sentinel_report=sentinel_rep,
+                    selected_model=selected_gemini_model,
+                    filing_metadata=filing_meta,
+                    forensic_report=forensic_rep
+                )
             result["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
             st.session_state["idex_result"] = result
             status.update(label=f"Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
@@ -3303,12 +3218,8 @@ if run_btn:
             clean_err = raw_err
             if active_api_key and len(active_api_key) > 8:
                 clean_err = clean_err.replace(active_api_key, "AIzaSy***[REDACTED]***")
-            if active_deepseek_key and len(active_deepseek_key) > 8:
-                clean_err = clean_err.replace(active_deepseek_key, "sk-***[REDACTED]***")
             clean_err = re.sub(r'AIza[0-9A-Za-z-_]{35}', 'AIzaSy***[REDACTED]***', clean_err)
-            clean_err = re.sub(r'sk-[0-9A-Za-z-_]{20,}', 'sk-***[REDACTED]***', clean_err)
             clean_err = re.sub(r'key=[0-9A-Za-z-_]{20,}', 'key=***[REDACTED]***', clean_err)
-            clean_err = re.sub(r'Bearer\s+[0-9A-Za-z._-]+', 'Bearer ***[REDACTED]***', clean_err, flags=re.IGNORECASE)
             st.error(f"Analysis Error: {clean_err}")
             with st.expander("Technical Details"):
                 st.write(f"Diagnostic detail: {clean_err}")
@@ -3348,13 +3259,7 @@ if "idex_result" in st.session_state:
             f'</div>'
         )
 
-    engine_badge = ""
-    if is_demo:
-        engine_badge = " [SYNTHETIC DEMO]"
-    elif res.get("llm_provider") == "deepseek":
-        engine_badge = f" [DeepSeek Engine · {res.get('model_used', 'deepseek-chat')}]"
-
-    st.markdown(f"### Institutional Equity Research Brief{engine_badge}")
+    st.markdown("### Institutional Equity Research Brief" + (" [SYNTHETIC DEMO]" if is_demo else ""))
 
     if res.get("filing_metadata"):
         st.html(build_filing_ingestion_notice_html(res["filing_metadata"]))
@@ -4332,7 +4237,6 @@ if "idex_result" in st.session_state:
 - **Reporting Period:** {res.get('financial_year')}
 {filing_meta_md}- **Final Rating:** {res.get('verdict')} (Score: {res.get('final_score')}/100)
 - **Risk Allocation Sizing:** {res.get('position_sizing')} (Illustrative Model Exposure Tier — Not SEBI Investment Advice)
-- **AI Research Engine:** {str(res.get('llm_provider', 'Google Gemini')).title()} ({res.get('model_used', 'default')})
 - **Evidence status:** {res.get('analysis_status', 'unknown')}
 - **Evidence gaps:** {', '.join(res.get('evidence_gaps', [])) or 'None reported'}
 

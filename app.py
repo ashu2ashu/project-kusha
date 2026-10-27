@@ -817,99 +817,100 @@ with st.sidebar:
     """)
 
 # --- TOP-OF-PAGE LIVE INDIAN MARKET SNAPSHOT (INSTITUTIONAL TELEMETRY HUD) ---
-st.html("""
-<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 14px 22px; margin-top: 2px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-  <div style="display: flex; align-items: center; gap: 12px;">
-    <span class="live-pulse-dot"></span>
-    <div>
-      <div style="font-size: 17px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px;">
-        <span style="color: #059669;">⚡</span> Indian Market Telemetry HUD
+def render_terminal_top_telemetry_hud():
+    st.html("""
+    <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 14px 22px; margin-top: 2px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span class="live-pulse-dot"></span>
+        <div>
+          <div style="font-size: 17px; font-weight: 900; color: #0F172A; display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px;">
+            <span style="color: #059669;">⚡</span> Indian Market Telemetry HUD
+          </div>
+          <div style="font-size: 12px; color: #64748B; margin-top: 2px;">
+            Real-time NSE / BSE institutional data feed · High-frequency macro sentiment
+          </div>
+        </div>
       </div>
-      <div style="font-size: 12px; color: #64748B; margin-top: 2px;">
-        Real-time NSE / BSE institutional data feed · High-frequency macro sentiment
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span style="background: rgba(5, 150, 105, 0.08); color: #059669; border: 1px solid rgba(5, 150, 105, 0.25); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace;">
+          ● LIVE NSE STREAM
+        </span>
+        <span style="background: rgba(37, 99, 235, 0.08); color: #2563EB; border: 1px solid rgba(37, 99, 235, 0.25); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">
+          IDEX-7.5SC DUAL-ENGINE
+        </span>
       </div>
     </div>
-  </div>
-  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-    <span style="background: rgba(5, 150, 105, 0.08); color: #059669; border: 1px solid rgba(5, 150, 105, 0.25); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace;">
-      ● LIVE NSE STREAM
-    </span>
-    <span style="background: rgba(37, 99, 235, 0.08); color: #2563EB; border: 1px solid rgba(37, 99, 235, 0.25); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">
-      IDEX-7.5SC DUAL-ENGINE
-    </span>
-  </div>
-</div>
-""")
+    """)
 
-indices_list = get_cached_market_indices()
-idx_cols = st.columns(4)
-for i, idx in enumerate(indices_list):
-    with idx_cols[i]:
-        is_pos = idx["pct"] >= 0
-        delta_col = "#059669" if is_pos else "#DC2626"
-        delta_bg = "rgba(5, 150, 105, 0.08)" if is_pos else "rgba(220, 38, 38, 0.08)"
-        delta_border = "rgba(5, 150, 105, 0.25)" if is_pos else "rgba(220, 38, 38, 0.25)"
-        delta_sign = "+" if is_pos else ""
-        delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
+    indices_list = get_cached_market_indices()
+    idx_cols = st.columns(4)
+    for i, idx in enumerate(indices_list):
+        with idx_cols[i]:
+            is_pos = idx["pct"] >= 0
+            delta_col = "#059669" if is_pos else "#DC2626"
+            delta_bg = "rgba(5, 150, 105, 0.08)" if is_pos else "rgba(220, 38, 38, 0.08)"
+            delta_border = "rgba(5, 150, 105, 0.25)" if is_pos else "rgba(220, 38, 38, 0.25)"
+            delta_sign = "+" if is_pos else ""
+            delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
 
-        # Calculate Day Range progress
-        lo = idx.get("lo", 0)
-        hi = idx.get("hi", 0)
-        cur = idx.get("cur", 0)
-        range_span = max(hi - lo, 1.0)
-        day_pct = min(100.0, max(0.0, (cur - lo) / range_span * 100.0))
+            # Calculate Day Range progress
+            lo = idx.get("lo", 0)
+            hi = idx.get("hi", 0)
+            cur = idx.get("cur", 0)
+            range_span = max(hi - lo, 1.0)
+            day_pct = min(100.0, max(0.0, (cur - lo) / range_span * 100.0))
 
-        card_html = (
-            f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 14px;">'
-            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
-            f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
-            f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; border: 1px solid {delta_border}; padding: 2px 7px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">{delta_str}</span>'
-            f'</div>'
-            f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
-            f'<div style="margin-top: 8px; background: #E2E8F0; height: 3px; border-radius: 9999px; position: relative;">'
-            f'<div style="background: linear-gradient(90deg, #2563EB, {delta_col}); width: {day_pct:.1f}%; height: 3px; border-radius: 9999px;"></div>'
-            f'</div>'
-            f'<div style="font-size: 10px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between; font-family: \'JetBrains Mono\', monospace;">'
-            f'<span>L: {idx["lo"]:,.0f}</span>'
-            f'<span>{day_pct:.0f}% of Day</span>'
-            f'<span>H: {idx["hi"]:,.0f}</span>'
-            f'</div>'
-            f'</div>'
-        )
-        st.html(card_html)
+            card_html = (
+                f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 14px;">'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
+                f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx["name"]}</span>'
+                f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; border: 1px solid {delta_border}; padding: 2px 7px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">{delta_str}</span>'
+                f'</div>'
+                f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
+                f'<div style="margin-top: 8px; background: #E2E8F0; height: 3px; border-radius: 9999px; position: relative;">'
+                f'<div style="background: linear-gradient(90deg, #2563EB, {delta_col}); width: {day_pct:.1f}%; height: 3px; border-radius: 9999px;"></div>'
+                f'</div>'
+                f'<div style="font-size: 10px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between; font-family: \'JetBrains Mono\', monospace;">'
+                f'<span>L: {idx["lo"]:,.0f}</span>'
+                f'<span>{day_pct:.0f}% of Day</span>'
+                f'<span>H: {idx["hi"]:,.0f}</span>'
+                f'</div>'
+                f'</div>'
+            )
+            st.html(card_html)
 
-# Top hero: Futuristic Institutional Terminal Header
-st.html(f"""
-<section class="ss-hero">
-  <div>
-    <div class="ss-hero-kicker">
-      <span>⚡</span> StockSage // Quantum Institutional Terminal • V2.5
-    </div>
-    <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
-    <p class="ss-hero-subtitle">Autonomous 8-pillar due diligence, high-density multi-factor screening, holographic forensic shields, and real-time valuation radar in one unified workstation.</p>
-    <div class="ss-hero-meta">
-      <span>IDEX-7.5SC Dual-Engine</span>
-      <span>16 Canonical Factors</span>
-      <span>Sentinel Fraud Shield</span>
-      <span>Verified BSE Disclosures</span>
-    </div>
-  </div>
-  <div class="ss-hero-stats">
-    <div class="ss-hero-stat">
-      <div class="ss-hero-stat-label">Coverage Universe</div>
-      <div class="ss-hero-stat-value">{tracked_equity_count} Bluechips</div>
-    </div>
-    <div class="ss-hero-stat">
-      <div class="ss-hero-stat-label">Sector Matrices</div>
-      <div class="ss-hero-stat-value">{sector_count} Sectors</div>
-    </div>
-    <div class="ss-hero-stat">
-      <div class="ss-hero-stat-label">Data Telemetry</div>
-      <div class="ss-hero-stat-value">Live NSE Stream</div>
-    </div>
-  </div>
-</section>
-""")
+    # Top hero: Futuristic Institutional Terminal Header
+    st.html(f"""
+    <section class="ss-hero">
+      <div>
+        <div class="ss-hero-kicker">
+          <span>⚡</span> StockSage // Quantum Institutional Terminal • V2.5
+        </div>
+        <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
+        <p class="ss-hero-subtitle">Autonomous 8-pillar due diligence, high-density multi-factor screening, holographic forensic shields, and real-time valuation radar in one unified workstation.</p>
+        <div class="ss-hero-meta">
+          <span>IDEX-7.5SC Dual-Engine</span>
+          <span>16 Canonical Factors</span>
+          <span>Sentinel Fraud Shield</span>
+          <span>Verified BSE Disclosures</span>
+        </div>
+      </div>
+      <div class="ss-hero-stats">
+        <div class="ss-hero-stat">
+          <div class="ss-hero-stat-label">Coverage Universe</div>
+          <div class="ss-hero-stat-value">{tracked_equity_count} Bluechips</div>
+        </div>
+        <div class="ss-hero-stat">
+          <div class="ss-hero-stat-label">Sector Matrices</div>
+          <div class="ss-hero-stat-value">{sector_count} Sectors</div>
+        </div>
+        <div class="ss-hero-stat">
+          <div class="ss-hero-stat-label">Data Telemetry</div>
+          <div class="ss-hero-stat-value">Live NSE Stream</div>
+        </div>
+      </div>
+    </section>
+    """)
 
 # --- PROJECT KUSHA WELCOME & GREETING VIEW ---
 def render_project_kusha_welcome_page():
@@ -1387,6 +1388,9 @@ terminal_mode = st.segmented_control(
 if terminal_mode == "👋 Welcome to Project KUSHA":
     render_project_kusha_welcome_page()
     st.stop()
+
+# --- ACTIVE TERMINAL TELEMETRY HUD & HEADER ---
+render_terminal_top_telemetry_hud()
 
 if terminal_mode == "⚡ Screener & Market Matrix":
     # Presets for the Quantum Screener

@@ -911,14 +911,462 @@ st.html(f"""
 </section>
 """)
 
+# --- PROJECT KUSHA WELCOME & GREETING VIEW ---
+def render_project_kusha_welcome_page():
+    # Hero Welcome Greeting Card
+    st.markdown("""
+    <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 26px 30px; border-top: 5px solid #059669; box-shadow: 0 4px 16px rgba(0,0,0,0.03); margin-top: 4px; margin-bottom: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+        <span style="font-size: 11.5px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;">
+          🇮🇳 DALAL STREET FORENSIC SURVEILLANCE // PROJECT KUSHA
+        </span>
+        <span style="font-size: 11.5px; font-weight: 700; color: #64748B; font-family: 'JetBrains Mono', monospace;">
+          IDEX-7.5SC DUAL ENGINE • ZERO BLACK-BOX MATH
+        </span>
+      </div>
+      <div style="font-size: 30px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 10px;">
+        Welcome to Project KUSHA.
+      </div>
+      <p style="font-size: 15.5px; font-weight: 500; color: #475569; line-height: 1.6; max-width: 960px; margin-bottom: 18px;">
+        Autonomous Dalal Street institutional equity research & forensic surveillance engine designed to protect retail and institutional capital against accounting manipulation, channel stuffing, promoter pledging, and inflated accruals.
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid #F1F5F9;">
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Core Evaluation</div>
+          <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">8-Pillar IDEX-7.5SC</div>
+        </div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Fraud Shield</div>
+          <div style="font-size: 15px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace;">8 Forensic Engines</div>
+        </div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Coverage Universe</div>
+          <div style="font-size: 15px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace;">50 Nifty Bluechips</div>
+        </div>
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Exchange Filings</div>
+          <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">BSE India Statutory</div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Section: Interactive Workspace Launchpad
+    st.markdown("""
+    <div style="font-size: 17px; font-weight: 800; color: #0F172A; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+      <span style="color: #059669;">🚀</span> Quick Launch Workspace Pad
+    </div>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="font-size: 20px;">⚡</span>
+              <span style="font-size: 16px; font-weight: 800; color: #0F172A;">Quantum Screener</span>
+            </div>
+            <p style="font-size: 13px; color: #475569; line-height: 1.5; min-height: 58px; margin-bottom: 14px;">
+              Scan 50 premier Nifty bluechips across 16 canonical valuation, growth, and efficiency ratios with institutional traffic-light filters.
+            </p>
+            """, unsafe_allow_html=True)
+            if st.button("Launch Quantum Screener ⚡", type="primary", key="cta_launch_screener", width="stretch"):
+                st.session_state["pending_nav_mode"] = "⚡ Screener & Market Matrix"
+                st.rerun()
+
+    with c2:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="font-size: 20px;">🔬</span>
+              <span style="font-size: 16px; font-weight: 800; color: #0F172A;">Holographic Dossier</span>
+            </div>
+            <p style="font-size: 13px; color: #475569; line-height: 1.5; min-height: 58px; margin-bottom: 14px;">
+              Deep-dive into an individual company with 8-pillar radial radar, forensic risk scorecard, peer comparison, and DCF compass.
+            </p>
+            """, unsafe_allow_html=True)
+            if st.button("Inspect Stock Dossier 🔬", key="cta_launch_dossier", width="stretch"):
+                st.session_state["pending_nav_mode"] = "🔬 Holographic Stock Dossier"
+                st.rerun()
+
+    with c3:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="font-size: 20px;">📑</span>
+              <span style="font-size: 16px; font-weight: 800; color: #0F172A;">Audited Filings Vault</span>
+            </div>
+            <p style="font-size: 13px; color: #475569; line-height: 1.5; min-height: 58px; margin-bottom: 14px;">
+              Direct access to official BSE India annual reports, statutory auditor disclosures, CARO statements, and exchange filings.
+            </p>
+            """, unsafe_allow_html=True)
+            if st.button("Explore Filings Vault 📑", key="cta_launch_vault", width="stretch"):
+                st.session_state["pending_nav_mode"] = "📑 Audited Filings Vault"
+                st.rerun()
+
+    # Section 1: What is Project KUSHA & What is Its Purpose?
+    st.markdown("""
+    <div style="margin-top: 24px; margin-bottom: 12px;">
+      <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #2563EB;">🎯</span> What is Project KUSHA &amp; What is Its Purpose?
+      </div>
+      <p style="font-size: 13px; color: #64748B; margin-top: 2px;">
+        The Dalal Street Forensic Dilemma: Moving from superficial P/E multiples to statutory reality.
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_purpose_text, col_purpose_comp = st.columns([1.1, 0.9])
+    with col_purpose_text:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="font-size: 15px; font-weight: 800; color: #0F172A; margin-bottom: 10px;">
+              Eliminating Dalal Street Accounting Blindspots
+            </div>
+            <p style="font-size: 13.5px; color: #334155; line-height: 1.6; margin-bottom: 12px;">
+              The Indian equity market is witnessing historic retail and institutional capital expansion. However, conventional stock screeners evaluate companies based on <b>backward-looking multiples</b> like trailing P/E, revenue growth, or promotional management commentary.
+            </p>
+            <p style="font-size: 13.5px; color: #334155; line-height: 1.6; margin-bottom: 12px;">
+              Crucially, traditional tools are <b>blind to non-cash accruals</b>, <b>promoter share pledging liquidation triggers</b>, <b>aggressive capitalization of expenses into Capital Work-in-Progress (CWIP)</b>, and <b>related-party transactions (RPTs)</b> that systematically siphon minority shareholder capital.
+            </p>
+            <div style="background: #F0FDF4; border-left: 4px solid #059669; padding: 10px 14px; border-radius: 6px; font-size: 13px; color: #065F46; line-height: 1.5;">
+              <b>Project KUSHA's Core Purpose:</b> To act as an autonomous, uncompromising institutional watchdog that cross-examines statutory cash flows against reported accruals, enforces deterministic penalties for accounting red flags, and protects investment capital before capital is allocated.
+            </div>
+            """, unsafe_allow_html=True)
+
+    with col_purpose_comp:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="font-size: 15px; font-weight: 800; color: #0F172A; margin-bottom: 10px;">
+              Conventional Screener vs. Project KUSHA
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+              <thead>
+                <tr style="border-bottom: 1.5px solid #E2E8F0;">
+                  <th style="text-align: left; padding: 6px 8px; color: #64748B;">Evaluation Vector</th>
+                  <th style="text-align: left; padding: 6px 8px; color: #DC2626;">Conventional</th>
+                  <th style="text-align: left; padding: 6px 8px; color: #059669;">Project KUSHA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid #F1F5F9;">
+                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Earnings Sanity</td>
+                  <td style="padding: 7px 8px; color: #64748B;">Accepts reported PAT</td>
+                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">CFO vs PAT Accrual Reconcilement</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #F1F5F9;">
+                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Promoter Pledging</td>
+                  <td style="padding: 7px 8px; color: #64748B;">Ignored or footnote</td>
+                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">PPRM &gt;50% PIO Hard Penalty</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #F1F5F9;">
+                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Capex &amp; CWIP</td>
+                  <td style="padding: 7px 8px; color: #64748B;">Treated as growth</td>
+                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">CWIP / Gross Block Aging Audit</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #F1F5F9;">
+                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Scoring Engine</td>
+                  <td style="padding: 7px 8px; color: #64748B;">Black-box rating</td>
+                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">100% Deterministic IDEX-7.5SC</td>
+                </tr>
+                <tr>
+                  <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Filing Provenance</td>
+                  <td style="padding: 7px 8px; color: #64748B;">Uncited summaries</td>
+                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">Direct BSE India Annual Report PDFs</td>
+                </tr>
+              </tbody>
+            </table>
+            """, unsafe_allow_html=True)
+
+    # Section 2: How Does It Work? The 5-Step Architecture
+    st.markdown("""
+    <div style="margin-top: 24px; margin-bottom: 14px;">
+      <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #059669;">⚙️</span> How Does It Work? The 5-Step Autonomous Pipeline
+      </div>
+      <p style="font-size: 13px; color: #64748B; margin-top: 2px;">
+        From statutory exchange filing ingestion to deterministic forensic risk scoring and intrinsic DCF corridors.
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 5 Step Horizontal Cards
+    p1, p2, p3, p4, p5 = st.columns(5)
+    with p1:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="font-size: 11px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
+              STEP 01
+            </div>
+            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+              📥 Ingestion
+            </div>
+            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+              Ingests 10-year P&amp;L, Balance Sheet, and Cash Flow statements. 6 internal sanity checks test balance sheet balance, accrual limits, and statement hierarchy.
+            </p>
+            """, unsafe_allow_html=True)
+
+    with p2:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="font-size: 11px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
+              STEP 02
+            </div>
+            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+              🏛️ 8-Pillar Matrix
+            </div>
+            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+              Deterministic 100-pt evaluation: Governance (20), Forensic Cash Flow (20), Solvency (12), Moat (13), Valuation (6), Simplicity (5), Innovation (18), Insider Risk (6).
+            </p>
+            """, unsafe_allow_html=True)
+
+    with p3:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="font-size: 11px; font-weight: 800; color: #DC2626; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
+              STEP 03
+            </div>
+            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+              🛡️ Fraud Shield
+            </div>
+            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+              8 multi-year forensic tests: Accrual divergence (CFO vs PAT), CWIP asset inflation, tax discrepancy, promoter pledging (PPRM), and trade receivable debtor aging.
+            </p>
+            """, unsafe_allow_html=True)
+
+    with p4:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="font-size: 11px; font-weight: 800; color: #D97706; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
+              STEP 04
+            </div>
+            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+              ⚡ IDEX Bridge
+            </div>
+            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+              Zero black-box bridge: Core Quality &minus; Forensic Penalties (cap &minus;7.5) + Bonuses (cap +10%). Promoter Integrity Overrides clamp score &lt;50 on severe red flags.
+            </p>
+            """, unsafe_allow_html=True)
+
+    with p5:
+        with st.container(border=True):
+            st.markdown("""
+            <div style="font-size: 11px; font-weight: 800; color: #059669; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">
+              STEP 05
+            </div>
+            <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+              🎯 DCF Fair Value
+            </div>
+            <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+              Computes 3-stage DCF intrinsic fair value vs Current Market Price (CMP), calibrating safety margin (Deep Undervaluation, Fair Value, or Rich Multiple).
+            </p>
+            """, unsafe_allow_html=True)
+
+    # Section 3: Fast 1-Click Bluechip Launcher
+    st.markdown("""
+    <div style="margin-top: 24px; margin-bottom: 12px;">
+      <div style="font-size: 18px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+        <span style="color: #2563EB;">⚡</span> Fast Bluechip Inspection Launchpad
+      </div>
+      <p style="font-size: 13px; color: #64748B; margin-top: 2px;">
+        Click any Dalal Street market stalwart below to immediately launch its full Holographic Stock Dossier:
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    presets = [
+        ("Reliance Industries", "RELIANCE", "⚡"),
+        ("HDFC Bank", "HDFCBANK", "🏦"),
+        ("Tata Consultancy Services", "TCS", "💻"),
+        ("Infosys", "INFY", "🌐"),
+        ("ITC Limited", "ITC", "📦"),
+        ("Larsen & Toubro", "LT", "🏗️"),
+        ("Tata Motors", "TATAMOTORS", "🚗"),
+        ("Sun Pharma", "SUNPHARMA", "💊"),
+    ]
+    
+    preset_cols = st.columns(4)
+    for idx, (label, sym, emoji) in enumerate(presets):
+        col_target = preset_cols[idx % 4]
+        with col_target:
+            if st.button(f"{emoji} {sym}", help=f"Inspect {label} ({sym})", key=f"welcome_bluechip_{sym}", width="stretch"):
+                info = find_company_info(sym)
+                st.session_state["selected_company_choice"] = info["display"]
+                st.session_state["pending_nav_mode"] = "🔬 Holographic Stock Dossier"
+                st.rerun()
+
+    # Section 4: Operational & Technical Architecture FAQ
+    st.markdown("""
+    <div style="margin-top: 28px; margin-bottom: 10px;">
+      <div style="font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 6px;">
+        <span>❓</span> Architecture &amp; Operational Insights
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.expander("🏛️ How is the 8-Pillar IDEX-7.5SC framework calculated deterministically?", expanded=False):
+        st.markdown("""
+        Every tracked equity starts with a clean baseline across 8 fundamental pillars totaling 100 maximum points:
+        - **Governance & Capital Allocation (20.0 pts)**: Capital reinvestment discipline, board independence, dilution control, and M&A track record.
+        - **Forensic Accounting & Cash Flow (20.0 pts)**: Cash conversion (CFO / PAT), accrual quality, working capital cycle, and receivable health.
+        - **Risk, Solvency & Fragility (12.0 pts)**: Net Debt/EBITDA, interest coverage ratio, liquidity buffer, and balance sheet leverage.
+        - **Valuation & Sanity Layer (6.0 pts)**: Relative multiples (P/E, EV/EBITDA, P/B) vs historical corridors and DCF margin of safety.
+        - **Moat Durability & Scalability (13.0 pts)**: Pricing power, distribution reach, network effects, and brand durability.
+        - **Simplicity & Repeatability (5.0 pts)**: Business clarity, revenue predictability, and low subsidiary complexity.
+        - **Innovation & TAM Optionality (18.0 pts)**: R&D reinvestment rate, new market adjacency expansion, and addressable TAM.
+        - **Insider & Minority Shareholder Risk (6.0 pts)**: Promoter share pledging (PPRM), insider trades, and RPT transparency.
+        
+        The final score bridges Core Quality minus Forensic Risk Deductions (capped at &minus;7.5) plus Resilience Bonuses (capped at +10%).
+        """)
+
+    with st.expander("🛡️ What triggers the Promoter Integrity Override (PIO)?", expanded=False):
+        st.markdown("""
+        The **Promoter Integrity Override (PIO)** is an unbending institutional circuit breaker. If any of the following critical triggers are flagged:
+        1. **Promoter Share Pledging (PPRM) exceeds 50%** of total promoter equity.
+        2. **Auditor resignation or adverse CARO qualification** alleging accounting misstatements.
+        3. **Regulatory enforcement actions** (SEBI / ED / SFIO investigation).
+        4. **Material related-party transactions (RPTs)** that extract capital from minority shareholders.
+        
+        **Deterministic Enforcement:**
+        - Governance pillar is immediately clamped to &le; 6.0 / 20.0.
+        - All trajectory and resilience bonuses are permanently revoked.
+        - `GOV-RED 🔴` badge is enforced across the dossier.
+        - Overall composite score is hard-capped in fragile territory (&lt;50.0).
+        """)
+
+    with st.expander("📑 Where does Project KUSHA source filings and market data?", expanded=False):
+        st.markdown("""
+        - **Statutory Annual Reports**: Streamed directly from official **BSE India** regulatory archives (<code>bseindia.com/xml-data/corpfiling/AttachHis/...</code>) with 1-click verified HTTPS links.
+        - **Audited Financial Statements**: Canonical 10-year audited P&L, Balance Sheet, and Cash Flow statements reconciled with **Screener.in** dataset.
+        - **Credit Ratings**: Canonical agency disclosures from **CRISIL, ICRA, CARE, and India Ratings**.
+        - **Live Market Telemetry**: NSE/BSE delayed market quotes via Yahoo Finance with day range telemetry and 52-week channels.
+        """)
+
+    with st.expander("🧪 Can I use Project KUSHA in Demo Mode without an API key?", expanded=False):
+        st.markdown("""
+        **Yes!** If you do not have a Google Gemini API key configured:
+        - Toggle **Demo Mode** in the sidebar.
+        - Select any tracked bluechip and click **Quick Demo**.
+        - The terminal will generate a full holographic dossier evaluation using verified synthetic reference data, showcasing the 8-pillar radial chart, forensic risk shield, DCF valuation corridor, and peer comparison matrix.
+        """)
+
+# --- AUDITED STATUTORY FILINGS VAULT VIEW ---
+def render_audited_filings_vault_view():
+    st.markdown("""
+    <div style="margin-top: 4px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 12px;">
+      <div>
+        <div style="font-size: 20px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+          <span style="color: #059669;">📑</span> Audited Statutory Filings Vault
+        </div>
+        <p style="font-size: 13px; color: #64748B; margin: 4px 0 0 0;">
+          Direct statutory annual report repository streamed from official BSE India exchange archives (<code>bseindia.com</code>).
+        </p>
+      </div>
+      <span style="font-size: 11.5px; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace; font-weight: 800;">
+        SEBI LODR REG 34 COMPLIANT
+      </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.container(border=True):
+        st.markdown("#### Select Equity to Inspect Statutory Disclosures")
+        c_list = company_options
+        cur_choice = st.session_state.get("selected_company_choice", None)
+        default_idx = c_list.index(cur_choice) if (cur_choice and cur_choice in c_list) else 0
+
+        v_col1, v_col2 = st.columns([3, 1])
+        with v_col1:
+            vault_company_str = st.selectbox(
+                "Company",
+                options=c_list,
+                index=default_idx,
+                key="vault_company_select",
+                placeholder="Search tracked companies (e.g. Reliance, TCS, HDFC Bank, Infosys)..."
+            )
+        
+        info = find_company_info(vault_company_str) if vault_company_str else None
+        sym = info.get("ticker", "RELIANCE") if info else "RELIANCE"
+
+        with v_col2:
+            st.text_input("NSE / BSE Symbol", value=sym, disabled=True)
+
+        # Quick preset buttons
+        st.caption("Quick Bluechip Filings Discovery")
+        preset_syms = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ITC", "LT"]
+        p_cols = st.columns(len(preset_syms))
+        for p_idx, p_sym in enumerate(preset_syms):
+            with p_cols[p_idx]:
+                if st.button(f"📄 {p_sym}", key=f"btn_vault_preset_{p_sym}", width="stretch"):
+                    p_info = find_company_info(p_sym)
+                    st.session_state["selected_company_choice"] = p_info["display"]
+                    st.rerun()
+
+    # Discover Available Annual Reports for this symbol
+    reports = get_available_annual_reports(sym) if (sym and sym != "CUSTOM") else []
+
+    if reports:
+        st.markdown(f"""
+        <div style="font-size: 15px; font-weight: 800; color: #0F172A; margin-top: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+          <span>📁</span> Available BSE India Statutory Filings ({len(reports)} Discovered)
+        </div>
+        """, unsafe_allow_html=True)
+
+        for r_idx, rep in enumerate(reports):
+            with st.container(border=True):
+                r_c1, r_c2, r_c3 = st.columns([3, 1.5, 1.5])
+                with r_c1:
+                    st.markdown(f"""
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-size: 18px;">📑</span>
+                      <div>
+                        <div style="font-size: 15px; font-weight: 800; color: #0F172A;">{rep.get('title', 'Annual Report')}</div>
+                        <div style="font-size: 12px; color: #64748B; font-family: 'JetBrains Mono', monospace;">
+                          Financial Year: {rep.get('year', 'Latest')} · Host: bseindia.com
+                        </div>
+                      </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with r_c2:
+                    st.link_button("View BSE Filing PDF ↗", rep["url"], width="stretch")
+                with r_c3:
+                    if st.button("Inspect in Dossier 🔬", key=f"vault_inspect_{sym}_{r_idx}", width="stretch"):
+                        st.session_state["selected_company_choice"] = info["display"]
+                        st.session_state["pending_nav_mode"] = "🔬 Holographic Stock Dossier"
+                        st.rerun()
+    else:
+        st.info(f"No direct BSE annual report PDF candidates are currently cached for symbol `{sym}`. You can analyze this equity using Google Search grounding or upload a custom PDF inside the Holographic Stock Dossier.")
+
+    # Statutory Disclosures Note Card
+    st.markdown("""
+    <div style="margin-top: 20px; background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px 22px;">
+      <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
+        🏛️ Statutory Filing Provenance &amp; SEBI LODR Regulations
+      </div>
+      <p style="font-size: 12.5px; color: #475569; line-height: 1.55; margin: 0;">
+        Under Regulation 34 of SEBI (Listing Obligations and Disclosure Requirements) Regulations, 2015, listed Indian entities must submit their annual reports containing audited financial statements, Cash Flow statements, Notes to Accounts, and the Companies (Auditor's Report) Order (CARO) to the stock exchanges. Project KUSHA references these official exchange filings directly from BSE India regulatory servers.
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
 # --- TOP-LEVEL WORKSPACE NAVIGATION ---
-workspace_options = ["⚡ Screener & Market Matrix", "🔬 Holographic Stock Dossier", "📑 Audited Filings Vault"]
+workspace_options = [
+    "👋 Welcome to Project KUSHA",
+    "⚡ Screener & Market Matrix",
+    "🔬 Holographic Stock Dossier",
+    "📑 Audited Filings Vault"
+]
 
 # Smooth alias mapping for existing session states
 nav_alias_map = {
     "🌐 Explore": "⚡ Screener & Market Matrix",
     "📊 Nifty 50": "⚡ Screener & Market Matrix",
-    "🔬 Company Analysis": "🔬 Holographic Stock Dossier"
+    "🔬 Company Analysis": "🔬 Holographic Stock Dossier",
+    "Welcome": "👋 Welcome to Project KUSHA",
+    "Greeting": "👋 Welcome to Project KUSHA",
+    "Home": "👋 Welcome to Project KUSHA",
+    "Screener": "⚡ Screener & Market Matrix",
+    "Dossier": "🔬 Holographic Stock Dossier",
+    "Vault": "📑 Audited Filings Vault"
 }
 
 if "pending_nav_mode" in st.session_state:
@@ -927,7 +1375,7 @@ if "pending_nav_mode" in st.session_state:
 
 current_nav = st.session_state.get("active_nav_mode")
 if current_nav not in workspace_options:
-    st.session_state["active_nav_mode"] = nav_alias_map.get(current_nav, "⚡ Screener & Market Matrix")
+    st.session_state["active_nav_mode"] = nav_alias_map.get(current_nav, "👋 Welcome to Project KUSHA")
 
 terminal_mode = st.segmented_control(
     "Workspace",
@@ -935,6 +1383,10 @@ terminal_mode = st.segmented_control(
     key="active_nav_mode",
     label_visibility="collapsed"
 )
+
+if terminal_mode == "👋 Welcome to Project KUSHA":
+    render_project_kusha_welcome_page()
+    st.stop()
 
 if terminal_mode == "⚡ Screener & Market Matrix":
     # Presets for the Quantum Screener
@@ -949,8 +1401,9 @@ if terminal_mode == "⚡ Screener & Market Matrix":
     
     render_nifty50_screener_view()
     st.stop()
-    
-    render_nifty50_screener_view()
+
+if terminal_mode == "📑 Audited Filings Vault":
+    render_audited_filings_vault_view()
     st.stop()
 
 if terminal_mode == "🔬 Holographic Stock Dossier":

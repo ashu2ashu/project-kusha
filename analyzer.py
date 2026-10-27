@@ -260,7 +260,7 @@ def validate_and_reconcile_idex_analysis(raw: Any, is_demo: bool = False) -> Dic
         company_name += " [SYNTHETIC SAMPLE]"
 
     return {
-        "cover_line": raw.get("cover_line", f"IDEX-7.5SC Institutional Analysis for {company_name}"),
+        "cover_line": raw.get("cover_line", f"Project KUSHA Institutional Analysis for {company_name}"),
         "company_name": company_name,
         "sector": raw.get("sector", "Diversified"),
         "financial_year": raw.get("financial_year", "Latest Reported Period"),
@@ -512,7 +512,7 @@ def get_demo_analysis(
     c_sec = sector.strip() if sector and sector.strip() else "Diversified Industrial"
 
     raw_demo = {
-        "cover_line": f"[SYNTHETIC DEMO] IDEX-7.5SC Framework Demonstration for {c_name}",
+        "cover_line": f"[SYNTHETIC DEMO] 8-Pillar Fundamental & Forensic Framework Demonstration for {c_name}",
         "company_name": f"{c_name} [DEMO SAMPLE]",
         "sector": c_sec,
         "financial_year": "FY24 (Synthetic Benchmark)",

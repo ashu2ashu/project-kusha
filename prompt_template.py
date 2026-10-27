@@ -16,7 +16,7 @@ You are evaluating:
 - Company Name: {company_name}
 - Sector / Industry: {sector}
 
-Using the IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) — Updated with Promoter Integrity Guardrails and the integrated Sector-Specific Receivable Health Layer.
+Using Project KUSHA 8-Pillar Fundamental & Forensic Model — Updated with Promoter Integrity Guardrails and the integrated Sector-Specific Receivable Health Layer.
 
 Perform forensic data extraction and rigorous scoring across the 8 Pillars (Core <= 100 Max):
 1. Governance & Capital Allocation (Max: 20.0) — Founder alignment, board quality, capital returns, dilution, ESOPs, M&A discipline, promoter honesty.
@@ -77,7 +77,7 @@ OUTPUT REQUIREMENT:
 Return ONLY valid JSON matching this exact structure:
 ```json
 {{
-  "cover_line": "Evaluate {company_name} in {sector} using IDEX-7.5SC Hybrid Pro (Ashu Elite Edition) — Updated with Promoter Integrity Guardrails",
+  "cover_line": "Evaluate {company_name} in {sector} using Project KUSHA 8-Pillar Fundamental & Forensic Model — Updated with Promoter Integrity Guardrails",
   "company_name": "{company_name}",
   "sector": "{sector}",
   "financial_year": "FY24 (or latest analyzed)",

@@ -1,6 +1,6 @@
 """
 app.py
-FinScan India | IDEX-7.5SC Hybrid Pro (Ashu Elite Edition)
+Project KUSHA | Fundamental & Forensic Institutional Terminal
 Institutional AI Financial Intelligence Terminal for Indian Listed Equities
 """
 
@@ -853,7 +853,7 @@ def render_terminal_top_telemetry_hud():
           ● LIVE NSE STREAM
         </span>
         <span style="background: rgba(37, 99, 235, 0.08); color: #2563EB; border: 1px solid rgba(37, 99, 235, 0.25); font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace;">
-          IDEX-7.5SC DUAL-ENGINE
+          FUNDAMENTAL & FORENSIC DUAL-ENGINE
         </span>
       </div>
     </div>
@@ -906,7 +906,7 @@ def render_terminal_top_telemetry_hud():
         <div class="ss-hero-title">The Future of Stock Screening & Forensics.</div>
         <p class="ss-hero-subtitle">Autonomous 8-pillar due diligence, high-density multi-factor screening, holographic forensic shields, and real-time valuation radar in one unified workstation.</p>
         <div class="ss-hero-meta">
-          <span>IDEX-7.5SC Dual-Engine</span>
+          <span>Fundamental & Forensic Dual-Engine</span>
           <span>16 Canonical Factors</span>
           <span>Sentinel Fraud Shield</span>
           <span>Verified BSE Disclosures</span>
@@ -939,7 +939,7 @@ def render_project_kusha_welcome_page():
           🇮🇳 DALAL STREET FORENSIC SURVEILLANCE // PROJECT KUSHA
         </span>
         <span style="font-size: 11.5px; font-weight: 700; color: #64748B; font-family: 'JetBrains Mono', monospace;">
-          IDEX-7.5SC DUAL ENGINE • ZERO BLACK-BOX MATH
+          FUNDAMENTAL & FORENSIC DUAL ENGINE • ZERO BLACK-BOX MATH
         </span>
       </div>
       <div style="font-size: 30px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 10px;">
@@ -951,7 +951,7 @@ def render_project_kusha_welcome_page():
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; padding-top: 14px; border-top: 1px solid #F1F5F9;">
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
           <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Core Evaluation</div>
-          <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">8-Pillar IDEX-7.5SC</div>
+          <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace;">8-Pillar Forensic Model</div>
         </div>
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
           <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Fraud Shield</div>
@@ -1032,7 +1032,7 @@ def render_project_kusha_welcome_page():
                 <tr style="border-bottom: 1px solid #F1F5F9;">
                   <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Scoring Engine</td>
                   <td style="padding: 7px 8px; color: #64748B;">Black-box rating</td>
-                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">100% Deterministic IDEX-7.5SC</td>
+                  <td style="padding: 7px 8px; font-weight: 700; color: #059669;">100% Deterministic Forensic Model</td>
                 </tr>
                 <tr>
                   <td style="padding: 7px 8px; font-weight: 600; color: #334155;">Filing Provenance</td>
@@ -1106,7 +1106,7 @@ def render_project_kusha_welcome_page():
               STEP 04
             </div>
             <div style="font-size: 14.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">
-              ⚡ IDEX Bridge
+              ⚡ Forensic Scoring Bridge
             </div>
             <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
               Zero black-box bridge: Core Quality &minus; Forensic Penalties (cap &minus;7.5) + Bonuses (cap +10%). Promoter Integrity Overrides clamp score &lt;50 on severe red flags.
@@ -1136,7 +1136,7 @@ def render_project_kusha_welcome_page():
     </div>
     """, unsafe_allow_html=True)
 
-    with st.expander("🏛️ How is the 8-Pillar IDEX-7.5SC framework calculated deterministically?", expanded=False):
+    with st.expander("🏛️ How is the 8-Pillar Fundamental & Forensic framework calculated deterministically?", expanded=False):
         st.markdown("""
         Every tracked equity starts with a clean baseline across 8 fundamental pillars totaling 100 maximum points:
         - **Governance & Capital Allocation (20.0 pts)**: Capital reinvestment discipline, board independence, dilution control, and M&A track record.
@@ -3187,7 +3187,7 @@ def render_graphical_forensic_architecture_html() -> str:
           <!-- Benchmark 4 -->
           <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 3px solid #7C3AED; border-radius: 12px; padding: 14px 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-size: 10.5px; font-weight: 800; color: #7C3AED; text-transform: uppercase; letter-spacing: 0.5px;">IDEX COMPOSITE SCORE</span>
+              <span style="font-size: 10.5px; font-weight: 800; color: #7C3AED; text-transform: uppercase; letter-spacing: 0.5px;">COMPOSITE QUALITY SCORE</span>
               <span style="background: rgba(124, 58, 237, 0.08); color: #7C3AED; border: 1px solid rgba(124, 58, 237, 0.25); font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">≥ 85 / 100</span>
             </div>
             <div style="background: #E2E8F0; border-radius: 9999px; height: 5px; margin-bottom: 8px;">
@@ -3202,7 +3202,7 @@ def render_graphical_forensic_architecture_html() -> str:
 
 # --- EXECUTION ENGINE ---
 if run_btn:
-    with st.status(f"Evaluating {target_company_name} with IDEX-7.5SC...", expanded=True) as status:
+    with st.status(f"Evaluating {target_company_name} across 8 Fundamental & Forensic Pillars...", expanded=True) as status:
         st.write("Ingesting financial statement tables & market feeds...")
         time.sleep(0.2)
         st.write("Evaluating statutory disclosures & related-party schedules...")
@@ -3397,7 +3397,7 @@ if "idex_result" in st.session_state:
         with st.expander(f"🕵️ Forensic Due Diligence Trail: {v_badge} (FQI: {fqi:.0f}/100 • 8-Pillar Concealed Risk Surveillance)", expanded=False):
             st.html(render_forensic_dossier_html(forensic_audit))
 
-    # 1. EXECUTIVE SCORE ROW (Radial IDEX Gauge & Formula Waterfall Bridge)
+    # 1. EXECUTIVE SCORE ROW (Radial Score Gauge & Formula Waterfall Bridge)
     final_score = res.get('final_score', 0)
     verdict = res.get("verdict", "").split("—")[0].strip()
     core_score = res.get('core_score', 0)
@@ -3432,7 +3432,7 @@ if "idex_result" in st.session_state:
         f'<div style="display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: center;">'
         # Radial Gauge Pod
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 18px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative;">'
-        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">IDEX COMPOSITE SCORE</div>'
+        f'<div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">COMPOSITE QUALITY SCORE</div>'
         f'<div style="position: relative; width: 130px; height: 130px;">'
         f'<svg width="130" height="130" viewBox="0 0 140 140" style="transform: rotate(-90deg);">'
         f'<defs>'
@@ -3496,7 +3496,7 @@ if "idex_result" in st.session_state:
         # Formula Bridge Node Strip
         f'<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #E2E8F0; flex-wrap: wrap;">'
         f'<div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-family: \'JetBrains Mono\', monospace; color: #64748B;">'
-        f'<span style="font-weight: 700; color: #0F172A;">⚡ IDEX-7.5SC Formula:</span>'
+        f'<span style="font-weight: 700; color: #0F172A;">⚡ Deterministic Scoring Formula:</span>'
         f'<span style="background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Core: {core_score:.1f}</span>'
         f'<span style="color: #64748B; font-weight: 800;">−</span>'
         f'<span style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Penalties: {abs(total_penalties):.1f}</span>'
@@ -3779,9 +3779,9 @@ if "idex_result" in st.session_state:
     # --- SECTION A: RISK DEDUCTIONS & GROWTH BONUSES ---
     if show_all or dossier_tab == "🛡️ Risk Deductions & Bonuses":
         if res.get("pio_triggered", False) and (core_score + total_penalties) > 49.0:
-            bridge_math_summary = f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → PIO Red Zone Cap (≤49.0) → Final IDEX ({final_score:.1f})'
+            bridge_math_summary = f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → PIO Red Zone Cap (≤49.0) → Final Score ({final_score:.1f})'
         else:
-            bridge_math_summary = f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f} pts) → Final IDEX ({final_score:.1f})'
+            bridge_math_summary = f'Core Quality ({core_score:.1f}) → Penalties (-{abs(total_penalties):.1f}) → Bonuses (+{total_bonus:.1f} pts) → Final Score ({final_score:.1f})'
 
         st.markdown(
             f'<div style="margin-top: 24px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">'
@@ -3899,7 +3899,7 @@ if "idex_result" in st.session_state:
                 f'<thead>'
                 f'<tr style="background: #F8FAFC; border-bottom: 1.5px solid #E2E8F0;">'
                 f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">Constituent Company</th>'
-                f'<th style="padding: 12px 16px; text-align: center; font-weight: 800; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">IDEX Quality Score</th>'
+                f'<th style="padding: 12px 16px; text-align: center; font-weight: 800; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">Composite Quality Score</th>'
                 f'<th style="padding: 12px 16px; text-align: left; font-weight: 800; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">Sector Position & Standing</th>'
                 f'</tr>'
                 f'</thead>'

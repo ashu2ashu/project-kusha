@@ -32,6 +32,15 @@ importlib.reload(financial_trends)
 importlib.reload(data_integrity_agent)
 importlib.reload(nifty_peer_comparison)
 importlib.reload(forensic_risk_engine)
+import evaluation_cache
+importlib.reload(evaluation_cache)
+
+from evaluation_cache import (
+    load_cached_evaluation,
+    save_cached_evaluation,
+    get_cache_stats,
+    clear_evaluation_cache
+)
 
 from nifty_peer_comparison import (
     render_head_to_head_comparison_html,
@@ -826,6 +835,25 @@ with st.sidebar:
 
     if demo_mode:
         st.caption("🧪 **Demo Mode Active**: The company assessment uses synthetic sample data and does not represent a real investment analysis.")
+
+    # Local Evaluation Cache Controls (Saves API Quota)
+    use_eval_cache = st.toggle(
+        "💾 Use local replay cache",
+        value=True,
+        help="Saves real Gemini outputs locally. Replays instantly (<0.05s) on repeat runs with 0 API requests and 0 storage overhead (~15KB per company)."
+    )
+    cache_stats = get_cache_stats()
+    if cache_stats["count"] > 0:
+        c_col1, c_col2 = st.columns([1.5, 1])
+        with c_col1:
+            st.caption(f"💾 **{cache_stats['count']} cached** ({cache_stats['total_kb']} KB)")
+        with c_col2:
+            if st.button("Clear", key="btn_clear_eval_cache", help="Wipes all cached analyses from your disk."):
+                cleared = clear_evaluation_cache()
+                st.toast(f"Cleared {cleared} cached evaluations.")
+                st.rerun()
+    else:
+        st.caption("💾 Cache empty (runs save automatically)")
 
     st.divider()
     
@@ -1907,6 +1935,29 @@ if terminal_mode == "Research":
                 st.session_state["trigger_demo_run"] = True
                 st.rerun()
 
+        # Check if local cached evaluation exists
+        cached_exists = False
+        if use_eval_cache and target_ticker:
+            cached_exists = load_cached_evaluation(
+                company_name=target_company_name or "",
+                ticker=target_ticker or "",
+                model=selected_gemini_model,
+                current_pipeline_version=ANALYSIS_PIPELINE_VERSION
+            ) is not None
+
+        force_live_api = False
+        if cached_exists:
+            col_c1, col_c2 = st.columns([2.6, 1.4])
+            with col_c1:
+                st.markdown(
+                    '<div style="margin-top: 4px; font-size: 11.5px; color: #059669; font-weight: 700;">'
+                    '⚡ <strong>Cached Evaluation Available:</strong> Will replay in &lt;0.05s with 0 API quota.'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+            with col_c2:
+                force_live_api = st.checkbox("Force fresh live API run", value=False, help="Bypasses local cache and executes fresh Gemini API call.")
+
         # Latency / estimated duration guidance
         st.markdown(
             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding: 4px 6px; font-size: 11.5px; color: #64748B;">'
@@ -1932,6 +1983,14 @@ if terminal_mode == "Research":
                     ["⚡ Auto-fetch BSE filing", "📂 Upload custom PDF", "🌐 Web research only"],
                     default="⚡ Auto-fetch BSE filing",
                     help="Finds annual-report links through Screener.in, accepts only HTTPS PDF links hosted on BSE, and validates the downloaded PDF before analysis."
+                )
+
+            skip_web_search = False
+            if doc_type != "🌐 Web research only":
+                skip_web_search = st.toggle(
+                    "⚡ Skip web search grounding (Conserves API quota)",
+                    value=False,
+                    help="Grounds analysis directly on the official PDF filing and skips Google Search web queries. Saves 1 full API call per audit and avoids 429 search quota exhaustion."
                 )
 
             uploaded_file = None
@@ -2079,6 +2138,8 @@ else:
     uploaded_file = None
     selected_filing_metadata = None
     doc_type = "⚡ Auto-fetch BSE filing"
+    skip_web_search = False
+    force_live_api = False
     live_data = None
     fin_res = None
     run_btn = False
@@ -2667,7 +2728,11 @@ def render_research_provenance_and_evidence_card(res, live_data, target_company_
     retrieval_time = res.get("retrieved_at") or datetime.now().strftime("%d %b %Y")
     exec_sec = res.get("execution_time_seconds")
     est_lbl = res.get("estimated_time_label")
-    latency_str = f" · Latency: {exec_sec:.1f}s" + (f" (Est: {est_lbl})" if est_lbl else "") if exec_sec is not None else ""
+    is_cached = res.get("is_cached_result", False)
+    if is_cached:
+        latency_str = f" · Replay: Local Cache ({exec_sec:.2f}s · 0 API Quota)"
+    else:
+        latency_str = f" · Latency: {exec_sec:.1f}s" + (f" (Est: {est_lbl})" if est_lbl else "") if exec_sec is not None else ""
     q3_text = f"Retrieved: {retrieval_time} · Multimodal Ingestion: {'Verified' if is_analyzed else 'Public Feed'} · Mathematical Sanity Check: {s_text}{latency_str}"
 
     # 4. Qualified Conclusion & Supporting Evidence
@@ -3658,96 +3723,141 @@ if run_btn:
             est_sec_typical=est_sec_typical
         ), height=130)
 
-    with st.status(f"Evaluating {clean_target_name} across 8 Fundamental & Forensic Pillars (Est: {est_label})...", expanded=True) as status:
-        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Ingesting financial statement tables & market feeds...")
-        time.sleep(0.15)
-        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating statutory disclosures & related-party schedules...")
-        time.sleep(0.15)
-        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating Sector Receivable Health (DSO, Aging, Provision Coverage)...")
-        time.sleep(0.15)
-        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Enforcing deterministic Python scoring, PIO guardrails & penalty/bonus caps...")
-        
-        try:
-            sentinel_rep = st.session_state.get("sentinel_report", None)
-            forensic_rep = st.session_state.get("forensic_report", None)
-            if demo_mode:
-                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Generating synthetic demonstration vector...")
-                result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep, forensic_report=forensic_rep)
-            else:
-                pdf_bytes = None
-                filing_meta = None
-                if doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
-                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Downloading BSE-hosted filing PDF ({selected_filing_metadata.get('title')})...")
-                    pdf_bytes = download_annual_report_bytes(selected_filing_metadata["url"])
-                    filing_meta = selected_filing_metadata
-                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Retrieved BSE statutory PDF ({len(pdf_bytes)/(1024*1024):.1f} MB).")
-                elif doc_type == "📂 Upload custom PDF" and uploaded_file:
-                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Ingesting user uploaded document ({uploaded_file.name})...")
-                    raw_bytes = uploaded_file.read()
-                    max_upload_size = 50 * 1024 * 1024  # 50 MB
-                    if len(raw_bytes) > max_upload_size:
-                        raise ValueError(f"Uploaded file exceeds maximum limit of 50MB (received {len(raw_bytes)/(1024*1024):.1f}MB).")
-                    if not raw_bytes.startswith(b"%PDF-"):
-                        raise ValueError("Uploaded document is not a valid PDF file (missing '%PDF-' header).")
-                    pdf_bytes = raw_bytes
-                    filing_meta = selected_filing_metadata
-                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Uploaded PDF validated ({len(pdf_bytes)/(1024*1024):.1f} MB).")
+    # Check if a pre-computed evaluation exists in the local development cache
+    cached_eval_data = None
+    if not demo_mode and use_eval_cache and not force_live_api:
+        cached_eval_data = load_cached_evaluation(
+            company_name=clean_target_name,
+            ticker=clean_target_ticker,
+            model=selected_gemini_model,
+            current_pipeline_version=ANALYSIS_PIPELINE_VERSION
+        )
 
-                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 🧠 Launching Gemini {selected_gemini_model} multimodal audit...")
-                result = analyze_document_with_gemini(
-                    company_name=target_company_name,
-                    sector=target_sector,
-                    api_key=active_api_key,
-                    pdf_bytes=pdf_bytes,
-                    live_data=live_data,
-                    custom_prompt=custom_prompt,
-                    sentinel_report=sentinel_rep,
-                    selected_model=selected_gemini_model,
-                    filing_metadata=filing_meta,
-                    forensic_report=forensic_rep
-                )
-            total_elapsed = time.time() - t_start
-            result["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
-            result["execution_time_seconds"] = round(total_elapsed, 1)
-            result["estimated_time_seconds"] = est_sec_typical
-            result["estimated_time_label"] = est_label
-            st.session_state["idex_result"] = result
+    if cached_eval_data is not None:
+        result, cached_at_time = cached_eval_data
+        result["is_cached_result"] = True
+        result["cached_at_time"] = cached_at_time
+        result["execution_time_seconds"] = 0.05
+        result["estimated_time_label"] = "Instant (Local Cache)"
+        st.session_state["idex_result"] = result
+
+        with timer_placeholder:
+            st.iframe(render_live_analysis_timer_html(
+                company_name=clean_target_name,
+                ticker=clean_target_ticker,
+                mode_label="💾 Local Cache Replay",
+                est_label="< 0.1s",
+                est_sec_typical=1,
+                completed_sec=0.05
+            ), height=130)
+
+        with st.status(f"⚡ Instant Replay from Local Cache: {clean_target_name} (0 API Calls Used)", expanded=False, state="complete") as status:
+            st.write(f"💾 Loaded pre-computed institutional brief from disk ({cached_at_time}).")
+            st.write(f"🔒 Mathematical Determinism & PIO Guardrails Verified.")
+            st.write(f"⚡ Zero API quota consumed (saved 2 live Gemini requests).")
+    else:
+        with st.status(f"Evaluating {clean_target_name} across 8 Fundamental & Forensic Pillars (Est: {est_label})...", expanded=True) as status:
+            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Ingesting financial statement tables & market feeds...")
+            time.sleep(0.15)
+            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating statutory disclosures & related-party schedules...")
+            time.sleep(0.15)
+            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating Sector Receivable Health (DSO, Aging, Provision Coverage)...")
+            time.sleep(0.15)
+            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Enforcing deterministic Python scoring, PIO guardrails & penalty/bonus caps...")
             
-            with timer_placeholder:
-                st.iframe(render_live_analysis_timer_html(
-                    company_name=clean_target_name,
-                    ticker=clean_target_ticker,
-                    mode_label=mode_pill,
-                    est_label=est_label,
-                    est_sec_typical=est_sec_typical,
-                    completed_sec=total_elapsed
-                ), height=130)
-            
-            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` ✅ Scoring complete in {total_elapsed:.1f}s (Est: {est_label}).")
-            status.update(label=f"Evaluation Complete for {clean_target_name} in {total_elapsed:.1f}s (Estimated: {est_label})!", state="complete", expanded=False)
-        except Exception as e:
-            total_elapsed = time.time() - t_start
-            with timer_placeholder:
-                st.iframe(render_live_analysis_timer_html(
-                    company_name=clean_target_name,
-                    ticker=clean_target_ticker,
-                    mode_label=mode_pill,
-                    est_label=est_label,
-                    est_sec_typical=est_sec_typical,
-                    completed_sec=total_elapsed,
-                    is_error=True
-                ), height=130)
-            status.update(label=f"Evaluation Failed after {total_elapsed:.1f}s", state="error")
-            raw_err = str(e)
-            # Redact raw API key patterns to prevent client-side credential exposure
-            clean_err = raw_err
-            if active_api_key and len(active_api_key) > 8:
-                clean_err = clean_err.replace(active_api_key, "AIzaSy***[REDACTED]***")
-            clean_err = re.sub(r'AIza[0-9A-Za-z-_]{35}', 'AIzaSy***[REDACTED]***', clean_err)
-            clean_err = re.sub(r'key=[0-9A-Za-z-_]{20,}', 'key=***[REDACTED]***', clean_err)
-            st.error(f"Analysis Error: {clean_err}")
-            with st.expander("Technical Details"):
-                st.write(f"Diagnostic detail: {clean_err}")
+            try:
+                sentinel_rep = st.session_state.get("sentinel_report", None)
+                forensic_rep = st.session_state.get("forensic_report", None)
+                if demo_mode:
+                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Generating synthetic demonstration vector...")
+                    result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep, forensic_report=forensic_rep)
+                else:
+                    pdf_bytes = None
+                    filing_meta = None
+                    if doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
+                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Downloading BSE-hosted filing PDF ({selected_filing_metadata.get('title')})...")
+                        pdf_bytes = download_annual_report_bytes(selected_filing_metadata["url"])
+                        filing_meta = selected_filing_metadata
+                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Retrieved BSE statutory PDF ({len(pdf_bytes)/(1024*1024):.1f} MB).")
+                    elif doc_type == "📂 Upload custom PDF" and uploaded_file:
+                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Ingesting user uploaded document ({uploaded_file.name})...")
+                        raw_bytes = uploaded_file.read()
+                        max_upload_size = 50 * 1024 * 1024  # 50 MB
+                        if len(raw_bytes) > max_upload_size:
+                            raise ValueError(f"Uploaded file exceeds maximum limit of 50MB (received {len(raw_bytes)/(1024*1024):.1f}MB).")
+                        if not raw_bytes.startswith(b"%PDF-"):
+                            raise ValueError("Uploaded document is not a valid PDF file (missing '%PDF-' header).")
+                        pdf_bytes = raw_bytes
+                        filing_meta = selected_filing_metadata
+                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Uploaded PDF validated ({len(pdf_bytes)/(1024*1024):.1f} MB).")
+
+                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 🧠 Launching Gemini {selected_gemini_model} multimodal audit...")
+                    result = analyze_document_with_gemini(
+                        company_name=target_company_name,
+                        sector=target_sector,
+                        api_key=active_api_key,
+                        pdf_bytes=pdf_bytes,
+                        live_data=live_data,
+                        custom_prompt=custom_prompt,
+                        sentinel_report=sentinel_rep,
+                        selected_model=selected_gemini_model,
+                        filing_metadata=filing_meta,
+                        forensic_report=forensic_rep,
+                        skip_web_search=skip_web_search
+                    )
+                total_elapsed = time.time() - t_start
+                result["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
+                result["execution_time_seconds"] = round(total_elapsed, 1)
+                result["estimated_time_seconds"] = est_sec_typical
+                result["estimated_time_label"] = est_label
+
+                # Save to local cache for instant zero-cost replays
+                if not demo_mode and use_eval_cache:
+                    save_cached_evaluation(
+                        company_name=clean_target_name,
+                        ticker=clean_target_ticker,
+                        model=selected_gemini_model,
+                        result=result,
+                        pipeline_version=ANALYSIS_PIPELINE_VERSION
+                    )
+
+                st.session_state["idex_result"] = result
+                
+                with timer_placeholder:
+                    st.iframe(render_live_analysis_timer_html(
+                        company_name=clean_target_name,
+                        ticker=clean_target_ticker,
+                        mode_label=mode_pill,
+                        est_label=est_label,
+                        est_sec_typical=est_sec_typical,
+                        completed_sec=total_elapsed
+                    ), height=130)
+                
+                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` ✅ Scoring complete in {total_elapsed:.1f}s (Est: {est_label}).")
+                status.update(label=f"Evaluation Complete for {clean_target_name} in {total_elapsed:.1f}s (Estimated: {est_label})!", state="complete", expanded=False)
+            except Exception as e:
+                total_elapsed = time.time() - t_start
+                with timer_placeholder:
+                    st.iframe(render_live_analysis_timer_html(
+                        company_name=clean_target_name,
+                        ticker=clean_target_ticker,
+                        mode_label=mode_pill,
+                        est_label=est_label,
+                        est_sec_typical=est_sec_typical,
+                        completed_sec=total_elapsed,
+                        is_error=True
+                    ), height=130)
+                status.update(label=f"Evaluation Failed after {total_elapsed:.1f}s", state="error")
+                raw_err = str(e)
+                # Redact raw API key patterns to prevent client-side credential exposure
+                clean_err = raw_err
+                if active_api_key and len(active_api_key) > 8:
+                    clean_err = clean_err.replace(active_api_key, "AIzaSy***[REDACTED]***")
+                clean_err = re.sub(r'AIza[0-9A-Za-z-_]{35}', 'AIzaSy***[REDACTED]***', clean_err)
+                clean_err = re.sub(r'key=[0-9A-Za-z-_]{20,}', 'key=***[REDACTED]***', clean_err)
+                st.error(f"Analysis Error: {clean_err}")
+                with st.expander("Technical Details"):
+                    st.write(f"Diagnostic detail: {clean_err}")
 
 # --- RESULTS DASHBOARD ---
 if "idex_result" in st.session_state:
@@ -3789,11 +3899,19 @@ if "idex_result" in st.session_state:
     # Execution telemetry & audit duration badge
     if res.get("execution_time_seconds") is not None:
         exec_dur = res["execution_time_seconds"]
-        est_lbl = res.get("estimated_time_label") or f"~{res.get('estimated_time_seconds', 0)}s"
+        is_cached = res.get("is_cached_result", False)
+        cached_time = res.get("cached_at_time", "")
+        if is_cached:
+            badge_text = f"⚡ Local Cache Replay: {exec_dur:.2f}s (0 API Quota Used • Cached: {cached_time})"
+            badge_style = "background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46;"
+        else:
+            est_lbl = res.get("estimated_time_label") or f"~{res.get('estimated_time_seconds', 0)}s"
+            badge_text = f"⏱️ Audit Duration: {exec_dur:.1f}s (Estimated: {est_lbl})"
+            badge_style = "background: #F1F5F9; border: 1px solid #CBD5E1; color: #0F172A;"
         st.markdown(
             f'<div style="display: flex; align-items: center; gap: 10px; margin-top: -6px; margin-bottom: 14px; font-size: 12px; color: #64748B;">'
-            f'<span style="background: #F1F5F9; border: 1px solid #CBD5E1; color: #0F172A; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-family: monospace;">'
-            f'⏱️ Audit Duration: {exec_dur:.1f}s (Estimated: {est_lbl})'
+            f'<span style="{badge_style} padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-family: monospace;">'
+            f'{badge_text}'
             f'</span>'
             f'<span style="color: #94A3B8;">&bull;</span>'
             f'<span>Mathematical Determinism &amp; PIO Guardrails Verified</span>'

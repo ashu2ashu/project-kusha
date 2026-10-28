@@ -19,3 +19,4 @@ service_account*.json
 .pytest_cache/
 .coverage
 htmlcov/
+.cache/

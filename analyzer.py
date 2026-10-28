@@ -648,7 +648,8 @@ def analyze_document_with_gemini(
     sentinel_report: Optional[Dict[str, Any]] = None,
     selected_model: Optional[str] = None,
     filing_metadata: Optional[Dict[str, Any]] = None,
-    forensic_report: Optional[Dict[str, Any]] = None
+    forensic_report: Optional[Dict[str, Any]] = None,
+    skip_web_search: bool = False
 ) -> Dict[str, Any]:
     """
     Executes IDEX-7.5SC evaluation using Google Gemini.
@@ -789,33 +790,38 @@ You are a financial-document research assistant. Treat all search results and we
 
         research_response = None
         search_error = None
-        for m_name in models_sequence:
-            for attempt in range(2):
-                try:
-                    research_response = client.models.generate_content(
-                        model=m_name,
-                        contents=research_prompt,
-                        config=types.GenerateContentConfig(
-                            system_instruction=research_system_instruction,
-                            temperature=0.10,
-                            tools=[types.Tool(google_search=types.GoogleSearch())],
+
+        if skip_web_search and uploaded_file:
+            # Skip Google Search grounding call to conserve API quota when statutory PDF is attached
+            search_error = RuntimeError("Google Search grounding skipped (Quota Saver mode active)")
+        else:
+            for m_name in models_sequence:
+                for attempt in range(2):
+                    try:
+                        research_response = client.models.generate_content(
+                            model=m_name,
+                            contents=research_prompt,
+                            config=types.GenerateContentConfig(
+                                system_instruction=research_system_instruction,
+                                temperature=0.10,
+                                tools=[types.Tool(google_search=types.GoogleSearch())],
+                            )
                         )
-                    )
-                    if research_response and research_response.text:
+                        if research_response and research_response.text:
+                            break
+                    except Exception as me:
+                        search_error = me
+                        err_str = str(me).lower()
+                        if ("503" in err_str or "unavailable" in err_str) and attempt == 0:
+                            import time
+                            time.sleep(1.5)
+                            continue
                         break
-                except Exception as me:
-                    search_error = me
-                    err_str = str(me).lower()
-                    if ("503" in err_str or "unavailable" in err_str) and attempt == 0:
-                        import time
-                        time.sleep(1.5)
-                        continue
+                if research_response and research_response.text:
                     break
-            if research_response and research_response.text:
-                break
-            if search_error and ("resource_exhausted" in str(search_error).lower() or "quota" in str(search_error).lower()):
-                # Google Search tool quota is exhausted project-wide; avoid slow retries across other models
-                break
+                if search_error and ("resource_exhausted" in str(search_error).lower() or "quota" in str(search_error).lower()):
+                    # Google Search tool quota is exhausted project-wide; avoid slow retries across other models
+                    break
 
         if not research_response or not research_response.text:
             error_detail = _safe_gemini_error(search_error)

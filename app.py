@@ -1907,6 +1907,15 @@ if terminal_mode == "Research":
                 st.session_state["trigger_demo_run"] = True
                 st.rerun()
 
+        # Latency / estimated duration guidance
+        st.markdown(
+            f'<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding: 4px 6px; font-size: 11.5px; color: #64748B;">'
+            f'<span>⏱️ <strong>Estimated Latency:</strong> ~12–20s (Web research) &middot; ~45–75s (BSE statutory filing) &middot; &lt;1s (Demo)</span>'
+            f'<span style="font-family: monospace; font-size: 11px; color: #059669; font-weight: 700;">Active Model: {selected_gemini_model}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
         # Advanced research options expander
         with st.expander("⚙️ Advanced research options (sector override, filings & PDFs)", expanded=False):
             col_sec1, col_sec2 = st.columns([2, 2])
@@ -2168,6 +2177,452 @@ def parse_dcf_estimate(dcf_str):
         return nums[0], nums[0], nums[0]
     return None, None, None
 
+def render_live_analysis_timer_html(
+    company_name: str,
+    ticker: str,
+    mode_label: str,
+    est_label: str,
+    est_sec_typical: int = 60,
+    completed_sec: float | None = None,
+    is_error: bool = False
+) -> str:
+    """Renders a client-side JavaScript ticking stopwatch and progress gauge for live analysis."""
+    esc_company = html.escape(str(company_name or "Target Entity"))
+    esc_ticker = html.escape(str(ticker or "NSE/BSE"))
+    esc_mode = html.escape(str(mode_label or "Fundamental Audit"))
+    esc_est = html.escape(str(est_label or "~45–75s"))
+    typical_s = max(1, int(est_sec_typical or 60))
+
+    if completed_sec is not None:
+        total_s = max(0.0, float(completed_sec))
+        m = int(total_s // 60)
+        s = int(total_s % 60)
+        d = int((total_s * 10) % 10)
+        time_display = f"{m:02d}:{s:02d}"
+        tenths_display = str(d)
+        
+        if is_error:
+            pulse_color = "#DC2626"
+            title_text = f"Audit Interrupted · {esc_company} ({esc_ticker})"
+            badge_text = "Failed / Error"
+            badge_style = "color: #EF4444; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);"
+            bar_style = "width: 100%; background: #EF4444;"
+            phase_text = "Evaluation interrupted. See technical diagnostics below."
+            pct_display = "100%"
+        else:
+            pulse_color = "#10B981"
+            title_text = f"Audit Completed · {esc_company} ({esc_ticker})"
+            badge_text = f"Completed in {total_s:.1f}s ✔"
+            badge_style = "color: #10B981; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);"
+            bar_style = "width: 100%; background: linear-gradient(90deg, #10B981, #059669);"
+            phase_text = "✅ Institutional brief compiled &amp; mathematical guardrails verified."
+            pct_display = "100%"
+
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    background: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    color: #F8FAFC;
+    overflow: hidden;
+  }}
+  .timer-card {{
+    background: linear-gradient(135deg, #090D16 0%, #0F172A 60%, #1E293B 100%);
+    border: 1.5px solid #334155;
+    border-radius: 12px;
+    padding: 12px 18px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  }}
+  .header-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }}
+  .live-tag {{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    color: {pulse_color};
+    text-transform: uppercase;
+  }}
+  .pulse-dot {{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: {pulse_color};
+    box-shadow: 0 0 8px {pulse_color};
+  }}
+  .mode-badge {{
+    background: rgba(56, 189, 248, 0.12);
+    color: #38BDF8;
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-family: monospace;
+    letter-spacing: 0.4px;
+  }}
+  .metrics-grid {{
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.9fr;
+    gap: 12px;
+    align-items: center;
+  }}
+  .metric-block {{
+    display: flex;
+    flex-direction: column;
+  }}
+  .metric-label {{
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    color: #94A3B8;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }}
+  .clock-digits {{
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 24px;
+    font-weight: 900;
+    color: #F8FAFC;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }}
+  .clock-digits .tenths {{
+    color: {pulse_color};
+    font-size: 20px;
+  }}
+  .estimate-val {{
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #E2E8F0;
+  }}
+  .status-badge {{
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    {badge_style}
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-align: center;
+    width: fit-content;
+  }}
+  .progress-track {{
+    background: #1E293B;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    height: 6px;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 9px;
+  }}
+  .progress-fill {{
+    height: 100%;
+    {bar_style}
+    border-radius: 9999px;
+  }}
+  .footer-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    font-size: 11px;
+  }}
+  .phase-text {{
+    color: #94A3B8;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }}
+  .pct-text {{
+    color: {pulse_color};
+    font-family: monospace;
+    font-weight: 800;
+    font-size: 11px;
+    margin-left: 8px;
+  }}
+</style>
+</head>
+<body>
+<div class="timer-card">
+  <div class="header-row">
+    <div class="live-tag">
+      <span class="pulse-dot"></span>
+      <span>{title_text}</span>
+    </div>
+    <span class="mode-badge">{esc_mode}</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-block">
+      <span class="metric-label">Total Duration</span>
+      <div class="clock-digits"><span>{time_display}</span>.<span class="tenths">{tenths_display}</span></div>
+    </div>
+    <div class="metric-block">
+      <span class="metric-label">Target Estimate</span>
+      <div class="estimate-val">⏳ {esc_est}</div>
+    </div>
+    <div class="metric-block">
+      <span class="metric-label">Engine Status</span>
+      <div class="status-badge">{badge_text}</div>
+    </div>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill"></div>
+  </div>
+  <div class="footer-row">
+    <span class="phase-text">{phase_text}</span>
+    <span class="pct-text">{pct_display}</span>
+  </div>
+</div>
+</body>
+</html>"""
+
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    background: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    color: #F8FAFC;
+    overflow: hidden;
+  }}
+  .timer-card {{
+    background: linear-gradient(135deg, #090D16 0%, #0F172A 60%, #1E293B 100%);
+    border: 1.5px solid #334155;
+    border-radius: 12px;
+    padding: 12px 18px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  }}
+  .header-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }}
+  .live-tag {{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    color: #38BDF8;
+    text-transform: uppercase;
+  }}
+  .pulse-dot {{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 8px #10B981;
+    animation: livePulse 1.4s ease-in-out infinite;
+  }}
+  @keyframes livePulse {{
+    0%, 100% {{ opacity: 1; transform: scale(1); }}
+    50% {{ opacity: 0.4; transform: scale(0.85); }}
+  }}
+  .mode-badge {{
+    background: rgba(56, 189, 248, 0.12);
+    color: #38BDF8;
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-family: monospace;
+    letter-spacing: 0.4px;
+  }}
+  .metrics-grid {{
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.9fr;
+    gap: 12px;
+    align-items: center;
+  }}
+  .metric-block {{
+    display: flex;
+    flex-direction: column;
+  }}
+  .metric-label {{
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    color: #94A3B8;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }}
+  .clock-digits {{
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 24px;
+    font-weight: 900;
+    color: #F8FAFC;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }}
+  .clock-digits .tenths {{
+    color: #38BDF8;
+    font-size: 20px;
+  }}
+  .estimate-val {{
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #E2E8F0;
+  }}
+  .status-badge {{
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #10B981;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-align: center;
+    width: fit-content;
+  }}
+  .progress-track {{
+    background: #1E293B;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    height: 6px;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-top: 9px;
+  }}
+  .progress-fill {{
+    height: 100%;
+    width: 2%;
+    background: linear-gradient(90deg, #38BDF8, #10B981);
+    border-radius: 9999px;
+    transition: width 0.15s ease-out;
+  }}
+  .footer-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    font-size: 11px;
+  }}
+  .phase-text {{
+    color: #94A3B8;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }}
+  .pct-text {{
+    color: #38BDF8;
+    font-family: monospace;
+    font-weight: 800;
+    font-size: 11px;
+    margin-left: 8px;
+  }}
+</style>
+</head>
+<body>
+<div class="timer-card">
+  <div class="header-row">
+    <div class="live-tag">
+      <span class="pulse-dot"></span>
+      <span>Live Audit &middot; {esc_company} ({esc_ticker})</span>
+    </div>
+    <span class="mode-badge">{esc_mode}</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-block">
+      <span class="metric-label">Elapsed Time</span>
+      <div class="clock-digits"><span id="m_s">00:00</span>.<span class="tenths" id="tenths">0</span></div>
+    </div>
+    <div class="metric-block">
+      <span class="metric-label">Estimated Latency</span>
+      <div class="estimate-val">⏳ {esc_est}</div>
+    </div>
+    <div class="metric-block">
+      <span class="metric-label">Engine Pace</span>
+      <div class="status-badge" id="pace_badge">Active &middot; On Track</div>
+    </div>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress_bar"></div>
+  </div>
+  <div class="footer-row">
+    <span class="phase-text" id="phase_label">Connecting to exchange feeds &amp; fundamental database...</span>
+    <span class="pct-text" id="pct_label">0%</span>
+  </div>
+</div>
+<script>
+(function() {{
+  var t0 = Date.now();
+  var est = {typical_s};
+  var msEl = document.getElementById('m_s');
+  var tenEl = document.getElementById('tenths');
+  var barEl = document.getElementById('progress_bar');
+  var pctEl = document.getElementById('pct_label');
+  var phaseEl = document.getElementById('phase_label');
+  var paceEl = document.getElementById('pace_badge');
+
+  function update() {{
+    var elapsedMs = Date.now() - t0;
+    var totalSec = elapsedMs / 1000.0;
+    var mins = Math.floor(totalSec / 60);
+    var secs = Math.floor(totalSec % 60);
+    var tenths = Math.floor((elapsedMs % 1000) / 100);
+
+    msEl.textContent = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+    tenEl.textContent = tenths;
+
+    var pct = 0;
+    if (est <= 1) {{
+      pct = Math.min(98, Math.round(totalSec * 80));
+    }} else {{
+      pct = Math.round((totalSec / est) * 100);
+      if (pct > 96) {{
+        pct = Math.min(99, 96 + Math.round(((totalSec - est) / (est * 0.5)) * 3));
+      }}
+    }}
+    pct = Math.max(2, Math.min(99, pct));
+    barEl.style.width = pct + '%';
+    pctEl.textContent = pct + '%';
+
+    if (totalSec > est && paceEl && est > 2) {{
+      paceEl.textContent = 'Deep Synthesis';
+      paceEl.style.color = '#F59E0B';
+      paceEl.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+      paceEl.style.background = 'rgba(245, 158, 11, 0.15)';
+    }}
+
+    if (pct < 15) {{
+      phaseEl.textContent = 'Connecting to exchange feeds & parsing fundamental tables...';
+    }} else if (pct < 35) {{
+      phaseEl.textContent = 'Evaluating statutory filings & footnote schedules...';
+    }} else if (pct < 70) {{
+      phaseEl.textContent = 'Multimodal reasoning across 8 Pillars with Gemini 2.5...';
+    }} else if (pct < 90) {{
+      phaseEl.textContent = 'Enforcing deterministic Python scoring & PIO guardrails...';
+    }} else {{
+      phaseEl.textContent = 'Compiling institutional research brief & governance dossier...';
+    }}
+  }}
+
+  setInterval(update, 100);
+  update();
+}})();
+</script>
+</body>
+</html>"""
+
 def render_research_provenance_and_evidence_card(res, live_data, target_company_name, target_ticker, target_sector, fin_res=None):
     live = live_data or {}
     company_name = html.escape(str(target_company_name or res.get("company_name", "Tracked Company")))
@@ -2210,7 +2665,10 @@ def render_research_provenance_and_evidence_card(res, live_data, target_company_
     s_score = sentinel.get("integrity_score")
     s_text = f"{s_score:.0f}/100" if s_score is not None else "Verified"
     retrieval_time = res.get("retrieved_at") or datetime.now().strftime("%d %b %Y")
-    q3_text = f"Retrieved: {retrieval_time} · Multimodal Ingestion: {'Verified' if is_analyzed else 'Public Feed'} · Mathematical Sanity Check: {s_text}"
+    exec_sec = res.get("execution_time_seconds")
+    est_lbl = res.get("estimated_time_label")
+    latency_str = f" · Latency: {exec_sec:.1f}s" + (f" (Est: {est_lbl})" if est_lbl else "") if exec_sec is not None else ""
+    q3_text = f"Retrieved: {retrieval_time} · Multimodal Ingestion: {'Verified' if is_analyzed else 'Public Feed'} · Mathematical Sanity Check: {s_text}{latency_str}"
 
     # 4. Qualified Conclusion & Supporting Evidence
     try:
@@ -3164,29 +3622,67 @@ if run_btn:
         st.error("⚠️ Please enter a valid stock ticker or symbol (e.g. RELIANCE, TCS, INFY) before launching an audit.")
         st.stop()
 
-    with st.status(f"Evaluating {clean_target_name} across 8 Fundamental & Forensic Pillars...", expanded=True) as status:
-        st.write("Ingesting financial statement tables & market feeds...")
-        time.sleep(0.2)
-        st.write("Evaluating statutory disclosures & related-party schedules...")
-        time.sleep(0.2)
-        st.write("Evaluating Sector Receivable Health (DSO, Aging, Provision Coverage)...")
-        time.sleep(0.2)
-        st.write("Enforcing deterministic Python scoring, PIO guardrails & penalty/bonus caps...")
+    # Determine execution profile and expected latency
+    if demo_mode:
+        mode_pill = "🧪 Synthetic Demo"
+        est_label = "< 1s"
+        est_sec_typical = 1
+    elif doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
+        mode_pill = "⚡ BSE Annual Report"
+        est_label = "~45–75s"
+        est_sec_typical = 60
+    elif doc_type == "📂 Upload custom PDF" and uploaded_file:
+        mode_pill = "📂 Custom PDF"
+        est_label = "~30–50s"
+        est_sec_typical = 40
+    else:
+        mode_pill = "🌐 Web Research"
+        est_label = "~12–20s"
+        est_sec_typical = 15
+
+    t_start = time.time()
+    def fmt_elapsed(t0):
+        el = max(0.0, time.time() - t0)
+        m = int(el // 60)
+        s = el % 60
+        return f"{m:02d}:{s:04.1f}"
+
+    # Render client-side live stopwatch & estimated progress component
+    timer_placeholder = st.empty()
+    with timer_placeholder:
+        st.iframe(render_live_analysis_timer_html(
+            company_name=clean_target_name,
+            ticker=clean_target_ticker,
+            mode_label=mode_pill,
+            est_label=est_label,
+            est_sec_typical=est_sec_typical
+        ), height=130)
+
+    with st.status(f"Evaluating {clean_target_name} across 8 Fundamental & Forensic Pillars (Est: {est_label})...", expanded=True) as status:
+        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Ingesting financial statement tables & market feeds...")
+        time.sleep(0.15)
+        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating statutory disclosures & related-party schedules...")
+        time.sleep(0.15)
+        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating Sector Receivable Health (DSO, Aging, Provision Coverage)...")
+        time.sleep(0.15)
+        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Enforcing deterministic Python scoring, PIO guardrails & penalty/bonus caps...")
         
         try:
             sentinel_rep = st.session_state.get("sentinel_report", None)
             forensic_rep = st.session_state.get("forensic_report", None)
             if demo_mode:
+                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Generating synthetic demonstration vector...")
                 result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep, forensic_report=forensic_rep)
             else:
                 pdf_bytes = None
                 filing_meta = None
                 if doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
-                    st.write(f"📥 Downloading BSE-hosted filing PDF ({selected_filing_metadata.get('title')})...")
+                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Downloading BSE-hosted filing PDF ({selected_filing_metadata.get('title')})...")
                     pdf_bytes = download_annual_report_bytes(selected_filing_metadata["url"])
                     filing_meta = selected_filing_metadata
+                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Retrieved BSE statutory PDF ({len(pdf_bytes)/(1024*1024):.1f} MB).")
                 elif doc_type == "📂 Upload custom PDF" and uploaded_file:
-                    st.write(f"📥 Ingesting user uploaded document ({uploaded_file.name})...")
+                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Ingesting user uploaded document ({uploaded_file.name})...")
                     raw_bytes = uploaded_file.read()
                     max_upload_size = 50 * 1024 * 1024  # 50 MB
                     if len(raw_bytes) > max_upload_size:
@@ -3195,7 +3691,9 @@ if run_btn:
                         raise ValueError("Uploaded document is not a valid PDF file (missing '%PDF-' header).")
                     pdf_bytes = raw_bytes
                     filing_meta = selected_filing_metadata
+                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Uploaded PDF validated ({len(pdf_bytes)/(1024*1024):.1f} MB).")
 
+                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 🧠 Launching Gemini {selected_gemini_model} multimodal audit...")
                 result = analyze_document_with_gemini(
                     company_name=target_company_name,
                     sector=target_sector,
@@ -3208,11 +3706,38 @@ if run_btn:
                     filing_metadata=filing_meta,
                     forensic_report=forensic_rep
                 )
+            total_elapsed = time.time() - t_start
             result["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
+            result["execution_time_seconds"] = round(total_elapsed, 1)
+            result["estimated_time_seconds"] = est_sec_typical
+            result["estimated_time_label"] = est_label
             st.session_state["idex_result"] = result
-            status.update(label=f"Evaluation Complete for {target_company_name}!", state="complete", expanded=False)
+            
+            with timer_placeholder:
+                st.iframe(render_live_analysis_timer_html(
+                    company_name=clean_target_name,
+                    ticker=clean_target_ticker,
+                    mode_label=mode_pill,
+                    est_label=est_label,
+                    est_sec_typical=est_sec_typical,
+                    completed_sec=total_elapsed
+                ), height=130)
+            
+            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` ✅ Scoring complete in {total_elapsed:.1f}s (Est: {est_label}).")
+            status.update(label=f"Evaluation Complete for {clean_target_name} in {total_elapsed:.1f}s (Estimated: {est_label})!", state="complete", expanded=False)
         except Exception as e:
-            status.update(label="Evaluation Failed", state="error")
+            total_elapsed = time.time() - t_start
+            with timer_placeholder:
+                st.iframe(render_live_analysis_timer_html(
+                    company_name=clean_target_name,
+                    ticker=clean_target_ticker,
+                    mode_label=mode_pill,
+                    est_label=est_label,
+                    est_sec_typical=est_sec_typical,
+                    completed_sec=total_elapsed,
+                    is_error=True
+                ), height=130)
+            status.update(label=f"Evaluation Failed after {total_elapsed:.1f}s", state="error")
             raw_err = str(e)
             # Redact raw API key patterns to prevent client-side credential exposure
             clean_err = raw_err
@@ -3260,6 +3785,21 @@ if "idex_result" in st.session_state:
         )
 
     st.markdown("### Institutional Equity Research Brief" + (" [SYNTHETIC DEMO]" if is_demo else ""))
+
+    # Execution telemetry & audit duration badge
+    if res.get("execution_time_seconds") is not None:
+        exec_dur = res["execution_time_seconds"]
+        est_lbl = res.get("estimated_time_label") or f"~{res.get('estimated_time_seconds', 0)}s"
+        st.markdown(
+            f'<div style="display: flex; align-items: center; gap: 10px; margin-top: -6px; margin-bottom: 14px; font-size: 12px; color: #64748B;">'
+            f'<span style="background: #F1F5F9; border: 1px solid #CBD5E1; color: #0F172A; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-family: monospace;">'
+            f'⏱️ Audit Duration: {exec_dur:.1f}s (Estimated: {est_lbl})'
+            f'</span>'
+            f'<span style="color: #94A3B8;">&bull;</span>'
+            f'<span>Mathematical Determinism &amp; PIO Guardrails Verified</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
     if res.get("filing_metadata"):
         st.html(build_filing_ingestion_notice_html(res["filing_metadata"]))

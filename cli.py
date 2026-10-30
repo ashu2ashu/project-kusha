@@ -15,6 +15,10 @@ import warnings
 warnings.filterwarnings('ignore')
 logging.getLogger("streamlit").setLevel(logging.ERROR)
 
+import kusha_logging
+kusha_logging.configure_logging()
+logger = kusha_logging.get_logger("kusha.cli")
+
 from dotenv import load_dotenv
 
 load_dotenv(override=True)

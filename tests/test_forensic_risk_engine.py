@@ -56,7 +56,12 @@ class TestForensicRiskEngine(unittest.TestCase):
         self.assertEqual(rep["verdict_badge"], "PRISTINE")
         self.assertEqual(len(rep["critical_red_flags"]), 0)
         self.assertEqual(rep["total_checks"], 8)
-        self.assertEqual(rep["passed_count"], 8)
+        # Auditor opinion is never supplied by the market-data feed, so that check
+        # must report INSUFFICIENT_DATA rather than a fabricated PASS.
+        self.assertEqual(rep["passed_count"], 7)
+        self.assertEqual(rep["insufficient_count"], 1)
+        auditor_check = next(c for c in rep["checks"] if c["id"] == "FOR_08_AUDITOR_GOVERNANCE")
+        self.assertEqual(auditor_check["status"], "INSUFFICIENT_DATA")
 
     def test_detects_negative_cash_conversion_divergence(self):
         """Verify that negative cumulative CFO triggers a CRITICAL red flag."""
@@ -146,7 +151,7 @@ class TestForensicRiskEngine(unittest.TestCase):
         html = render_forensic_dossier_html(rep)
         self.assertIn("Institutional Forensic Due Diligence & Concealed Risk Audit", html)
         self.assertIn("Forensic Quality Index", html)
-        self.assertIn("Credit Rating Agency Surveillance", html)
+        self.assertIn("External Credit Rating Disclosure", html)
         self.assertIn("Cash Conversion Quality", html)
         self.assertIn("Channel Stuffing Radar", html)
         self.assertIn("Capital WIP Aging", html)

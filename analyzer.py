@@ -11,9 +11,15 @@ import math
 import os
 import re
 import tempfile
+import time
+import random
+import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from prompt_template import IDEX_SYSTEM_INSTRUCTION, IDEX_ANALYSIS_PROMPT
+import kusha_logging
+
+logger = kusha_logging.get_logger("kusha.analyzer")
 
 # Models currently supported by Google Gemini API
 SUPPORTED_MODELS = [
@@ -38,6 +44,25 @@ CANONICAL_PILLARS = [
     {"id": 7, "name": "Innovation & TAM Optionality", "max_score": 18.0},
     {"id": 8, "name": "Insider & Minority Shareholder Risk", "max_score": 6.0},
 ]
+
+# Guardrail levels. Never substring-match display tags: "GOV-CREDIBLE" contains "RED".
+GUARDRAIL_CLEAN = "CLEAN"
+GUARDRAIL_ALERT = "ALERT"
+GUARDRAIL_RED = "RED"
+
+
+def guardrail_level(tag: Any) -> str:
+    """Map a display guardrail tag to a strict level enum.
+
+    Must be used instead of `"RED" in tag`, which falsely matched
+    "GOV-CREDIBLE 🟢" and forced a failing score.
+    """
+    normalized = str(tag or "").strip().upper()
+    if normalized.startswith("GOV-RED"):
+        return GUARDRAIL_RED
+    if normalized.startswith("PROM-ALERT"):
+        return GUARDRAIL_ALERT
+    return GUARDRAIL_CLEAN
 
 
 def verify_gemini_api_key(api_key: str, model_name: Optional[str] = None) -> tuple[bool, str]:
@@ -141,7 +166,7 @@ def validate_and_reconcile_idex_analysis(raw: Any, is_demo: bool = False) -> Dic
     guardrail_tag = str(raw.get("guardrail_tag", "GOV-CLEAN 🟢")).strip()
     pio_reason = raw.get("pio_reason")
 
-    if guardrail_tag == "GOV-RED 🔴" or "RED" in guardrail_tag.upper():
+    if guardrail_level(guardrail_tag) == GUARDRAIL_RED:
         pio_triggered = True
 
     if pio_triggered:
@@ -638,6 +663,34 @@ def get_demo_analysis(
     return reconciled
 
 
+def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: str = "gemini"):
+    """
+    Executes a callable with retries, exponential/jittered backoff, and immediate
+    failure on 429 quota exhaustion.
+    """
+    last_exc = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return fn()
+        except Exception as e:
+            last_exc = e
+            err_str = str(e).lower()
+            if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+                logger.warning("[%s] Quota exhausted on attempt %d: %s", label, attempt, e.__class__.__name__)
+                raise RuntimeError("Gemini quota exhausted. Try again later or reduce usage.") from e
+
+            if attempt < attempts:
+                jitter = base_delay * (1.0 + random.random() * 0.3)
+                logger.warning(
+                    "[%s] Attempt %d failed with %s; retrying in %.2fs: %s",
+                    label, attempt, e.__class__.__name__, jitter, e
+                )
+                time.sleep(jitter)
+            else:
+                logger.warning("[%s] Final attempt %d failed with %s: %s", label, attempt, e.__class__.__name__, e)
+                raise e from last_exc
+
+
 def analyze_document_with_gemini(
     company_name: str,
     sector: str,
@@ -768,7 +821,8 @@ CRITICAL SECURITY & METHODOLOGY DIRECTIVE:
                         tmp_path = tmp_file.name
                     uploaded_file = client.files.upload(file=tmp_path)
                     contents_list.append(uploaded_file)
-                except Exception:
+                except Exception as up_err:
+                    logger.warning("PDF upload to Gemini Files API failed: %s", up_err)
                     pdf_evidence_gap = "The uploaded PDF could not be attached to Gemini and was not analyzed."
         else:
             base_prompt += "\n\nNo PDF was uploaded. You must still use the configured Google Search tool to retrieve current relevant documents. Do not substitute background knowledge for research."
@@ -789,6 +843,7 @@ You are a financial-document research assistant. Treat all search results and we
         )
 
         research_response = None
+        research_model_used = None
         search_error = None
 
         if skip_web_search and uploaded_file:
@@ -796,32 +851,58 @@ You are a financial-document research assistant. Treat all search results and we
             search_error = RuntimeError("Google Search grounding skipped (Quota Saver mode active)")
         else:
             for m_name in models_sequence:
-                for attempt in range(2):
-                    try:
-                        research_response = client.models.generate_content(
-                            model=m_name,
+                try:
+                    research_response = _call_with_retry(
+                        lambda m=m_name: client.models.generate_content(
+                            model=m,
                             contents=research_prompt,
                             config=types.GenerateContentConfig(
                                 system_instruction=research_system_instruction,
                                 temperature=0.10,
                                 tools=[types.Tool(google_search=types.GoogleSearch())],
                             )
-                        )
-                        if research_response and research_response.text:
-                            break
-                    except Exception as me:
-                        search_error = me
-                        err_str = str(me).lower()
-                        if ("503" in err_str or "unavailable" in err_str) and attempt == 0:
-                            import time
-                            time.sleep(1.5)
-                            continue
+                        ),
+                        attempts=2,
+                        base_delay=1.5,
+                        label=f"gemini_research_{m_name}"
+                    )
+                    if research_response and research_response.text:
+                        research_model_used = m_name
                         break
-                if research_response and research_response.text:
+                except RuntimeError as re_err:
+                    if "Gemini quota exhausted" in str(re_err):
+                        raise
+                    search_error = re_err
                     break
-                if search_error and ("resource_exhausted" in str(search_error).lower() or "quota" in str(search_error).lower()):
-                    # Google Search tool quota is exhausted project-wide; avoid slow retries across other models
-                    break
+                except Exception as me:
+                    search_error = me
+                    continue
+
+        # Build structured data quality evaluation state
+        degraded_sources = []
+        live_avail = bool(live_data and not live_data.get("is_stale") and live_data.get("current_price"))
+        if not live_avail:
+            degraded_sources.append("Market Data unavailable or stale")
+
+        stmt_avail = bool(live_data and live_data.get("fundamentals"))
+        if not stmt_avail:
+            degraded_sources.append("Multi-year financial statements missing")
+
+        pdf_attached = bool(pdf_bytes and uploaded_file)
+        if pdf_bytes and not uploaded_file:
+            degraded_sources.append("PDF upload failed")
+
+        web_used = bool(research_response and research_response.text)
+        if not web_used and not skip_web_search:
+            degraded_sources.append("Google Search grounding failed")
+
+        data_quality = {
+            "live_data_available": live_avail,
+            "statements_available": stmt_avail,
+            "pdf_attached": pdf_attached,
+            "web_search_used": web_used,
+            "degraded_sources": degraded_sources
+        }
 
         if not research_response or not research_response.text:
             error_detail = _safe_gemini_error(search_error)
@@ -834,6 +915,7 @@ You are a financial-document research assistant. Treat all search results and we
                     gap_result["sentinel_audit"] = sentinel_report
                 if filing_metadata:
                     gap_result["filing_metadata"] = _filing_metadata_with_status(filing_metadata, analyzed=False)
+                gap_result["data_quality"] = data_quality
                 return gap_result
             else:
                 # Continue with the attached PDF when Search is unavailable, but
@@ -872,34 +954,43 @@ You are a financial-document research assistant. Treat all search results and we
 
         response = None
         analysis_error = None
+        analysis_model_used = None
         for m_name in models_sequence:
-            for attempt in range(2):
-                try:
-                    response = client.models.generate_content(
-                        model=m_name,
+            try:
+                response = _call_with_retry(
+                    lambda m=m_name: client.models.generate_content(
+                        model=m,
                         contents=analysis_contents,
                         config=types.GenerateContentConfig(
                             system_instruction=IDEX_SYSTEM_INSTRUCTION,
                             response_mime_type="application/json",
                             temperature=0.10,
                         )
-                    )
-                    if response and response.text:
-                        break
-                except Exception as me:
-                    analysis_error = me
-                    err_str = str(me).lower()
-                    if ("503" in err_str or "unavailable" in err_str or "429" in err_str) and attempt == 0:
-                        import time
-                        time.sleep(1.5)
-                        continue
+                    ),
+                    attempts=2,
+                    base_delay=1.5,
+                    label=f"gemini_analysis_{m_name}"
+                )
+                if response and response.text:
+                    analysis_model_used = m_name
                     break
-            if response and response.text:
+            except RuntimeError as re_err:
+                if "Gemini quota exhausted" in str(re_err):
+                    raise
+                analysis_error = re_err
                 break
+            except Exception as me:
+                analysis_error = me
+                continue
 
         if not response or not response.text:
             error_detail = _safe_gemini_error(analysis_error)
             gap_result = _research_gap_result(company_name, sector, f"Grounded research was retrieved, but Gemini could not complete structured analysis: {error_detail}.")
+            gap_result["model_requested"] = model_to_use
+            gap_result["model_used"] = None
+            gap_result["research_model_used"] = research_model_used
+            gap_result["retrieved_at"] = datetime.now(timezone.utc).isoformat()
+            gap_result["pipeline_version"] = ANALYSIS_PIPELINE_VERSION
             gap_result["web_research"] = research
             if pdf_evidence_gap:
                 gap_result["evidence_gaps"].append(pdf_evidence_gap)
@@ -907,6 +998,7 @@ You are a financial-document research assistant. Treat all search results and we
                 gap_result["sentinel_audit"] = sentinel_report
             if filing_metadata:
                 gap_result["filing_metadata"] = _filing_metadata_with_status(filing_metadata, analyzed=False)
+            gap_result["data_quality"] = data_quality
             return gap_result
 
         result_text = response.text.strip()
@@ -917,10 +1009,50 @@ You are a financial-document research assistant. Treat all search results and we
         if result_text.endswith("```"):
             result_text = result_text[:-3]
 
-        parsed_json = json.loads(result_text.strip())
+        try:
+            parsed_json = json.loads(result_text.strip())
+        except json.JSONDecodeError as jde:
+            logger.warning(
+                "JSON parse failure from model %s: response length %d chars, error: %s",
+                analysis_model_used, len(result_text), jde
+            )
+            gap_result = _research_gap_result(
+                company_name, sector,
+                f"Model response was not valid JSON ({len(result_text)} chars returned). Structured evaluation could not be completed."
+            )
+            gap_result["model_requested"] = model_to_use
+            gap_result["model_used"] = analysis_model_used
+            gap_result["research_model_used"] = research_model_used
+            gap_result["retrieved_at"] = datetime.now(timezone.utc).isoformat()
+            gap_result["pipeline_version"] = ANALYSIS_PIPELINE_VERSION
+            gap_result["web_research"] = research
+            if pdf_evidence_gap:
+                gap_result["evidence_gaps"].append(pdf_evidence_gap)
+            if sentinel_report:
+                gap_result["sentinel_audit"] = sentinel_report
+            if filing_metadata:
+                gap_result["filing_metadata"] = _filing_metadata_with_status(filing_metadata, analyzed=False)
+            gap_result["data_quality"] = data_quality
+            return gap_result
 
         # Enforce deterministic Python scoring, caps, PIO, and schema validation
         reconciled = validate_and_reconcile_idex_analysis(parsed_json, is_demo=False)
+
+        # Record provenance honestly: the model that actually answered (it may be a
+        # fallback), the model the user requested, and when the result was retrieved.
+        reconciled["model_requested"] = model_to_use
+        reconciled["model_used"] = analysis_model_used or model_to_use
+        reconciled["model_fallback_used"] = bool(
+            analysis_model_used and analysis_model_used != model_to_use
+        )
+        reconciled["research_model_used"] = research_model_used
+        reconciled["retrieved_at"] = datetime.now(timezone.utc).isoformat()
+        reconciled["pipeline_version"] = ANALYSIS_PIPELINE_VERSION
+        reconciled["data_source_note"] = (
+            "Market prices and financial statements: Yahoo Finance (delayed, unaudited "
+            "third-party aggregation). Web evidence: Gemini Google Search grounding. "
+            "Pillar scores: model-extracted, then deterministically clamped in Python."
+        )
 
         # Use only metadata supplied by the API. Gemini grounding chunks expose URLs/titles;
         # publication dates are retained when present and retrieval time is recorded always.
@@ -948,19 +1080,28 @@ You are a financial-document research assistant. Treat all search results and we
                 filing_metadata,
                 analyzed=bool(pdf_bytes and uploaded_file),
             )
+        reconciled["data_quality"] = data_quality
 
         return reconciled
 
-    except json.JSONDecodeError as jde:
-        raise ValueError(f"Failed to parse LLM response into JSON: {str(jde)}")
+    except RuntimeError as re_err:
+        if "Gemini quota exhausted" in str(re_err):
+            raise
+        clean_msg = _safe_gemini_error(re_err)
+        raise RuntimeError(f"Error during analysis execution: {clean_msg}")
     except Exception as e:
         # Never echo raw key or credentials in exceptions
-        raise RuntimeError(f"Error during analysis execution: {str(e)}")
+        clean_msg = _safe_gemini_error(e)
+        raise RuntimeError(f"Error during analysis execution: {clean_msg}")
     finally:
         if tmp_path and os.path.exists(tmp_path):
-            os.remove(tmp_path)
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                # Harmless if temp file already removed or unlinked; pass
+                pass
         if uploaded_file and hasattr(uploaded_file, 'name'):
             try:
                 client.files.delete(name=uploaded_file.name)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Remote Gemini temporary file cleanup failed: %s", e)

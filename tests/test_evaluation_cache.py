@@ -28,7 +28,8 @@ class TestEvaluationCache(unittest.TestCase):
                 {"pillar_id": 2, "score": 80, "title": "Forensics"}
             ],
             "final_score": 82.5,
-            "verdict": "High financial integrity franchise"
+            "verdict": "High financial integrity franchise",
+            "forensic_report": {"overall_risk": "Low"}
         }
         self.version = "TEST_v1.0"
 

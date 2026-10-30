@@ -2,6 +2,9 @@
 nifty_universe.py
 Comprehensive directory of all 501 Nifty 500 listed Indian companies.
 Includes automatic industry-to-sector mapping and live market data ingestion.
+
+Note: Market quotes and benchmark indices fetched via public APIs are delayed third-party
+data from public providers or static reference fallback sets. Not real-time exchange feeds.
 """
 
 import os
@@ -11,6 +14,9 @@ import yfinance as yf
 import time
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
+import kusha_logging
+
+logger = kusha_logging.get_logger("kusha.nifty_universe")
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "nifty500.csv")
 
@@ -158,8 +164,9 @@ def load_nifty500() -> List[Dict[str, str]]:
                 companies.append(item)
                 _cached_lookup[item["display"]] = item
                 _cached_lookup[symbol] = item
-        except Exception:
-            pass
+        except Exception as e:
+            # Category C: CSV row parse failure; skip malformed row and continue reading
+            logger.debug("Failed reading cached company row: %s", e)
 
     # Sort alphabetically by company name
     companies.sort(key=lambda x: x["name"])
@@ -251,7 +258,8 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
                 
             if cur_price:
                 break
-        except Exception:
+        except Exception as e:
+            logger.warning("Primary Yahoo Finance fetch failed for %s (attempt %d): %s", ticker_symbol, attempt + 1, e)
             if attempt == 0:
                 time.sleep(1.0)
                 continue
@@ -290,8 +298,8 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
         inf = {}
         try:
             inf = stock.info or {}
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("stock.info unavailable for %s; fundamentals will be None: %s", ticker_symbol, e)
             
         # Core Valuation & Multiples - DO NOT FABRICATE
         pe_raw = inf.get("trailingPE")
@@ -507,8 +515,15 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
             "fetched_at": fetch_time.isoformat(),
             "source_disclaimer": "Third-party data via Yahoo Finance API. Not official exchange data or audited regulatory filings."
         }
-    except Exception:
+    except Exception as e:
+        logger.warning("Whole quote build failed for %s: %s", ticker_symbol, e)
         return None
+
+
+# Date of static fallback dataset verification; not an authoritative live reference date.
+INDICES_REFERENCE_AS_OF = "2024-06-30"
+# Date of static fallback marquee stock dataset verification; not an authoritative live reference date.
+MARQUEE_REFERENCE_AS_OF = "2024-06-30"
 
 
 def fetch_live_indices_data() -> List[Dict[str, Any]]:
@@ -533,6 +548,7 @@ def fetch_live_indices_data() -> List[Dict[str, Any]]:
             low_df = df.get("Low")
             
             if close_df is not None:
+                fetch_time = datetime.now(timezone.utc).isoformat()
                 for name, sym, icon, _, _, _, _, _ in indices_def:
                     if sym in close_df:
                         s_series = close_df[sym].dropna()
@@ -541,8 +557,8 @@ def fetch_live_indices_data() -> List[Dict[str, Any]]:
                             prev = float(s_series.iloc[-2])
                             chg = cur - prev
                             pct = (chg / prev) * 100
-                            hi = float(high_df[sym].dropna().iloc[-1]) if high_df is not None and sym in high_df else cur
-                            lo = float(low_df[sym].dropna().iloc[-1]) if low_df is not None and sym in low_df else cur
+                            hi = float(high_df[sym].dropna().iloc[-1]) if high_df is not None and sym in high_df and len(high_df[sym].dropna()) > 0 else None
+                            lo = float(low_df[sym].dropna().iloc[-1]) if low_df is not None and sym in low_df and len(low_df[sym].dropna()) > 0 else None
                             out_map[sym] = {
                                 "name": name,
                                 "symbol": sym,
@@ -551,10 +567,12 @@ def fetch_live_indices_data() -> List[Dict[str, Any]]:
                                 "chg": chg,
                                 "pct": pct,
                                 "hi": hi,
-                                "lo": lo
+                                "lo": lo,
+                                "data_status": "live",
+                                "as_of": fetch_time
                             }
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Batch index quote fetch failed, falling back to individual queries: %s", e)
 
     # 2. Resilient individual fallback for any missing index
     for name, sym, icon, def_cur, def_chg, def_pct, def_hi, def_lo in indices_def:
@@ -569,8 +587,8 @@ def fetch_live_indices_data() -> List[Dict[str, Any]]:
                     prev = float(prev)
                     chg = cur - prev
                     pct = (chg / prev) * 100 if prev else 0.0
-                    hi = float(fi.get("dayHigh") or cur)
-                    lo = float(fi.get("dayLow") or cur)
+                    hi = float(fi.get("dayHigh")) if fi.get("dayHigh") is not None else None
+                    lo = float(fi.get("dayLow")) if fi.get("dayLow") is not None else None
                     out_map[sym] = {
                         "name": name,
                         "symbol": sym,
@@ -579,11 +597,13 @@ def fetch_live_indices_data() -> List[Dict[str, Any]]:
                         "chg": chg,
                         "pct": pct,
                         "hi": hi,
-                        "lo": lo
+                        "lo": lo,
+                        "data_status": "live",
+                        "as_of": datetime.now(timezone.utc).isoformat()
                     }
                     continue
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Individual fallback quote failed for index %s: %s", sym, e)
             
             # Static reference if completely unreachable
             out_map[sym] = {
@@ -594,7 +614,9 @@ def fetch_live_indices_data() -> List[Dict[str, Any]]:
                 "chg": def_chg,
                 "pct": def_pct,
                 "hi": def_hi,
-                "lo": def_lo
+                "lo": def_lo,
+                "data_status": "stale_reference",
+                "as_of": INDICES_REFERENCE_AS_OF
             }
             
     return [out_map[sym] for _, sym, _, _, _, _, _, _ in indices_def]
@@ -612,42 +634,66 @@ def fetch_marquee_stocks_data() -> List[Dict[str, Any]]:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df = yf.download(stk_syms, period="5d", progress=False)
-            close_df = df["Close"]
-            high_df = df["High"]
-            low_df = df["Low"]
+            close_df = df.get("Close")
+            high_df = df.get("High")
+            low_df = df.get("Low")
             
             stocks_out = []
-            for t in stock_tickers:
-                s = f"{t}.NS"
-                if s in close_df:
-                    c_series = close_df[s].dropna()
-                    if len(c_series) >= 2:
-                        cur = float(c_series.iloc[-1])
-                        prev = float(c_series.iloc[-2])
-                        chg = cur - prev
-                        pct = (chg / prev) * 100
-                        hi = float(high_df[s].dropna().iloc[-1])
-                        lo = float(low_df[s].dropna().iloc[-1])
-                        info = find_company_info(t)
-                        name = info["name"] if info else t
-                        sector = info["sector"] if info else "Equity"
-                        display = info["display"] if info else f"{t} ({t}.NS)"
-                        stocks_out.append({
-                            "ticker": t,
-                            "name": name,
-                            "sector": sector,
-                            "display": display,
-                            "cur": cur,
-                            "chg": chg,
-                            "pct": pct,
-                            "hi": hi,
-                            "lo": lo,
-                            "data_status": "provider"
-                        })
-            if stocks_out:
-                return stocks_out
-    except Exception:
-        pass
+            provider_success = False
+            fetch_time = datetime.now(timezone.utc).isoformat()
+
+            if close_df is not None:
+                for t in stock_tickers:
+                    s = f"{t}.NS"
+                    info = find_company_info(t)
+                    name = info["name"] if info else t
+                    sector = info["sector"] if info else "Equity"
+                    display = info["display"] if info else f"{t} ({t}.NS)"
+                    
+                    if s in close_df:
+                        c_series = close_df[s].dropna()
+                        if len(c_series) >= 2:
+                            cur = float(c_series.iloc[-1])
+                            prev = float(c_series.iloc[-2])
+                            chg = cur - prev
+                            pct = (chg / prev) * 100
+                            hi = float(high_df[s].dropna().iloc[-1]) if high_df is not None and s in high_df and len(high_df[s].dropna()) > 0 else None
+                            lo = float(low_df[s].dropna().iloc[-1]) if low_df is not None and s in low_df and len(low_df[s].dropna()) > 0 else None
+                            provider_success = True
+                            stocks_out.append({
+                                "ticker": t,
+                                "name": name,
+                                "sector": sector,
+                                "display": display,
+                                "cur": cur,
+                                "chg": chg,
+                                "pct": pct,
+                                "hi": hi,
+                                "lo": lo,
+                                "data_status": "provider",
+                                "as_of": fetch_time
+                            })
+                            continue
+
+                    # If this ticker was missing in partial return
+                    stocks_out.append({
+                        "ticker": t,
+                        "name": name,
+                        "sector": sector,
+                        "display": display,
+                        "cur": None,
+                        "chg": None,
+                        "pct": None,
+                        "hi": None,
+                        "lo": None,
+                        "data_status": "unavailable",
+                        "as_of": None
+                    })
+
+                if provider_success:
+                    return stocks_out
+    except Exception as e:
+        logger.warning("Marquee ticker fetch failed, using fallback dataset: %s", e)
         
     fallback = [
         {"ticker": "RELIANCE", "name": "Reliance Industries Ltd.", "sector": "Oil, Gas & Energy Fuels", "cur": 1190.0, "chg": 5.5, "pct": 0.46, "hi": 1195.0, "lo": 1178.0},
@@ -665,6 +711,7 @@ def fetch_marquee_stocks_data() -> List[Dict[str, Any]]:
         info = find_company_info(item["ticker"])
         item["display"] = info["display"] if info else f"{item['name']} ({item['ticker']})"
         item["data_status"] = "sample_fallback"
+        item["as_of"] = MARQUEE_REFERENCE_AS_OF
     return fallback
 
 
@@ -679,5 +726,6 @@ def fetch_ticker_historical_data(ticker_symbol: str, period: str = "1y") -> pd.D
             t = yf.Ticker(sym)
             df = t.history(period=period)
             return df
-    except Exception:
+    except Exception as e:
+        logger.warning("Historical data fetch failed for %s: %s", sym, e)
         return pd.DataFrame()

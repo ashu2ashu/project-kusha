@@ -8,7 +8,14 @@ credit rating alerts, and governance red flags beyond standard annual report nar
 
 import time
 import math
+import re
+import html as _html
 from typing import Dict, Any, List, Optional
+
+
+def _esc(value: Any) -> str:
+    """Escape any value before interpolation into rendered HTML."""
+    return _html.escape(str(value if value is not None else ""), quote=True)
 
 
 # Canonical Database of Credit Ratings for Indian Listed Equities
@@ -255,9 +262,11 @@ class ForensicRiskEngine:
                     f"({rec_yoy:.1f}%). Zero indication of channel stuffing."
                 )
         else:
-            rec_status = "PASS"
-            velocity_spread = 0.0
-            rec_detail = "Trade debtor velocity in line with industry baseline; no structural receivable divergence detected."
+            # No receivable/revenue series means the check was never performed.
+            # It must not be reported as a pass.
+            rec_status = "INSUFFICIENT_DATA"
+            velocity_spread = None
+            rec_detail = "Receivables and revenue series unavailable or too short; channel-stuffing radar not evaluated."
 
         checks.append({
             "id": "FOR_02_RECEIVABLE_VELOCITY",
@@ -297,15 +306,15 @@ class ForensicRiskEngine:
                 cwip_status = "PASS"
                 cwip_detail = f"Prudent Asset Formation: CWIP is modest at ₹{latest_cwip:,.1f} Cr ({cwip_ratio:.1f}% of PPE). Regular capitalization."
         else:
-            cwip_status = "PASS"
-            cwip_ratio = 5.0
-            cwip_detail = "Capital WIP is negligible or fully capitalized into productive operational assets."
+            cwip_status = "INSUFFICIENT_DATA"
+            cwip_ratio = None
+            cwip_detail = "Capital WIP or net PPE series unavailable; expense-capitalization check not evaluated."
 
         checks.append({
             "id": "FOR_03_CWIP_AGING",
             "title": "Capital WIP Aging & Expense Capitalization Check",
             "category": "Balance Sheet Integrity",
-            "metric": f"{cwip_ratio:.1f}% of PPE",
+            "metric": f"{cwip_ratio:.1f}% of PPE" if cwip_ratio is not None else "N/A",
             "benchmark": "< 20.0%",
             "status": cwip_status,
             "detail": cwip_detail
@@ -343,9 +352,9 @@ class ForensicRiskEngine:
                 tax_status = "PASS"
                 tax_detail = f"Healthy Tax Realization: Effective tax rate is {effective_tax_rate:.1f}%, consistent with Indian statutory corporate rates."
         else:
-            tax_status = "PASS"
-            effective_tax_rate = 24.5
-            tax_detail = "Statutory corporate tax provisions align cleanly with reported earnings."
+            tax_status = "INSUFFICIENT_DATA"
+            effective_tax_rate = None
+            tax_detail = "PBT or tax provision series unavailable; effective tax rate not evaluated."
 
         checks.append({
             "id": "FOR_04_TAX_DIVERGENCE",
@@ -384,15 +393,15 @@ class ForensicRiskEngine:
                 oth_status = "PASS"
                 oth_detail = f"Core-Driven Quality: Other income accounts for only {other_inc_pct:.1f}% of PBT. Profits are authentically operational."
         else:
-            oth_status = "PASS"
-            other_inc_pct = 6.0
-            oth_detail = "Profits are overwhelmingly driven by operational business revenues with minimal non-core dependency."
+            oth_status = "INSUFFICIENT_DATA"
+            other_inc_pct = None
+            oth_detail = "Other income or PBT series unavailable; non-core dependency not evaluated."
 
         checks.append({
             "id": "FOR_05_OTHER_INCOME_DEPENDENCY",
             "title": "Other Income Dependency & Core Business Decoupling",
             "category": "Core Earnings Purity",
-            "metric": f"{other_inc_pct:.1f}% of PBT",
+            "metric": f"{other_inc_pct:.1f}% of PBT" if other_inc_pct is not None else "N/A",
             "benchmark": "< 18.0%",
             "status": oth_status,
             "detail": oth_detail
@@ -405,12 +414,20 @@ class ForensicRiskEngine:
         de_val = live.get("debt_to_equity")
 
         if cra_info:
-            cra_rating = cra_info.get("rating", "CRISIL AAA")
+            cra_rating = cra_info.get("rating", "Not rated")
             cra_outlook = cra_info.get("outlook", "STABLE")
-            cra_agency = cra_info.get("agency", "CRISIL")
+            cra_agency = cra_info.get("agency", "Unknown agency")
             cra_headroom = cra_info.get("headroom", "")
-            cra_status = "PASS" if "AAA" in cra_rating or "AA+" in cra_rating else ("MONITOR" if "A" in cra_rating else "CRITICAL")
-            cra_detail = f"External Solvency Certified: {cra_agency} rated '{cra_rating}' ({cra_outlook} outlook). {cra_headroom}"
+            rationale_date = cra_info.get("rationale_date", "date not recorded")
+            junior_grade = any(x in cra_rating for x in ("AA-", " A+", " A ", "BBB"))
+            cra_status = (
+                "PASS" if ("AAA" in cra_rating or "AA+" in cra_rating)
+                else ("MONITOR" if junior_grade else "CRITICAL")
+            )
+            cra_detail = (
+                f"External credit rating on record: {cra_agency} '{cra_rating}' "
+                f"({cra_outlook} outlook, disclosure dated {rationale_date}). {cra_headroom}"
+            )
         elif de_val is not None:
             if float(de_val) <= 0.3:
                 cra_status = "PASS"
@@ -427,9 +444,9 @@ class ForensicRiskEngine:
                 critical_red_flags.append(f"Excessive Leverage (D/E {float(de_val):.2f}x)")
                 cra_detail = f"Solvency Proxy: Elevated leverage (D/E: {float(de_val):.2f}x); vulnerable to debt refinancing stress."
         else:
-            cra_status = "PASS"
-            cra_rating = "CONSERVATIVE POSTURE"
-            cra_detail = "Solvency Proxy: Conservative debt posture indicated by available balance sheet filings."
+            cra_status = "INSUFFICIENT_DATA"
+            cra_rating = "NOT EVALUATED"
+            cra_detail = "No credit rating on record and no debt-to-equity input supplied; solvency not evaluated."
 
         checks.append({
             "id": "FOR_06_CREDIT_RATING_SOLVENCY",
@@ -444,23 +461,34 @@ class ForensicRiskEngine:
         # =========================================================================
         # 7. PROMOTER PLEDGE & ENCUMBRANCE RADAR (SAST Checks)
         # =========================================================================
-        prom_pledge_raw = live.get("screener_metrics", {}).get("promoter_pledging") or "0.0%"
-        is_pledge_flagged = any(x in str(prom_pledge_raw) for x in ["%", "pts"]) and not any(z in str(prom_pledge_raw) for z in ["0.0%", "0%", "N/A"])
+        prom_pledge_raw = (live.get("screener_metrics", {}) or {}).get("promoter_pledging")
+        pledge_pct = None
+        if prom_pledge_raw is not None:
+            match = re.search(r"-?\d+(?:\.\d+)?", str(prom_pledge_raw))
+            if match:
+                pledge_pct = float(match.group(0))
 
-        if is_pledge_flagged:
+        if pledge_pct is None:
+            # Absence of a pledge disclosure is not evidence of zero pledging.
+            pledge_status = "INSUFFICIENT_DATA"
+            pledge_metric = "N/A"
+            pledge_detail = "Promoter pledge disclosure unavailable from the supplied source; encumbrance not evaluated."
+        elif pledge_pct > 0.0:
             pledge_status = "CRITICAL"
             forensic_penalties += 20.0
-            critical_red_flags.append(f"Active Promoter Share Pledge ({prom_pledge_raw})")
-            pledge_detail = f"Encumbrance Warning: Promoter shares are pledged ({prom_pledge_raw}) as loan collateral. High margin call vulnerability."
+            pledge_metric = f"{pledge_pct:.2f}% pledged"
+            critical_red_flags.append(f"Active Promoter Share Pledge ({pledge_metric})")
+            pledge_detail = f"Encumbrance Warning: promoter shares are pledged ({pledge_metric}) as loan collateral. High margin-call vulnerability."
         else:
             pledge_status = "PASS"
-            pledge_detail = "Clean Title: 0.0% of promoter shareholding is pledged. Zero margin call liquidation risk."
+            pledge_metric = "0.0% pledged"
+            pledge_detail = "Clean title: disclosure reports 0.0% of promoter shareholding pledged."
 
         checks.append({
             "id": "FOR_07_PROMOTER_PLEDGE",
             "title": "Promoter Pledging & Indirect Encumbrances (SAST)",
             "category": "Ownership Integrity",
-            "metric": "0.0% Pledged" if not is_pledge_flagged else str(prom_pledge_raw),
+            "metric": pledge_metric,
             "benchmark": "Strictly 0.0%",
             "status": pledge_status,
             "detail": pledge_detail
@@ -469,18 +497,39 @@ class ForensicRiskEngine:
         # =========================================================================
         # 8. AUDITOR TENURE, CARO & SECRETARIAL GOVERNANCE
         # =========================================================================
-        # Check for clean statutory auditor history
-        auditor_status = "PASS"
-        auditor_detail = (
-            "Audited by recognized statutory auditor with an unqualified (clean) opinion. "
-            "Zero mid-term auditor resignations under SEBI LODR Regulation 30 Annexure A."
+        # No auditor opinion is supplied by the market-data feed. Only evaluate when
+        # an explicit disclosure was passed in; otherwise report that it was not checked.
+        auditor_opinion = str(live.get("auditor_opinion") or "").strip()
+        op_lower = auditor_opinion.lower()
+        is_unqualified = "unqualified" in op_lower and "not unqualified" not in op_lower
+        is_adverse = (
+            any(marker in op_lower for marker in ("adverse", "disclaimer of opinion", "resign"))
+            or (bool(re.search(r'\bqualified\b', op_lower)) and not is_unqualified)
         )
+
+        if not auditor_opinion:
+            auditor_status = "INSUFFICIENT_DATA"
+            auditor_metric = "N/A"
+            auditor_detail = (
+                "Auditor opinion, CARO qualifications and resignation history were not supplied "
+                "by the available data source; governance check not evaluated."
+            )
+        elif is_adverse:
+            auditor_status = "CRITICAL"
+            auditor_metric = "QUALIFIED / ADVERSE"
+            forensic_penalties += 18.0
+            critical_red_flags.append("Adverse or qualified auditor opinion")
+            auditor_detail = f"Auditor disclosure supplied: {auditor_opinion}"
+        else:
+            auditor_status = "PASS"
+            auditor_metric = "UNQUALIFIED"
+            auditor_detail = f"Auditor disclosure supplied reports an unqualified opinion: {auditor_opinion}"
 
         checks.append({
             "id": "FOR_08_AUDITOR_GOVERNANCE",
             "title": "Statutory Auditor Independence & CARO Qualifications",
             "category": "Regulatory Governance",
-            "metric": "CLEAN / UNQUALIFIED",
+            "metric": auditor_metric,
             "benchmark": "Zero Qualifications & Resignations",
             "status": auditor_status,
             "detail": auditor_detail
@@ -488,30 +537,70 @@ class ForensicRiskEngine:
 
         # =========================================================================
         # SCORING & FORENSIC QUALITY INDEX (FQI 0-100)
+        # A score is only issued when enough checks were actually evaluated.
+        # Missing inputs must never contribute to a clean verdict.
         # =========================================================================
-        fqi_score = max(round(100.0 - forensic_penalties, 1), 10.0)
+        evaluated = [c for c in checks if c["status"] in ("PASS", "MONITOR", "CRITICAL")]
+        insufficient = [c for c in checks if c["status"] == "INSUFFICIENT_DATA"]
+        coverage = round(len(evaluated) / len(checks), 2) if checks else 0.0
+        min_coverage = 0.75
+        scored = len(evaluated) > 0 and coverage >= min_coverage
 
-        if fqi_score >= 82.0 and not critical_red_flags:
-            verdict = "PRISTINE / LOW FORENSIC RISK"
-            verdict_badge = "PRISTINE"
-            verdict_color = "#059669"
-            verdict_bg = "#ECFDF5"
-            verdict_border = "#A7F3D0"
-            verdict_desc = "Statements exhibit high cash-profit purity, clean audit trails, zero promoter pledges, and healthy tax alignment."
-        elif fqi_score >= 60.0:
-            verdict = "MODERATE / MONITOR ACCRUAL DRIFT"
-            verdict_badge = "MONITOR"
-            verdict_color = "#D97706"
-            verdict_bg = "#FFFBEB"
-            verdict_border = "#FDE68A"
-            verdict_desc = f"Mild forensic divergence detected ({len(critical_red_flags)} warning signals). Monitor working capital absorption."
-        else:
+        candidate_score = max(round(100.0 - forensic_penalties, 1), 10.0)
+        coverage_note = (
+            f"Evidence coverage {len(evaluated)}/{len(checks)} checks evaluated; "
+            f"{len(insufficient)} not evaluated due to missing data."
+        )
+
+        if critical_red_flags:
             verdict = "CRITICAL / HIGH FORENSIC ANOMALY RISK"
             verdict_badge = "HIGH RISK"
             verdict_color = "#DC2626"
             verdict_bg = "#FEF2F2"
             verdict_border = "#FECACA"
-            verdict_desc = f"Serious red flags identified ({'; '.join(critical_red_flags)}). High risk of uncollectible revenue or disguised liabilities."
+            verdict_desc = (
+                f"Serious red flags identified ({'; '.join(critical_red_flags)}). "
+                f"High risk of uncollectible revenue or disguised liabilities. {coverage_note}"
+            )
+            fqi_score = candidate_score if scored else None
+        elif not scored:
+            fqi_score = None
+            verdict = "INSUFFICIENT DATA — FORENSIC SCORE WITHHELD"
+            verdict_badge = "INSUFFICIENT DATA"
+            verdict_color = "#64748B"
+            verdict_bg = "#F8FAFC"
+            verdict_border = "#CBD5E1"
+            verdict_desc = (
+                "Not enough forensic checks could be evaluated to issue a score. "
+                f"{coverage_note} Absence of evidence is not evidence of cleanliness."
+            )
+        elif candidate_score >= 82.0:
+            fqi_score = candidate_score
+            verdict = "LOW FORENSIC RISK (BASED ON EVALUATED CHECKS)"
+            verdict_badge = "PRISTINE"
+            verdict_color = "#059669"
+            verdict_bg = "#ECFDF5"
+            verdict_border = "#A7F3D0"
+            verdict_desc = (
+                "Evaluated statements show healthy cash conversion and no detected red flags. "
+                f"{coverage_note}"
+            )
+        elif candidate_score >= 60.0:
+            fqi_score = candidate_score
+            verdict = "MODERATE / MONITOR ACCRUAL DRIFT"
+            verdict_badge = "MONITOR"
+            verdict_color = "#D97706"
+            verdict_bg = "#FFFBEB"
+            verdict_border = "#FDE68A"
+            verdict_desc = f"Mild forensic divergence detected. Monitor working-capital absorption. {coverage_note}"
+        else:
+            fqi_score = candidate_score
+            verdict = "CRITICAL / HIGH FORENSIC ANOMALY RISK"
+            verdict_badge = "HIGH RISK"
+            verdict_color = "#DC2626"
+            verdict_bg = "#FEF2F2"
+            verdict_border = "#FECACA"
+            verdict_desc = f"Multiple forensic warnings detected without a hard red flag. {coverage_note}"
 
         elapsed_ms = round((time.time() - start_time) * 1000, 1)
 
@@ -531,8 +620,17 @@ class ForensicRiskEngine:
             "passed_count": sum(1 for c in checks if c["status"] == "PASS"),
             "monitor_count": sum(1 for c in checks if c["status"] == "MONITOR"),
             "critical_count": sum(1 for c in checks if c["status"] == "CRITICAL"),
+            "insufficient_count": len(insufficient),
+            "evaluated_count": len(evaluated),
+            "coverage": coverage,
+            "score_issued": scored,
             "total_checks": len(checks),
-            "credit_rating": cra_info or {"agency": "CRISIL / CARE", "rating": cra_rating, "outlook": "STABLE"},
+            "credit_rating": cra_info or {
+                "agency": "Not verified",
+                "rating": cra_rating,
+                "outlook": "Not verified",
+                "headroom": "No rating disclosure supplied.",
+            },
             "elapsed_ms": elapsed_ms
         }
 
@@ -544,17 +642,22 @@ def render_forensic_dossier_html(report: Dict[str, Any]) -> str:
     if not report:
         return ""
 
-    fqi = report.get("fqi_score", 100.0)
-    v_badge = report.get("verdict_badge", "PRISTINE")
-    
+    fqi = report.get("fqi_score")
+    fqi_display = f"{float(fqi):.1f}" if isinstance(fqi, (int, float)) else "N/A"
+    v_badge = report.get("verdict_badge", "NOT EVALUATED")
+
     if v_badge == "PRISTINE":
         v_color = "#059669"
         v_bg = "#ECFDF5"
         v_border = "#A7F3D0"
-    elif "ALERT" in v_badge or "WATCH" in v_badge:
+    elif v_badge == "MONITOR":
         v_color = "#D97706"
         v_bg = "#FFFBEB"
         v_border = "#FDE68A"
+    elif v_badge in ("NOT EVALUATED", "INSUFFICIENT DATA"):
+        v_color = "#64748B"
+        v_bg = "#F8FAFC"
+        v_border = "#CBD5E1"
     else:
         v_color = "#DC2626"
         v_bg = "#FEF2F2"
@@ -597,22 +700,38 @@ def render_forensic_dossier_html(report: Dict[str, Any]) -> str:
             f'<div style="flex:1;">'
             f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">'
             f'<span style="font-size:16px;">{icon}</span>'
-            f'<span style="font-size:13.5px; font-weight:800; color:#0F172A;">{c["title"]}</span>'
-            f'<span style="background:#FFFFFF; color:{color}; border:1px solid {border}; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:9999px;">{c["category"]}</span>'
+            f'<span style="font-size:13.5px; font-weight:800; color:#0F172A;">{_esc(c.get("title"))}</span>'
+            f'<span style="background:#FFFFFF; color:{color}; border:1px solid {border}; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:9999px;">{_esc(c.get("category"))}</span>'
             f'</div>'
-            f'<div style="font-size:12.5px; line-height:1.5; color:#475569; margin-top:4px;">{c["detail"]}</div>'
+            f'<div style="font-size:12.5px; line-height:1.5; color:#475569; margin-top:4px;">{_esc(c.get("detail"))}</div>'
             f'</div>'
             f'<div style="text-align:right; min-width:110px;">'
-            f'<div style="font-size:13.5px; font-weight:900; color:{color}; font-family:\'JetBrains Mono\', monospace;">{c["metric"]}</div>'
-            f'<div style="font-size:10.5px; color:#64748B; margin-top:2px;">Benchmark: {c["benchmark"]}</div>'
+            f'<div style="font-size:13.5px; font-weight:900; color:{color}; font-family:\'JetBrains Mono\', monospace;">{_esc(c.get("metric"))}</div>'
+            f'<div style="font-size:10.5px; color:#64748B; margin-top:2px;">Benchmark: {_esc(c.get("benchmark"))}</div>'
             f'</div>'
             f'</div>'
         )
 
-    cra_agency = cra.get("agency", "CRISIL")
-    cra_rating = cra.get("rating", "CRISIL AAA / Stable")
-    cra_outlook = cra.get("outlook", "STABLE")
-    cra_headroom = cra.get("headroom", "Adequate liquidity buffer and unencumbered banking lines.")
+    cra_agency = cra.get("agency") or "Not verified"
+    cra_rating = cra.get("rating") or "Not verified"
+    cra_outlook = cra.get("outlook") or "Not verified"
+    cra_headroom = cra.get("headroom") or "No rating disclosure supplied."
+
+    # Governance card must reflect the actual check results, never a fixed "Clean Audit".
+    pledge_check = next((c for c in checks if c.get("id") == "FOR_07_PROMOTER_PLEDGE"), {})
+    auditor_check = next((c for c in checks if c.get("id") == "FOR_08_AUDITOR_GOVERNANCE"), {})
+    pledge_metric = pledge_check.get("metric", "N/A")
+    auditor_metric = auditor_check.get("metric", "N/A")
+    governance_ok = (
+        pledge_check.get("status") == "PASS" and auditor_check.get("status") == "PASS"
+    )
+    gov_color = "#059669" if governance_ok else "#64748B"
+    gov_headline = f"Pledge: {pledge_metric} • Auditor: {auditor_metric}"
+    gov_sub = (
+        "Both encumbrance and auditor disclosures were evaluated and passed."
+        if governance_ok
+        else "One or more governance disclosures were unavailable or flagged — see checks below."
+    )
 
     html = (
         f'<div style="background:#FFFFFF; border:1.5px solid {v_border}; border-radius:16px; padding:24px 26px; margin-bottom:24px; box-shadow:0 1px 4px rgba(0, 0, 0, 0.04);">'
@@ -627,24 +746,24 @@ def render_forensic_dossier_html(report: Dict[str, Any]) -> str:
         f'<div style="display:flex; align-items:center; gap:10px;">'
         f'<div style="background:{v_bg}; border:1px solid {v_border}; border-radius:10px; padding:6px 14px; text-align:right;">'
         f'<div style="font-size:9.5px; font-weight:800; color:{v_color}; text-transform:uppercase;">Forensic Quality Index</div>'
-        f'<div style="font-size:18px; font-weight:900; color:{v_color}; font-family:\'JetBrains Mono\', monospace;">{fqi:.1f} / 100</div>'
+        f'<div style="font-size:18px; font-weight:900; color:{v_color}; font-family:\'JetBrains Mono\', monospace;">{fqi_display} / 100</div>'
         f'</div>'
-        f'<span style="background:{v_color}; color:#FFFFFF; font-size:12px; font-weight:900; padding:8px 14px; border-radius:9999px; letter-spacing:0.5px; font-family:\'JetBrains Mono\', monospace;">{v_badge}</span>'
+        f'<span style="background:{v_color}; color:#FFFFFF; font-size:12px; font-weight:900; padding:8px 14px; border-radius:9999px; letter-spacing:0.5px; font-family:\'JetBrains Mono\', monospace;">{_esc(v_badge)}</span>'
         f'</div>'
         f'</div>'
         f'<div style="background:{v_bg}; border:1px solid {v_border}; border-radius:10px; padding:12px 18px; margin-bottom:16px; font-size:13px; color:{v_color}; font-weight:600; line-height:1.5;">'
-        f'<strong>Audit Verdict:</strong> {v_desc}'
+        f'<strong>Audit Verdict:</strong> {_esc(v_desc)}'
         f'</div>'
         f'<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">'
         f'<div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:8px; padding:12px 16px;">'
-        f'<div style="font-size:10.5px; font-weight:800; color:#2563EB; text-transform:uppercase; margin-bottom:4px;">🏛️ Credit Rating Agency Surveillance</div>'
-        f'<div style="font-size:14px; font-weight:800; color:#0F172A;">{cra_rating} ({cra_agency})</div>'
-        f'<div style="font-size:11.5px; color:#64748B; margin-top:2px;">Outlook: {cra_outlook} • {cra_headroom}</div>'
+        f'<div style="font-size:10.5px; font-weight:800; color:#2563EB; text-transform:uppercase; margin-bottom:4px;">🏛️ External Credit Rating Disclosure</div>'
+        f'<div style="font-size:14px; font-weight:800; color:#0F172A;">{_esc(cra_rating)} ({_esc(cra_agency)})</div>'
+        f'<div style="font-size:11.5px; color:#64748B; margin-top:2px;">Outlook: {_esc(cra_outlook)} • {_esc(cra_headroom)}</div>'
         f'</div>'
         f'<div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:8px; padding:12px 16px;">'
-        f'<div style="font-size:10.5px; font-weight:800; color:#059669; text-transform:uppercase; margin-bottom:4px;">🛡️ Governance & Integrity Defense</div>'
-        f'<div style="font-size:14px; font-weight:800; color:#059669;">Clean Audit • 0.0% Pledged</div>'
-        f'<div style="font-size:11.5px; color:#64748B; margin-top:2px;">Zero auditor resignations, zero NCLT actions, unencumbered promoter shares.</div>'
+        f'<div style="font-size:10.5px; font-weight:800; color:{gov_color}; text-transform:uppercase; margin-bottom:4px;">🛡️ Governance Disclosures</div>'
+        f'<div style="font-size:14px; font-weight:800; color:{gov_color};">{_esc(gov_headline)}</div>'
+        f'<div style="font-size:11.5px; color:#64748B; margin-top:2px;">{_esc(gov_sub)}</div>'
         f'</div>'
         f'</div>'
         f'<div style="margin-top:14px;">'

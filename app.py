@@ -11,7 +11,9 @@ import os
 import re
 import html
 import time
+import hashlib
 from datetime import datetime
+from typing import Dict, Any, Optional, List
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 
@@ -83,6 +85,58 @@ from nifty_universe import (
 )
 import pandas as pd
 from plotly.subplots import make_subplots
+import logging
+import hmac
+import kusha_logging
+
+kusha_logging.configure_logging()
+logger = kusha_logging.get_logger("kusha.app")
+
+MAX_PDF_MB = 40
+MAX_RUNS_PER_SESSION = int(os.environ.get("KUSHA_MAX_RUNS", "25"))
+
+
+def esc(value: Any) -> str:
+    """Escape any value for safe HTML interpolation. None becomes an empty string."""
+    return html.escape(str(value if value is not None else ""), quote=True)
+
+
+def safe_url(url: Any) -> str:
+    """Return the URL only if it is an absolute http(s) URL, else ''."""
+    u = str(url or "").strip()
+    return u if u.lower().startswith(("https://", "http://")) else ""
+
+
+def sanitize_memo_field(val: Any, max_len: int = 600) -> str:
+    """Neutralize structural markdown, strip leading control characters, collapse to single line, and cap length."""
+    if val is None:
+        return ""
+    s = str(val).replace("\r", " ").replace("\n", " ")
+    # Strip dangerous leading structural markdown characters repeatedly
+    s = re.sub(r'^[#>\-*|`\s]+', '', s)
+    # Escape pipe characters so they don't break markdown tables
+    s = s.replace("|", "\\|")
+    # Collapse multiple whitespace
+    s = re.sub(r'\s+', ' ', s).strip()
+    if len(s) > max_len:
+        s = s[:max_len].rstrip() + "..."
+    return s
+
+
+def get_kusha_access_password() -> Optional[str]:
+    """Retrieve optional access password from environment or st.secrets."""
+    pwd = os.environ.get("KUSHA_ACCESS_PASSWORD", "").strip()
+    if pwd:
+        return pwd
+    try:
+        if "KUSHA_ACCESS_PASSWORD" in st.secrets:
+            sec_pwd = str(st.secrets["KUSHA_ACCESS_PASSWORD"]).strip()
+            if sec_pwd:
+                return sec_pwd
+    except Exception as e:
+        # secrets.toml does not exist or has invalid syntax in non-cloud / local environment; legitimate fallback
+        logger.debug("st.secrets check for KUSHA_ACCESS_PASSWORD skipped: %s", e)
+    return None
 
 
 def build_filing_ingestion_notice_html(filing_metadata):
@@ -100,7 +154,7 @@ def build_filing_ingestion_notice_html(filing_metadata):
         background, border, accent, heading_color, body_color = "#EFF6FF", "#BFDBFE", "#2563EB", "#1E40AF", "#475569"
     elif analyzed:
         heading = "Official BSE India Filing Analyzed · Multimodal Document Ingestion"
-        description = "The official statutory filing was attached to Gemini and comprehensively analyzed across all 10 governance and financial pillars."
+        description = "The official statutory filing was attached to Gemini and analyzed against all 8 governance and financial pillars."
         background, border, accent, heading_color, body_color = "#ECFDF5", "#A7F3D0", "#059669", "#065F46", "#475569"
     else:
         heading = "Filing listed · PDF not analyzed"
@@ -780,6 +834,18 @@ def get_cached_market_indices():
 def get_cached_marquee_stocks():
     return fetch_marquee_stocks_data()
 
+
+def render_marquee_stocks_tape(stocks_list: Optional[List[Dict[str, Any]]] = None) -> None:
+    """Renders marquee benchmark equities with mandatory data status labelling."""
+    items = stocks_list if stocks_list is not None else get_cached_marquee_stocks()
+    if not items:
+        return
+
+    non_provider = [stk for stk in items if stk.get("data_status") != "provider"]
+    if non_provider:
+        as_of_date = non_provider[0].get("as_of") or "2024-06-30"
+        st.html(f'<div style="background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; padding: 6px 12px; border-radius: 6px; font-size: 11px; margin-bottom: 8px; font-weight: 600;">Sample reference data as of {as_of_date} — not live.</div>')
+
 @st.cache_data(ttl=300, show_spinner=False)
 def get_cached_ticker_history(ticker_sym: str, period: str = "1y"):
     return fetch_ticker_historical_data(ticker_sym, period=period)
@@ -817,8 +883,44 @@ def save_analyst_feedback(category: str, ticker: str, claim_or_figure: str, expe
         json.dump(payload, f, indent=2)
     return fb_id
 
+# --- STARTUP NETWORK GUARD & OPERATOR PASSWORD GATE ---
+configured_access_password = get_kusha_access_password()
+
+try:
+    server_address = st.config.get_option("server.address")
+except Exception as e:
+    # Fallback to local loopback if running in bare headless mode without active streamlit config
+    server_address = "127.0.0.1"
+
+is_loopback = str(server_address or "").strip().lower() in ("127.0.0.1", "localhost", "::1")
+if not is_loopback and not configured_access_password:
+    st.error(
+        "⚠️ This app is network-reachable with no authentication. "
+        "Anyone on this network can use it and consume your API quota."
+    )
+
+if configured_access_password:
+    if not st.session_state.get("kusha_authenticated", False):
+        st.markdown("### 🔒 Project KUSHA Access Gate")
+        st.caption("Operator authentication is required to access this terminal.")
+        with st.form("kusha_auth_gate_form", clear_on_submit=True):
+            gate_pwd = st.text_input("Enter Access Password", type="password")
+            submit_gate = st.form_submit_button("Authenticate")
+            if submit_gate:
+                if hmac.compare_digest(gate_pwd.encode("utf-8"), configured_access_password.encode("utf-8")):
+                    st.session_state["kusha_authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("Incorrect password")
+        st.stop()
+
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
+    if configured_access_password:
+        if st.sidebar.button("🔒 Lock session", key="btn_lock_session_sidebar", width="stretch"):
+            st.session_state["kusha_authenticated"] = False
+            st.rerun()
+
     st.markdown("### Project KUSHA")
     st.caption("Autonomous AI for Finance • Ashu Elite Edition")
     
@@ -963,10 +1065,10 @@ with st.sidebar:
             <span style="color: #059669; font-size: 14px;">●</span> Proprietary Core Active
           </div>
           <div style="color: #64748B; line-height: 1.45;">
-            The 8-pillar forensic algorithms, scoring heuristics, and footnote extraction rule-sets are compiled on the backend under institutional IP protection.
+            Pillar scores are extracted by a Gemini model, then clamped, capped and summed in Python. The final number is deterministic given the model output, but the model output itself is not reproducible. No encryption or tamper-proofing is applied.
           </div>
-          <div style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #059669; font-weight: 700;">
-            ENCRYPTION &amp; TAMPER GUARD ENFORCED
+          <div style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #D97706; font-weight: 700;">
+            DETERMINISTIC POST-PROCESSING ONLY
           </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1007,38 +1109,58 @@ def render_terminal_top_telemetry_hud():
     """)
 
     indices_list = get_cached_market_indices()
+    stale_indices = [idx for idx in indices_list if idx.get("data_status") == "stale_reference"]
+    if stale_indices:
+        stale_date = stale_indices[0].get("as_of", "2024-06-30")
+        st.html(f'<div style="background: #FEF3C7; border: 1.5px solid #FCD34D; color: #92400E; padding: 10px 16px; border-radius: 8px; font-size: 12px; margin-bottom: 12px; font-weight: 700;">⚠️ Index levels unavailable from provider; showing a static reference set as of {stale_date}. Not current.</div>')
+
     idx_cols = st.columns(4)
     for i, idx in enumerate(indices_list):
         with idx_cols[i]:
-            is_pos = idx["pct"] >= 0
+            is_pos = (idx.get("pct") or 0) >= 0
             delta_col = "#059669" if is_pos else "#DC2626"
             delta_bg = "rgba(5, 150, 105, 0.08)" if is_pos else "rgba(220, 38, 38, 0.08)"
             delta_border = "rgba(5, 150, 105, 0.25)" if is_pos else "rgba(220, 38, 38, 0.25)"
             delta_sign = "+" if is_pos else ""
-            delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
+            if idx.get("pct") is not None and idx.get("chg") is not None:
+                delta_str = f"{delta_sign}{idx['pct']:.2f}% ({delta_sign}{idx['chg']:,.1f})"
+            else:
+                delta_str = "N/A"
 
             # Calculate Day Range progress
-            lo = idx.get("lo", 0)
-            hi = idx.get("hi", 0)
-            cur = idx.get("cur", 0)
-            range_span = max(hi - lo, 1.0)
-            day_pct = min(100.0, max(0.0, (cur - lo) / range_span * 100.0))
+            lo = idx.get("lo")
+            hi = idx.get("hi")
+            cur = idx.get("cur")
+            
+            if hi is not None and lo is not None and cur is not None:
+                range_span = max(hi - lo, 1.0)
+                day_pct = min(100.0, max(0.0, (cur - lo) / range_span * 100.0))
+                lo_str = f"L: {lo:,.0f}"
+                hi_str = f"H: {hi:,.0f}"
+                day_pct_str = f"{day_pct:.0f}% of Day"
+                bar_html = f'<div style="background: linear-gradient(90deg, #2563EB, {delta_col}); width: {day_pct:.1f}%; height: 3px; border-radius: 9999px;"></div>'
+            else:
+                lo_str = f"L: {lo:,.0f}" if lo is not None else "L: N/A"
+                hi_str = f"H: {hi:,.0f}" if hi is not None else "H: N/A"
+                day_pct_str = "Day Range: N/A"
+                bar_html = ''
 
-            idx_name = idx["name"]
+            cur_str = f"{cur:,.2f}" if cur is not None else "N/A"
+            idx_name = idx.get("name", "Index")
             card_html = (
                 f'<div role="region" aria-label="{idx_name} quote" style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; border-top: 3.5px solid {delta_col}; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 14px; min-height: 110px;">'
                 f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
-                f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx["icon"]} {idx_name}</span>'
+                f'<span style="font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px;">{idx.get("icon", "")} {idx_name}</span>'
                 f'<span style="font-size: 11px; font-weight: 800; color: {delta_col}; background: {delta_bg}; border: 1px solid {delta_border}; padding: 2px 7px; border-radius: 6px; font-family: \'JetBrains Mono\', monospace;">{delta_str}</span>'
                 f'</div>'
-                f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{idx["cur"]:,.2f}</div>'
+                f'<div style="font-size: 22px; font-weight: 900; color: #0F172A; font-family: \'JetBrains Mono\', monospace; line-height: 1.1;">{cur_str}</div>'
                 f'<div style="margin-top: 8px; background: #E2E8F0; height: 3px; border-radius: 9999px; position: relative;">'
-                f'<div style="background: linear-gradient(90deg, #2563EB, {delta_col}); width: {day_pct:.1f}%; height: 3px; border-radius: 9999px;"></div>'
+                f'{bar_html}'
                 f'</div>'
                 f'<div style="font-size: 10px; color: #64748B; margin-top: 6px; display: flex; justify-content: space-between; font-family: \'JetBrains Mono\', monospace;">'
-                f'<span>L: {idx["lo"]:,.0f}</span>'
-                f'<span>{day_pct:.0f}% of Day</span>'
-                f'<span>H: {idx["hi"]:,.0f}</span>'
+                f'<span>{lo_str}</span>'
+                f'<span>{day_pct_str}</span>'
+                f'<span>{hi_str}</span>'
                 f'</div>'
                 f'</div>'
             )
@@ -1306,7 +1428,7 @@ def render_project_kusha_welcome_page():
           <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #2563EB;">
             <div style="font-size: 11px; font-weight: 800; color: #2563EB; text-transform: uppercase;">2. Data Origin</div>
             <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-top: 2px;">Where did this information come from?</div>
-            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">BSE India exchange filings (SEBI LODR Reg 34), Screener.in 10-Yr statements &amp; verified search citations.</div>
+            <div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.4;">BSE India exchange filings (SEBI LODR Reg 34), delayed Yahoo Finance statements (~4 years, unaudited), and web citations.</div>
           </div>
           <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; border-left: 3.5px solid #7C3AED;">
             <div style="font-size: 11px; font-weight: 800; color: #7C3AED; text-transform: uppercase;">3. Freshness &amp; Integrity</div>
@@ -1345,8 +1467,8 @@ def render_project_kusha_welcome_page():
         </div>
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
           <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Valuation Corridors</div>
-          <div style="font-size: 15px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace;">3-Stage DCF Corridors</div>
-          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">Margin of Safety Ranges</div>
+          <div style="font-size: 15px; font-weight: 800; color: #2563EB; font-family: 'JetBrains Mono', monospace;">Relative Valuation</div>
+          <div style="font-size: 11px; color: #64748B; font-weight: 600; margin-top: 2px;">P/E · EV/EBITDA · P/B multiples</div>
         </div>
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px;">
           <div style="font-size: 10.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">Statutory Filings</div>
@@ -1464,7 +1586,7 @@ def render_project_kusha_welcome_page():
             </div>
             <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">Ingestion</div>
             <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
-              • 10-Yr Audited Financials<br/>
+              • ~4-Yr Third-Party Financials<br/>
               • 6 Sanity Checks
             </div>
             """, unsafe_allow_html=True)
@@ -1518,10 +1640,10 @@ def render_project_kusha_welcome_page():
               <span style="font-size: 10px; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">STEP 05</span>
               <span style="font-size: 16px;">🎯</span>
             </div>
-            <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">DCF Fair Value</div>
+            <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">Relative Valuation</div>
             <div style="font-size: 11.5px; color: #475569; line-height: 1.4;">
-              • 3-Stage DCF Intrinsic Value<br/>
-              • Safety Margin Corridors
+              • P/E · EV/EBITDA · P/B Multiples<br/>
+              • Peer Benchmark Spread
             </div>
             """, unsafe_allow_html=True)
 
@@ -1558,7 +1680,7 @@ def render_project_kusha_welcome_page():
             <span style="font-size: 10.5px; font-weight: 700; color: #059669; background: #ECFDF5; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Vector 05</span>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
-            <div><span style="font-size: 13px;">📈</span> <strong style="font-size: 12px; color: #0F172A;">Valuation &amp; Sanity Layer</strong><br/><span style="font-size: 11px; color: #64748B;">Multiples vs 10Y &amp; DCF Safety</span></div>
+            <div><span style="font-size: 13px;">📈</span> <strong style="font-size: 12px; color: #0F172A;">Valuation &amp; Sanity Layer</strong><br/><span style="font-size: 11px; color: #64748B;">Multiples vs 10Y History</span></div>
             <span style="font-size: 10.5px; font-weight: 700; color: #059669; background: #ECFDF5; padding: 2px 6px; border-radius: 4px; font-family: monospace;">Vector 06</span>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
@@ -1607,12 +1729,12 @@ def render_project_kusha_welcome_page():
             <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Official statutory annual reports with 1-click verified PDF URLs.</div>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
-            <div style="font-size: 12px; font-weight: 800; color: #0F172A;">📊 Screener.in</div>
-            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Canonical 10-year audited P&amp;L, Balance Sheet, and Cash Flow datasets.</div>
+            <div style="font-size: 12px; font-weight: 800; color: #0F172A;">📊 Yahoo Finance</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Third-party, unaudited P&amp;L, Balance Sheet and Cash Flow data (~4 years).</div>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
             <div style="font-size: 12px; font-weight: 800; color: #0F172A;">⭐ CRISIL / ICRA</div>
-            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Official credit rating disclosures and institutional safety ratings.</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Manually curated public rating disclosures for a small set of large caps only; shown with its disclosure date.</div>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
             <div style="font-size: 12px; font-weight: 800; color: #0F172A;">📈 NSE / Yahoo</div>
@@ -1634,7 +1756,7 @@ def render_project_kusha_welcome_page():
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px;">
             <div style="font-size: 11.5px; font-weight: 800; color: #7C3AED;">3️⃣ Instant Dossier</div>
-            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Radial charts, fraud shield, and DCF valuation corridors in 1 second.</div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Radial charts, fraud shield, and valuation corridors in 1 second.</div>
           </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1990,8 +2112,8 @@ if terminal_mode == "Research":
               <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 22px;">🏢</span>
                 <div>
-                  <div style="font-size: 15px; font-weight: 800; color: #0F172A;">{target_company_name} <span style="font-size: 13px; font-weight: 700; color: #64748B; font-family: 'JetBrains Mono', monospace;">({target_ticker})</span></div>
-                  <div style="font-size: 11.5px; color: #64748B;">Sector: {matched_info.get('sector', 'General') if matched_info else 'General'} · BSE: {bse_c} · Source: BSE Statutory Filings</div>
+                  <div style="font-size: 15px; font-weight: 800; color: #0F172A;">{esc(target_company_name)} <span style="font-size: 13px; font-weight: 700; color: #64748B; font-family: 'JetBrains Mono', monospace;">({esc(target_ticker)})</span></div>
+                  <div style="font-size: 11.5px; color: #64748B;">Sector: {esc(matched_info.get('sector', 'General') if matched_info else 'General')} · BSE: {esc(bse_c)} · Source: BSE Statutory Filings</div>
                 </div>
               </div>
               <div style="text-align: right;">
@@ -2001,59 +2123,51 @@ if terminal_mode == "Research":
             </div>
             """)
 
+        # Per-session analysis budget check
+        if "kusha_runs" not in st.session_state:
+            st.session_state["kusha_runs"] = 0
+        current_runs = st.session_state["kusha_runs"]
+        budget_exhausted = current_runs >= MAX_RUNS_PER_SESSION
+        if budget_exhausted:
+            st.warning(f"Session analysis budget reached ({current_runs} of {MAX_RUNS_PER_SESSION}). Reload to start a new session.")
+
         # Action Buttons Row (Prominent & Unobscured)
         run_btn = False
         if st.session_state.pop("trigger_demo_run", False):
-            demo_mode = True
-            run_btn = True
-            if not target_company_name:
-                target_company_name = "Tata Consumer Products Ltd."
-                target_sector = "FMCG / Packaged Goods"
-                target_ticker = "TATACONSUM.NS"
-            if target_ticker and not live_data:
-                live_data = get_cached_live_data(target_ticker)
-            if target_ticker and not fin_res:
-                fin_res = get_cached_financial_statements(target_ticker)
+            if budget_exhausted:
+                st.warning(f"Session analysis budget reached ({current_runs} of {MAX_RUNS_PER_SESSION}). Reload to start a new session.")
+            else:
+                demo_mode = True
+                run_btn = True
+                if not target_company_name:
+                    target_company_name = "Tata Consumer Products Ltd."
+                    target_sector = "FMCG / Packaged Goods"
+                    target_ticker = "TATACONSUM.NS"
+                if target_ticker and not live_data:
+                    live_data = get_cached_live_data(target_ticker)
+                if target_ticker and not fin_res:
+                    fin_res = get_cached_financial_statements(target_ticker)
 
         btn_col1, btn_col2 = st.columns([3, 1.8])
+        is_running = st.session_state.get("kusha_running", False)
         with btn_col1:
             btn_label = f"Build research brief for {target_company_name}" if target_company_name else "Select a company to research"
             run_btn_manual = st.button(
                 btn_label,
                 type="primary",
                 width="stretch",
-                disabled=not bool(target_company_name)
+                disabled=not bool(target_company_name) or budget_exhausted or is_running
             )
             if run_btn_manual:
                 run_btn = True
         with btn_col2:
-            if st.button("Try synthetic demo (Tata Consumer)", width="stretch"):
+            if st.button("Try synthetic demo (Tata Consumer)", width="stretch", disabled=budget_exhausted or is_running):
                 st.session_state["pending_company_choice"] = "Tata Consumer Products Ltd. (TATACONSUM)"
                 st.session_state["trigger_demo_run"] = True
                 st.rerun()
 
-        # Check if local cached evaluation exists
-        cached_exists = False
-        if use_eval_cache and target_ticker:
-            cached_exists = load_cached_evaluation(
-                company_name=target_company_name or "",
-                ticker=target_ticker or "",
-                model=selected_gemini_model,
-                current_pipeline_version=ANALYSIS_PIPELINE_VERSION
-            ) is not None
-
+        cache_badge_ph = st.empty()
         force_live_api = False
-        if cached_exists:
-            col_c1, col_c2 = st.columns([2.6, 1.4])
-            with col_c1:
-                st.markdown(
-                    '<div style="margin-top: 4px; font-size: 11.5px; color: #059669; font-weight: 700;">'
-                    '⚡ <strong>Cached Evaluation Available:</strong> Will replay in &lt;0.05s with 0 API quota.'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
-            with col_c2:
-                force_live_api = st.checkbox("Force fresh live API run", value=False, help="Bypasses local cache and executes fresh Gemini API call.")
 
         # Latency / estimated duration guidance
         st.markdown(
@@ -2122,18 +2236,77 @@ if terminal_mode == "Research":
                     help="Uploaded PDF is processed via Google Gemini Files API for multimodal financial statement extraction."
                 )
                 if uploaded_file:
-                    selected_filing_metadata = {
-                        "title": uploaded_file.name,
-                        "year": "User Uploaded",
-                        "source": "Manual PDF Upload",
-                        "url": None
-                    }
+                    raw_pdf_bytes = uploaded_file.getvalue()
+                    if len(raw_pdf_bytes) > MAX_PDF_MB * 1024 * 1024:
+                        st.error(f"Uploaded file exceeds maximum limit of {MAX_PDF_MB}MB (received {len(raw_pdf_bytes)/(1024*1024):.1f}MB).")
+                        uploaded_file = None
+                        selected_filing_metadata = None
+                    elif not raw_pdf_bytes.startswith(b"%PDF-"):
+                        st.error("Not a valid PDF (missing '%PDF-' header).")
+                        uploaded_file = None
+                        selected_filing_metadata = None
+                    else:
+                        selected_filing_metadata = {
+                            "title": uploaded_file.name,
+                            "year": "User Uploaded",
+                            "source": "Manual PDF Upload",
+                            "url": None
+                        }
             else:
                 st.caption("Gemini will perform Google Search grounding on recent filings, investor presentations, and market reports.")
                 selected_filing_metadata = None
 
         if not target_sector:
             target_sector = matched_info["sector"] if matched_info else "General"
+
+        # Determine execution profile and expected mode for cache key consistency
+        if demo_mode:
+            mode_pill = "🧪 Synthetic Demo"
+        elif doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
+            mode_pill = "⚡ BSE Annual Report"
+        elif doc_type == "📂 Upload custom PDF" and uploaded_file:
+            mode_pill = "📂 Custom PDF"
+        else:
+            mode_pill = "🌐 Web Research"
+
+        # Compute document_hash once per run
+        pdf_bytes = uploaded_file.getvalue() if (doc_type == "📂 Upload custom PDF" and uploaded_file) else None
+        if pdf_bytes:
+            document_hash = hashlib.sha256(pdf_bytes).hexdigest()
+        elif doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata and selected_filing_metadata.get("url"):
+            document_hash = hashlib.sha256(selected_filing_metadata["url"].encode("utf-8")).hexdigest()
+        else:
+            document_hash = "no_document"
+
+        clean_target_name = str(target_company_name or "").strip()
+        clean_target_ticker = str(target_ticker or "").strip()
+
+        # Check if local cached evaluation exists (Probe site)
+        cached_exists = False
+        if use_eval_cache and clean_target_ticker:
+            cached_exists = load_cached_evaluation(
+                company_name=clean_target_name,
+                ticker=clean_target_ticker,
+                model=selected_gemini_model,
+                current_pipeline_version=ANALYSIS_PIPELINE_VERSION,
+                document_hash=document_hash,
+                sector=target_sector,
+                skip_web_search=skip_web_search,
+                analysis_mode=mode_pill,
+            ) is not None
+
+        if cached_exists:
+            with cache_badge_ph.container():
+                col_c1, col_c2 = st.columns([2.6, 1.4])
+                with col_c1:
+                    st.markdown(
+                        '<div style="margin-top: 4px; font-size: 11.5px; color: #059669; font-weight: 700;">'
+                        '⚡ <strong>Cached Evaluation Available:</strong> Will replay in &lt;0.05s with 0 API quota.'
+                        '</div>',
+                        unsafe_allow_html=True
+                    )
+                with col_c2:
+                    force_live_api = st.checkbox("Force fresh live API run", value=False, help="Bypasses local cache and executes fresh Gemini API call.")
 
         # Secondary Expander: Company Data & 10-Year Financial History
         with st.expander("📊 View company data & 10-year financial history", expanded=False):
@@ -2242,16 +2415,29 @@ else:
     run_btn = False
 
 
-# Helper metadata for 8 Pillars (Crisp Institutional White & Emerald)
+# Display metadata for the 8 canonical pillars.
+# The labels MUST match analyzer.CANONICAL_PILLARS so a chip never mislabels a score.
+_PILLAR_STYLE = [
+    ("🏛️", "Governance", "rgba(5, 150, 105, 0.08)", "#059669", "rgba(5, 150, 105, 0.25)"),
+    ("🔍", "Forensics", "rgba(37, 99, 235, 0.08)", "#2563EB", "rgba(37, 99, 235, 0.25)"),
+    ("🛡️", "Risk / ESG", "rgba(124, 58, 237, 0.08)", "#7C3AED", "rgba(124, 58, 237, 0.25)"),
+    ("📈", "Valuation", "rgba(37, 99, 235, 0.08)", "#2563EB", "rgba(37, 99, 235, 0.25)"),
+    ("🔄", "Moat", "rgba(5, 150, 105, 0.08)", "#059669", "rgba(5, 150, 105, 0.25)"),
+    ("💵", "Simplicity", "rgba(217, 119, 6, 0.08)", "#D97706", "rgba(217, 119, 6, 0.25)"),
+    ("🚀", "Innovation", "rgba(124, 58, 237, 0.08)", "#7C3AED", "rgba(124, 58, 237, 0.25)"),
+    ("⚖️", "Insider Risk", "rgba(234, 88, 12, 0.08)", "#EA580C", "rgba(234, 88, 12, 0.25)"),
+]
+
 PILLAR_METADATA = {
-    1: {"icon": "🏛️", "chip": "Governance", "chip_bg": "rgba(5, 150, 105, 0.08)", "chip_fg": "#059669", "border": "rgba(5, 150, 105, 0.25)"},
-    2: {"icon": "🔍", "chip": "Forensics", "chip_bg": "rgba(37, 99, 235, 0.08)", "chip_fg": "#2563EB", "border": "rgba(37, 99, 235, 0.25)"},
-    3: {"icon": "🛡️", "chip": "Solvency", "chip_bg": "rgba(124, 58, 237, 0.08)", "chip_fg": "#7C3AED", "border": "rgba(124, 58, 237, 0.25)"},
-    4: {"icon": "📈", "chip": "Efficiency", "chip_bg": "rgba(37, 99, 235, 0.08)", "chip_fg": "#2563EB", "border": "rgba(37, 99, 235, 0.25)"},
-    5: {"icon": "🔄", "chip": "Working Cap", "chip_bg": "rgba(5, 150, 105, 0.08)", "chip_fg": "#059669", "border": "rgba(5, 150, 105, 0.25)"},
-    6: {"icon": "💵", "chip": "Cash Flow", "chip_bg": "rgba(217, 119, 6, 0.08)", "chip_fg": "#D97706", "border": "rgba(217, 119, 6, 0.25)"},
-    7: {"icon": "🚀", "chip": "Moat / Longevity", "chip_bg": "rgba(124, 58, 237, 0.08)", "chip_fg": "#7C3AED", "border": "rgba(124, 58, 237, 0.25)"},
-    8: {"icon": "⚖️", "chip": "Capital Allocation", "chip_bg": "rgba(234, 88, 12, 0.08)", "chip_fg": "#EA580C", "border": "rgba(234, 88, 12, 0.25)"},
+    pillar["id"]: {
+        "icon": _PILLAR_STYLE[i][0],
+        "chip": _PILLAR_STYLE[i][1],
+        "chip_bg": _PILLAR_STYLE[i][2],
+        "chip_fg": _PILLAR_STYLE[i][3],
+        "border": _PILLAR_STYLE[i][4],
+        "name": pillar["name"],
+    }
+    for i, pillar in enumerate(analyzer.CANONICAL_PILLARS)
 }
 
 # Helper to build Plotly 8-Pillar Radar Chart in Institutional White & Emerald
@@ -2804,7 +2990,7 @@ def render_research_provenance_and_evidence_card(res, live_data, target_company_
         q2_chip_fg = "#D97706"
         q2_chip_bdr = "#FDE68A"
     elif is_analyzed:
-        q2_source = f"Official BSE India Statutory Annual Report ({filing_meta.get('title', 'Annual Report')}) + Screener.in 10-Yr Audited Statements + Delayed Quotes"
+        q2_source = f"Official BSE India statutory filing ({filing_meta.get('title', 'Annual Report')}) + delayed Yahoo Finance statements (~4 years, unaudited) + delayed quotes"
         q2_chip = "STATUTORY BSE FILING"
         q2_chip_bg = "#ECFDF5"
         q2_chip_fg = "#059669"
@@ -2812,7 +2998,7 @@ def render_research_provenance_and_evidence_card(res, live_data, target_company_
     else:
         research = res.get("web_research", {})
         src_cnt = len(research.get("sources", []))
-        q2_source = f"Public Aggregators (Screener.in 10-Yr Financials, Delayed NSE Feeds) + {src_cnt} Web Citations"
+        q2_source = f"Delayed Yahoo Finance market and statement data (unaudited) + {src_cnt} web citation{'s' if src_cnt != 1 else ''}"
         q2_chip = "PUBLIC FEEDS & CITATIONS"
         q2_chip_bg = "#EFF6FF"
         q2_chip_fg = "#2563EB"
@@ -2821,8 +3007,8 @@ def render_research_provenance_and_evidence_card(res, live_data, target_company_
     # 3. Freshness & Integrity
     sentinel = res.get("sentinel_audit") or {}
     s_score = sentinel.get("integrity_score")
-    s_text = f"{s_score:.0f}/100" if s_score is not None else "Verified"
-    retrieval_time = res.get("retrieved_at") or datetime.now().strftime("%d %b %Y")
+    s_text = f"{s_score:.0f}/100" if s_score is not None else "Not evaluated (insufficient data)"
+    retrieval_time = res.get("retrieved_at") or "Not recorded"
     exec_sec = res.get("execution_time_seconds")
     est_lbl = res.get("estimated_time_label")
     is_cached = res.get("is_cached_result", False)
@@ -2840,7 +3026,7 @@ def render_research_provenance_and_evidence_card(res, live_data, target_company_
     pio_trig = res.get("pio_triggered", False)
     guardrail = str(res.get("guardrail_tag", ""))
 
-    if pio_trig or "RED" in guardrail or final_score < 55.0:
+    if pio_trig or analyzer.guardrail_level(guardrail) == analyzer.GUARDRAIL_RED or final_score < 55.0:
         stance_label = "Elevated Caution / High Risk"
         stance_col = "#DC2626"
         stance_bg = "#FEF2F2"
@@ -2948,14 +3134,14 @@ def render_traffic_light_and_eli15_html(res, live_data, target_company_name, tar
     is_insufficient = res.get("analysis_status") == "insufficient_evidence"
     has_gaps = is_insufficient or (bool(res.get("evidence_gaps")) and not is_doc_analyzed)
 
-    if pio_trig or "RED" in guardrail:
+    if pio_trig or analyzer.guardrail_level(guardrail) == analyzer.GUARDRAIL_RED:
         gov_status = "CRITICAL RISK"
         gov_color = "#DC2626"
         gov_bg = "#FEF2F2"
         gov_border = "#FECACA"
         gov_sub = "High risk: Serious audit red flags or promoter integrity warnings active."
         gov_icon = "🔴"
-    elif "ALERT" in guardrail or total_pen >= 4.0:
+    elif analyzer.guardrail_level(guardrail) == analyzer.GUARDRAIL_ALERT or total_pen >= 4.0:
         gov_status = "MONITOR"
         gov_color = "#D97706"
         gov_bg = "#FFFBEB"
@@ -3167,6 +3353,10 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
     is_doc_analyzed = res.get("filing_metadata", {}).get("ingestion_status") == "analyzed" or res.get("document_analyzed", False)
     is_insufficient = res.get("analysis_status") == "insufficient_evidence"
 
+    def _fcheck(check_id):
+        """Look up a result from the forensic engine's check list."""
+        return next((c for c in forensic_rep.get("checks", []) if c.get("id") == check_id), {})
+
     # ==========================================
     # 1. Auditor & Accounting Check
     # ==========================================
@@ -3198,20 +3388,17 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
             auditor_status = "ALERT"
             auditor_badge = "AUDIT NOTE"
         else:
-            auditor_status = "PASS"
-            auditor_badge = "CLEAN AUDIT"
-    elif forensic_rep.get("auditor_independence", {}).get("status") == "PASS":
+            auditor_status = "MONITOR"
+            auditor_badge = "NOT VERIFIED"
+            auditor_ev = "An auditor disclosure was cited but it does not state a clean or adverse opinion; treat as unverified."
+    elif _fcheck("FOR_08_AUDITOR_GOVERNANCE").get("status") == "PASS":
         auditor_status = "PASS"
         auditor_badge = "CLEAN AUDIT"
-        auditor_ev = forensic_rep["auditor_independence"].get("detail", "Clean statutory audit history; zero adverse auditor qualifications under CARO.")
-    elif is_insufficient:
+        auditor_ev = _fcheck("FOR_08_AUDITOR_GOVERNANCE").get("detail", "Supplied auditor disclosure reports an unqualified opinion.")
+    else:
         auditor_status = "MONITOR"
         auditor_badge = "NOT VERIFIED"
-        auditor_ev = "Auditor opinion and statutory disclosures were not verified in current sources."
-    else:
-        auditor_status = "PASS"
-        auditor_badge = "CLEAN AUDIT"
-        auditor_ev = "Official statutory filings verify an unmodified audit opinion with zero reservations or CARO qualifications."
+        auditor_ev = "No auditor opinion, CARO qualification or resignation history was available in the supplied data."
 
     shield_items.append({
         "title": "Auditor & Accounting Check",
@@ -3232,38 +3419,35 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
             break
 
     prom_holding_str = str(live.get("screener_metrics", {}).get("promoter_holding") or live.get("promoter_holding") or "").strip()
-    rep_pledge = forensic_rep.get("promoter_pledging", {})
-    rep_pledge_status = rep_pledge.get("status")
-    rep_pledge_val = rep_pledge.get("pledged_pct")
+    pledge_check = _fcheck("FOR_07_PROMOTER_PLEDGE")
 
-    if rep_pledge_status == "PASS" or (rep_pledge_val is not None and rep_pledge_val == 0.0):
+    if pledge_check.get("status") == "PASS":
         pledge_status = "PASS"
         pledge_badge = "0.0% PLEDGED"
-        pledge_ev = rep_pledge.get("detail") or "Official filings confirm 0.0% promoter share pledge. Zero promoter shares are encumbered."
-    elif rep_pledge_status in ["ALERT", "MONITOR"] and rep_pledge_val and rep_pledge_val > 5.0:
-        pledge_status = rep_pledge_status
-        pledge_badge = f"{rep_pledge_val:.1f}% PLEDGED"
-        pledge_ev = rep_pledge.get("detail") or f"Promoter pledge of {rep_pledge_val:.1f}% encumbers shares as debt collateral."
+        pledge_ev = pledge_check.get("detail") or "Disclosure reports 0.0% of promoter shareholding pledged."
+    elif pledge_check.get("status") == "CRITICAL":
+        pledge_status = "ALERT"
+        pledge_badge = pledge_check.get("metric", "PLEDGE FLAGGED")
+        pledge_ev = pledge_check.get("detail") or "Promoter shares are pledged as loan collateral."
     elif pledge_ev:
         p_l = pledge_ev.lower()
-        if any(term in p_l for term in ["0.0%", "0%", "zero", "nil", "none", "unencumbered", "no pledge", "no shares pledged"]) and "insufficient" not in p_l:
+        if any(term in p_l for term in ["0.0%", "zero", "nil", "no pledge", "no shares pledged"]) and "insufficient" not in p_l:
             pledge_status = "PASS"
             pledge_badge = "0.0% PLEDGED"
-        elif any(term in p_l for term in ["alert", "high pledge", "dumping", "encumbered", "pledge flagged"]):
+        elif any(term in p_l for term in ["alert", "high pledge", "encumbered", "pledge flagged"]):
             pledge_status = "MONITOR"
             pledge_badge = "PLEDGE FLAGGED"
         else:
-            pledge_status = "PASS"
-            pledge_badge = "0.0% PLEDGED"
-    elif is_insufficient:
+            pledge_status = "MONITOR"
+            pledge_badge = "NOT VERIFIED"
+            pledge_ev = "A pledge disclosure was cited but does not state a quantified pledge level; treat as unverified."
+    else:
         pledge_status = "MONITOR"
         pledge_badge = "NOT VERIFIED"
-        pledge_ev = "Promoter share pledging data could not be verified from available disclosures."
-    else:
-        pledge_status = "PASS"
-        pledge_badge = "0.0% PLEDGED"
-        holding_note = f"Promoter holding of {prom_holding_str}" if prom_holding_str and prom_holding_str != "N/A" else "Promoter shareholding"
-        pledge_ev = f"{holding_note} is 100% unencumbered. Official filings confirm zero promoter shares are pledged as loan collateral."
+        pledge_ev = (
+            "Promoter pledging could not be verified from the available disclosures. "
+            "Absence of a pledge disclosure is not evidence of zero pledging."
+        )
 
     shield_items.append({
         "title": "Promoter Share Pledge",
@@ -3275,9 +3459,9 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
     # ==========================================
     # 3. Real Cash vs Paper Profit (Cash Flow Conversion)
     # ==========================================
-    cfo_status = "PASS"
-    cfo_badge = "CFO > PAT (REAL CASH)"
-    cfo_ev = "Operating cash flow matches reported net profit; earnings reflect verified money in the bank."
+    cfo_status = None
+    cfo_badge = None
+    cfo_ev = None
 
     # Inspect financial statements
     cf_data = fin.get("cf", {})
@@ -3294,29 +3478,34 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
         cum_cfo = sum(cfo_clean)
         cum_pat = sum(pat_clean) if pat_clean else 0.0
         cum_fcf = sum(fcf_clean) if fcf_clean else 0.0
-        conv_pct = (cum_cfo / cum_pat * 100.0) if cum_pat > 0 else 100.0
+        conv_pct = (cum_cfo / cum_pat * 100.0) if cum_pat > 0 else None
 
-        if cum_cfo > 0:
+        if cum_cfo > 0 and conv_pct is not None:
             cfo_status = "PASS"
-            if conv_pct >= 90.0:
-                cfo_badge = "CFO > PAT (REAL CASH)"
-            else:
-                cfo_badge = f"CFO/PAT: {conv_pct:.0f}%"
+            cfo_badge = "CFO > PAT (REAL CASH)" if conv_pct >= 90.0 else f"CFO/PAT: {conv_pct:.0f}%"
             fcf_note = f" with ₹{cum_fcf:,.0f} Cr cumulative FCF" if cum_fcf > 0 else ""
-            cfo_ev = f"Verified cash conversion: Cumulative CFO of ₹{cum_cfo:,.0f} Cr ({conv_pct:.0f}% of PAT){fcf_note} confirms high earnings quality."
+            cfo_ev = f"Cumulative CFO of ₹{cum_cfo:,.0f} Cr ({conv_pct:.0f}% of PAT){fcf_note}. This is a cash-conversion ratio, not proof of earnings quality."
+        elif cum_cfo > 0:
+            cfo_status = "MONITOR"
+            cfo_badge = "CFO/PAT: N/A"
+            cfo_ev = (
+                f"Cumulative CFO is positive (₹{cum_cfo:,.0f} Cr) but cumulative PAT is "
+                f"{'zero' if cum_pat == 0 else 'negative'}, so the CFO/PAT ratio is not meaningful."
+            )
         else:
             cfo_status = "MONITOR"
             cfo_badge = "NEGATIVE CFO"
-            cfo_ev = f"Operating cash burn detected: Cumulative CFO is negative (₹{cum_cfo:,.0f} Cr) despite reported net profit."
-    elif forensic_rep.get("cash_conversion"):
-        cc = forensic_rep["cash_conversion"]
-        cfo_status = cc.get("status", "PASS")
-        cfo_badge = "CFO > PAT (REAL CASH)" if cfo_status == "PASS" else "CFO GAP"
-        cfo_ev = cc.get("detail", cfo_ev)
-    elif is_insufficient:
-        cfo_status = "MONITOR"
-        cfo_badge = "NOT VERIFIED"
-        cfo_ev = "Cash flow conversion could not be verified against statutory statements."
+            cfo_ev = f"Operating cash burn detected: cumulative CFO is negative (₹{cum_cfo:,.0f} Cr)."
+    else:
+        cfo_check = _fcheck("FOR_01_CASH_CONVERSION")
+        if cfo_check.get("status"):
+            cfo_status = "PASS" if cfo_check["status"] == "PASS" else "MONITOR"
+            cfo_badge = cfo_check.get("metric", "CFO/PAT")
+            cfo_ev = cfo_check.get("detail")
+        else:
+            cfo_status = "MONITOR"
+            cfo_badge = "NOT VERIFIED"
+            cfo_ev = "Cash flow conversion could not be evaluated: CFO or PAT history was unavailable."
 
     shield_items.append({
         "title": "Real Cash vs Paper Profit",
@@ -3352,18 +3541,16 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
         debtor_status = "PASS" if debtor_pass else "MONITOR"
         debtor_badge = f"DSO: {dso_val:.0f} DAYS"
         debtor_ev = f"Customers pay on time ({dso_val:.0f} days average); overdue debt risk is low ({over_90} past 90 days)."
-    elif forensic_rep.get("channel_stuffing", {}).get("status") == "PASS":
-        debtor_status = "PASS"
-        debtor_badge = "HEALTHY DSO"
-        debtor_ev = forensic_rep["channel_stuffing"].get("detail", "Receivables velocity and collections align with revenue growth; zero channel stuffing.")
-    elif is_insufficient:
-        debtor_status = "MONITOR"
-        debtor_badge = "DSO: N/A"
-        debtor_ev = "Customer payment turnaround (DSO) and aging metrics were not disclosed in filings."
     else:
-        debtor_status = "PASS"
-        debtor_badge = "HEALTHY DSO"
-        debtor_ev = "Customer collections and receivables aging align with standard B2B trade credit benchmarks."
+        rec_check = _fcheck("FOR_02_RECEIVABLE_VELOCITY")
+        if rec_check.get("status"):
+            debtor_status = "PASS" if rec_check["status"] == "PASS" else "MONITOR"
+            debtor_badge = rec_check.get("metric", "DSO: N/A")
+            debtor_ev = rec_check.get("detail")
+        else:
+            debtor_status = "MONITOR"
+            debtor_badge = "DSO: N/A"
+            debtor_ev = "Customer payment turnaround (DSO) and receivables aging were not available; not evaluated."
 
     shield_items.append({
         "title": "Customer Payments & Dues",
@@ -3384,14 +3571,10 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
         de_status = "PASS" if de_pass else "MONITOR"
         de_badge = "DEBT FREE" if de_val <= 0.05 else f"D/E {de_val:.2f}x"
         de_ev = f"Strong cash cushion and low borrowings (D/E {de_val:.2f}x) protect the company from interest rate shocks." if de_pass else f"Debt-to-equity of {de_val:.2f}x requires ongoing operating cash generation."
-    elif is_insufficient:
+    else:
         de_status = "MONITOR"
         de_badge = "D/E: N/A"
-        de_ev = "Debt-to-equity metric is unavailable from market data feeds."
-    else:
-        de_status = "PASS"
-        de_badge = "SOLVENT"
-        de_ev = "Capital structure demonstrates strong solvency and sustainable debt service capability."
+        de_ev = "Debt-to-equity was unavailable from the supplied data; solvency not evaluated."
 
     shield_items.append({
         "title": "Debt & Solvency Health",
@@ -3408,14 +3591,13 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
         reg_status = "ALERT"
         reg_badge = "UNDER PROBE"
         reg_ev = "Regulatory warnings, auditor actions, or forensic concerns flagged in records."
-    elif is_insufficient:
+    else:
         reg_status = "MONITOR"
         reg_badge = "NOT VERIFIED"
-        reg_ev = "Regulatory disclosures could not be completely verified from current records."
-    else:
-        reg_status = "PASS"
-        reg_badge = "CLEAN RECORD"
-        reg_ev = "Zero active penalties, investigations, or show-cause notices from SEBI, MCA, or stock exchanges."
+        reg_ev = (
+            "Regulatory history was not independently verified. This is not a statement "
+            "that the company has no penalties or investigations."
+        )
 
     shield_items.append({
         "title": "Regulatory Track Record",
@@ -3425,10 +3607,18 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
     })
 
     passed_count = sum(1 for it in shield_items if it["status"] == "PASS")
-    shield_badge = f"{passed_count} / 6 CHECKS PASSED — ALL CLEAR" if passed_count == 6 else f"{passed_count} / 6 CHECKS PASSED"
-    shield_badge_bg = "rgba(5, 150, 105, 0.08)" if passed_count >= 5 else "rgba(217, 119, 6, 0.08)"
-    shield_badge_fg = "#059669" if passed_count >= 5 else "#D97706"
-    shield_badge_bdr = "rgba(5, 150, 105, 0.25)" if passed_count >= 5 else "rgba(217, 119, 6, 0.25)"
+    not_verified_count = sum(1 for it in shield_items if it["badge"] == "NOT VERIFIED")
+    total_shield = len(shield_items)
+    if passed_count == total_shield:
+        shield_badge = f"{passed_count} / {total_shield} CHECKS PASSED — ALL CLEAR"
+    elif not_verified_count:
+        shield_badge = f"{passed_count} / {total_shield} PASSED · {not_verified_count} NOT VERIFIED"
+    else:
+        shield_badge = f"{passed_count} / {total_shield} CHECKS PASSED"
+    all_clear = passed_count == total_shield
+    shield_badge_bg = "rgba(5, 150, 105, 0.08)" if all_clear else "rgba(217, 119, 6, 0.08)"
+    shield_badge_fg = "#059669" if all_clear else "#D97706"
+    shield_badge_bdr = "rgba(5, 150, 105, 0.25)" if all_clear else "rgba(217, 119, 6, 0.25)"
 
     cards_html_list = []
     for it in shield_items:
@@ -3446,17 +3636,17 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
             f'<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">'
             f'<div style="display: flex; align-items: center; gap: 8px;">'
             f'<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: {icon_bg}; color: {icon_fg}; border-radius: 50%; font-size: 12px; font-weight: 900;">{icon_str}</span>'
-            f'<span style="font-size: 13.5px; font-weight: 800; color: #0F172A;">{it["title"]}</span>'
+            f'<span style="font-size: 13.5px; font-weight: 800; color: #0F172A;">{html.escape(str(it["title"]))}</span>'
             f'</div>'
-            f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; white-space: nowrap; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{it["badge"]}</span>'
+            f'<span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_border}; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; white-space: nowrap; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{html.escape(str(it["badge"]))}</span>'
             f'</div>'
-            f'<div style="font-size: 12.5px; line-height: 1.5; color: #475569; margin-top: 4px;">{it["evidence"]}</div>'
+            f'<div style="font-size: 12.5px; line-height: 1.5; color: #475569; margin-top: 4px;">{html.escape(str(it["evidence"]))}</div>'
             f'</div>'
             f'</div>'
         )
     cards_html = "".join(cards_html_list)
 
-    html = (
+    shield_html = (
         f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">'
         f'<div>'
@@ -3473,7 +3663,7 @@ def render_forensic_fraud_shield_html(res, live_data, financial_data=None, foren
         f'</div>'
         f'</div>'
     )
-    return html
+    return shield_html
 
 def render_valuation_compass_html(res, live_data):
     live = live_data or {}
@@ -3494,11 +3684,9 @@ def render_valuation_compass_html(res, live_data):
     dcf_str = appendix_b.get("dcf_fair_value_estimate", "")
     dcf_low, dcf_high, dcf_mid = parse_dcf_estimate(dcf_str)
 
-    if not dcf_mid and cmp:
-        dcf_mid = round(cmp * 1.06, 0)
-        dcf_low = round(dcf_mid * 0.95, 0)
-        dcf_high = round(dcf_mid * 1.05, 0)
-
+    # No fair-value estimate from the model means no fair-value corridor.
+    # Deriving one from the current price would fabricate a "target" from the
+    # very number it is supposed to be compared against.
     if not cmp or not dcf_mid:
         return ""
 
@@ -3526,26 +3714,26 @@ def render_valuation_compass_html(res, live_data):
         mos_color = "#059669"
         mos_bg = "rgba(5, 150, 105, 0.08)"
         mos_bdr = "rgba(5, 150, 105, 0.25)"
-        mos_desc = f"Trading at discount to DCF Intrinsic Value (₹{dcf_mid:,.0f})"
+        mos_desc = f"Trading at a discount to the model fair-value estimate (₹{dcf_mid:,.0f})"
     else:
         mos_badge = f"{abs(mos_pct):.1f}% Valuation Premium"
         mos_color = "#DC2626"
         mos_bg = "rgba(220, 38, 38, 0.08)"
         mos_bdr = "rgba(220, 38, 38, 0.25)"
-        mos_desc = f"Trading above DCF Intrinsic Value (₹{dcf_mid:,.0f})"
+        mos_desc = f"Trading above the model fair-value estimate (₹{dcf_mid:,.0f})"
 
     # Asymmetry & Risk-Reward calculations
     downside_low_pct = ((cmp - low_52w) / cmp) * 100.0 if cmp and low_52w else 0.0
     upside_dcf_pct = ((dcf_mid - cmp) / cmp) * 100.0 if cmp and dcf_mid else 0.0
 
     if upside_dcf_pct >= 0:
-        upside_str = f"+{upside_dcf_pct:.1f}% to DCF"
+        upside_str = f"+{upside_dcf_pct:.1f}% to model fair value"
         upside_color = "#059669"
-        asymmetry_desc = "Favorable risk-reward with margin of safety"
+        asymmetry_desc = "Favorable risk-reward versus the model estimate"
     else:
-        upside_str = f"{upside_dcf_pct:.1f}% to DCF"
+        upside_str = f"{upside_dcf_pct:.1f}% to model fair value"
         upside_color = "#DC2626"
-        asymmetry_desc = "Trading above DCF estimate; downside risk to 52W Low"
+        asymmetry_desc = "Trading above the model estimate; downside risk to 52W Low"
 
     downside_str = f"-{abs(downside_low_pct):.1f}% to 52W L"
 
@@ -3576,7 +3764,7 @@ def render_valuation_compass_html(res, live_data):
         f'<span style="font-size: 20px;">🧭</span>'
         f'<span style="font-size: 14.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.8px;">Valuation Compass & Fair Value Corridor</span>'
         f'</div>'
-        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">Current market price relative to 52-week corridor and DCF intrinsic fair value</div>'
+        f'<div style="font-size: 12.5px; color: #64748B; margin-top: 3px;">Current market price relative to the 52-week corridor and a model-estimated fair value (not a computed DCF)</div>'
         f'</div>'
         f'<span style="background: {mos_bg}; color: {mos_color}; border: 1px solid {mos_bdr}; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; font-family: \'JetBrains Mono\', monospace; letter-spacing: 0.3px;">{mos_badge}</span>'
         f'</div>'
@@ -3591,7 +3779,7 @@ def render_valuation_compass_html(res, live_data):
         f'<div style="position: absolute; left: {pct_low:.1f}%; top: -26px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748B; font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">52W L: ₹{low_52w:,.1f}</div>'
         f'<div style="position: absolute; left: {pct_low:.1f}%; top: -2px; transform: translateX(-50%); width: 3px; height: 18px; background: #CBD5E1; border-radius: 2px; z-index: 4;"></div>'
         # 5. DCF Fair Value Target Label (below)
-        f'<div style="position: absolute; left: {to_pct(dcf_mid):.1f}%; top: 18px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; color: #059669; font-family: \'JetBrains Mono\', monospace; white-space: nowrap; z-index: 4;">▲ DCF Fair: ₹{dcf_mid:,.0f}</div>'
+        f'<div style="position: absolute; left: {to_pct(dcf_mid):.1f}%; top: 18px; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; color: #059669; font-family: \'JetBrains Mono\', monospace; white-space: nowrap; z-index: 4;">▲ Est. Fair: ₹{dcf_mid:,.0f}</div>'
         # 6. CMP Needle and Badge (positioned precisely at CMP)
         f'<div style="position: absolute; left: {pct_cmp:.1f}%; top: -34px; transform: translateX(-50%); z-index: 5; text-align: center;">'
         f'<span style="background: #2563EB; color: #FFFFFF; font-size: 11.5px; font-weight: 900; padding: 2px 8px; border-radius: 6px; box-shadow: 0 1px 4px rgba(37, 99, 235, 0.4); font-family: \'JetBrains Mono\', monospace; white-space: nowrap;">CMP ₹{cmp:,.1f}</span>'
@@ -3604,7 +3792,7 @@ def render_valuation_compass_html(res, live_data):
         # Bottom Metric Cards
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px;">'
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">'
-        f'<div style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">FAIR VALUE (DCF)</div>'
+        f'<div style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">FAIR VALUE (MODEL ESTIMATE)</div>'
         f'<div style="font-size: 16.5px; font-weight: 800; color: #059669; font-family: \'JetBrains Mono\', monospace; margin-top: 4px;">{dcf_card_val}</div>'
         f'<div style="font-size: 12px; color: #64748B; margin-top: 2px;">{dcf_card_sub}</div>'
         f'</div>'
@@ -3624,7 +3812,7 @@ def render_valuation_compass_html(res, live_data):
         # Micro-Legend for Valuation Compass
         f'<div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px dashed #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B;">'
         f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: #2563EB; border-radius: 2px;"></span> CMP Active Price Pin</span>'
-        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: rgba(5, 150, 105, 0.15); border: 1.5px solid #059669; border-radius: 2px;"></span> DCF Fair Value Zone</span>'
+        f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: rgba(5, 150, 105, 0.15); border: 1.5px solid #059669; border-radius: 2px;"></span> Model Fair Value Zone</span>'
         f'<span style="display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 11px; height: 11px; background: #E2E8F0; border: 1px solid #CBD5E1; border-radius: 2px;"></span> 52-Week Range Bounds</span>'
         f'</div>'
         f'</div>'
@@ -3784,177 +3972,213 @@ if run_btn:
         st.error("⚠️ Please enter a valid stock ticker or symbol (e.g. RELIANCE, TCS, INFY) before launching an audit.")
         st.stop()
 
-    # Determine execution profile and expected latency
-    if demo_mode:
-        mode_pill = "🧪 Synthetic Demo"
-        est_label = "< 1s"
-        est_sec_typical = 1
-    elif doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
-        mode_pill = "⚡ BSE Annual Report"
-        est_label = "~45–75s"
-        est_sec_typical = 60
-    elif doc_type == "📂 Upload custom PDF" and uploaded_file:
-        mode_pill = "📂 Custom PDF"
-        est_label = "~30–50s"
-        est_sec_typical = 40
-    else:
-        mode_pill = "🌐 Web Research"
-        est_label = "~12–20s"
-        est_sec_typical = 15
+    # Rate Limiting & Spend Budget Enforcement
+    if "kusha_runs" not in st.session_state:
+        st.session_state["kusha_runs"] = 0
+    current_runs = st.session_state["kusha_runs"]
+    if current_runs >= MAX_RUNS_PER_SESSION:
+        st.warning(f"Session analysis budget reached ({current_runs} of {MAX_RUNS_PER_SESSION}). Reload to start a new session.")
+        st.stop()
 
-    t_start = time.time()
-    def fmt_elapsed(t0):
-        el = max(0.0, time.time() - t0)
-        m = int(el // 60)
-        s = el % 60
-        return f"{m:02d}:{s:04.1f}"
+    last_run_time = st.session_state.get("kusha_last_run_time", 0.0)
+    now_ts = time.time()
+    if (now_ts - last_run_time) < 10.0 and last_run_time > 0.0:
+        st.warning("Please wait — an analysis just completed.")
+        st.stop()
 
-    # Render client-side live stopwatch & estimated progress component
-    timer_placeholder = st.empty()
-    with timer_placeholder:
-        st.iframe(render_live_analysis_timer_html(
-            company_name=clean_target_name,
-            ticker=clean_target_ticker,
-            mode_label=mode_pill,
-            est_label=est_label,
-            est_sec_typical=est_sec_typical
-        ), height=130)
+    if st.session_state.get("kusha_running", False):
+        st.stop()
 
-    # Check if a pre-computed evaluation exists in the local development cache
-    cached_eval_data = None
-    if not demo_mode and use_eval_cache and not force_live_api:
-        cached_eval_data = load_cached_evaluation(
-            company_name=clean_target_name,
-            ticker=clean_target_ticker,
-            model=selected_gemini_model,
-            current_pipeline_version=ANALYSIS_PIPELINE_VERSION
-        )
+    st.session_state["kusha_running"] = True
+    try:
+        # Determine execution profile and expected latency
+        if demo_mode:
+            mode_pill = "🧪 Synthetic Demo"
+            est_label = "< 1s"
+            est_sec_typical = 1
+        elif doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
+            mode_pill = "⚡ BSE Annual Report"
+            est_label = "~45–75s"
+            est_sec_typical = 60
+        elif doc_type == "📂 Upload custom PDF" and uploaded_file:
+            mode_pill = "📂 Custom PDF"
+            est_label = "~30–50s"
+            est_sec_typical = 40
+        else:
+            mode_pill = "🌐 Web Research"
+            est_label = "~12–20s"
+            est_sec_typical = 15
 
-    if cached_eval_data is not None:
-        result, cached_at_time = cached_eval_data
-        result["is_cached_result"] = True
-        result["cached_at_time"] = cached_at_time
-        result["execution_time_seconds"] = 0.05
-        result["estimated_time_label"] = "Instant (Local Cache)"
-        st.session_state["idex_result"] = result
+        t_start = time.time()
+        def fmt_elapsed(t0):
+            el = max(0.0, time.time() - t0)
+            m = int(el // 60)
+            s = el % 60
+            return f"{m:02d}:{s:04.1f}"
 
+        # Render client-side live stopwatch & estimated progress component
+        timer_placeholder = st.empty()
         with timer_placeholder:
             st.iframe(render_live_analysis_timer_html(
                 company_name=clean_target_name,
                 ticker=clean_target_ticker,
-                mode_label="💾 Local Cache Replay",
-                est_label="< 0.1s",
-                est_sec_typical=1,
-                completed_sec=0.05
+                mode_label=mode_pill,
+                est_label=est_label,
+                est_sec_typical=est_sec_typical
             ), height=130)
 
-        with st.status(f"⚡ Instant Replay from Local Cache: {clean_target_name} (0 API Calls Used)", expanded=False, state="complete") as status:
-            st.write(f"💾 Loaded pre-computed institutional brief from disk ({cached_at_time}).")
-            st.write(f"🔒 Mathematical Determinism & PIO Guardrails Verified.")
-            st.write(f"⚡ Zero API quota consumed (saved 2 live Gemini requests).")
-    else:
-        with st.status(f"Evaluating {clean_target_name} across 8 Fundamental & Forensic Pillars (Est: {est_label})...", expanded=True) as status:
-            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Ingesting financial statement tables & market feeds...")
-            time.sleep(0.15)
-            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating statutory disclosures & related-party schedules...")
-            time.sleep(0.15)
-            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating Sector Receivable Health (DSO, Aging, Provision Coverage)...")
-            time.sleep(0.15)
-            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Enforcing deterministic Python scoring, PIO guardrails & penalty/bonus caps...")
-            
-            try:
-                sentinel_rep = st.session_state.get("sentinel_report", None)
-                forensic_rep = st.session_state.get("forensic_report", None)
-                if demo_mode:
-                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Generating synthetic demonstration vector...")
-                    result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep, forensic_report=forensic_rep)
-                else:
-                    pdf_bytes = None
-                    filing_meta = None
-                    if doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
-                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Downloading BSE-hosted filing PDF ({selected_filing_metadata.get('title')})...")
-                        pdf_bytes = download_annual_report_bytes(selected_filing_metadata["url"])
-                        filing_meta = selected_filing_metadata
-                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Retrieved BSE statutory PDF ({len(pdf_bytes)/(1024*1024):.1f} MB).")
-                    elif doc_type == "📂 Upload custom PDF" and uploaded_file:
-                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Ingesting user uploaded document ({uploaded_file.name})...")
-                        raw_bytes = uploaded_file.read()
-                        max_upload_size = 50 * 1024 * 1024  # 50 MB
-                        if len(raw_bytes) > max_upload_size:
-                            raise ValueError(f"Uploaded file exceeds maximum limit of 50MB (received {len(raw_bytes)/(1024*1024):.1f}MB).")
-                        if not raw_bytes.startswith(b"%PDF-"):
-                            raise ValueError("Uploaded document is not a valid PDF file (missing '%PDF-' header).")
-                        pdf_bytes = raw_bytes
-                        filing_meta = selected_filing_metadata
-                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Uploaded PDF validated ({len(pdf_bytes)/(1024*1024):.1f} MB).")
+        # Check if a pre-computed evaluation exists in the local development cache (Load site)
+        cached_eval_data = None
+        if not demo_mode and use_eval_cache and not force_live_api:
+            cached_eval_data = load_cached_evaluation(
+                company_name=clean_target_name,
+                ticker=clean_target_ticker,
+                model=selected_gemini_model,
+                current_pipeline_version=ANALYSIS_PIPELINE_VERSION,
+                document_hash=document_hash,
+                sector=target_sector,
+                skip_web_search=skip_web_search,
+                analysis_mode=mode_pill,
+            )
 
-                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 🧠 Launching Gemini {selected_gemini_model} multimodal audit...")
-                    result = analyze_document_with_gemini(
-                        company_name=target_company_name,
-                        sector=target_sector,
-                        api_key=active_api_key,
-                        pdf_bytes=pdf_bytes,
-                        live_data=live_data,
-                        custom_prompt=custom_prompt,
-                        sentinel_report=sentinel_rep,
-                        selected_model=selected_gemini_model,
-                        filing_metadata=filing_meta,
-                        forensic_report=forensic_rep,
-                        skip_web_search=skip_web_search
-                    )
-                total_elapsed = time.time() - t_start
-                result["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
-                result["execution_time_seconds"] = round(total_elapsed, 1)
-                result["estimated_time_seconds"] = est_sec_typical
-                result["estimated_time_label"] = est_label
+        if cached_eval_data is not None:
+            result, cached_at_time = cached_eval_data
+            result["is_cached_result"] = True
+            result["cached_at_time"] = cached_at_time
+            result["execution_time_seconds"] = 0.05
+            result["estimated_time_label"] = "Instant (Local Cache)"
+            st.session_state["idex_result"] = result
+            st.session_state["kusha_runs"] = st.session_state.get("kusha_runs", 0) + 1
+            st.session_state["kusha_last_run_time"] = time.time()
+            logger.info("Analysis completed | Model: %s (Cache Replay) | Elapsed: 0.05s", selected_gemini_model)
 
-                # Save to local cache for instant zero-cost replays
-                if not demo_mode and use_eval_cache:
-                    save_cached_evaluation(
-                        company_name=clean_target_name,
-                        ticker=clean_target_ticker,
-                        model=selected_gemini_model,
-                        result=result,
-                        pipeline_version=ANALYSIS_PIPELINE_VERSION
-                    )
+            with timer_placeholder:
+                st.iframe(render_live_analysis_timer_html(
+                    company_name=clean_target_name,
+                    ticker=clean_target_ticker,
+                    mode_label="💾 Local Cache Replay",
+                    est_label="< 0.1s",
+                    est_sec_typical=1,
+                    completed_sec=0.05
+                ), height=130)
 
-                st.session_state["idex_result"] = result
+            with st.status(f"⚡ Instant Replay from Local Cache: {clean_target_name} (0 API Calls Used)", expanded=False, state="complete") as status:
+                st.write(f"💾 Loaded pre-computed institutional brief from disk ({cached_at_time}).")
+                st.write(f"🔒 Mathematical Determinism & PIO Guardrails Verified.")
+                st.write(f"⚡ Zero API quota consumed (saved 2 live Gemini requests).")
+        else:
+            with st.status(f"Evaluating {clean_target_name} across 8 Fundamental & Forensic Pillars (Est: {est_label})...", expanded=True) as status:
+                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Ingesting financial statement tables & market feeds...")
+                time.sleep(0.15)
+                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating statutory disclosures & related-party schedules...")
+                time.sleep(0.15)
+                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Evaluating Sector Receivable Health (DSO, Aging, Provision Coverage)...")
+                time.sleep(0.15)
+                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Enforcing deterministic Python scoring, PIO guardrails & penalty/bonus caps...")
                 
-                with timer_placeholder:
-                    st.iframe(render_live_analysis_timer_html(
-                        company_name=clean_target_name,
-                        ticker=clean_target_ticker,
-                        mode_label=mode_pill,
-                        est_label=est_label,
-                        est_sec_typical=est_sec_typical,
-                        completed_sec=total_elapsed
-                    ), height=130)
-                
-                st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` ✅ Scoring complete in {total_elapsed:.1f}s (Est: {est_label}).")
-                status.update(label=f"Evaluation Complete for {clean_target_name} in {total_elapsed:.1f}s (Estimated: {est_label})!", state="complete", expanded=False)
-            except Exception as e:
-                total_elapsed = time.time() - t_start
-                with timer_placeholder:
-                    st.iframe(render_live_analysis_timer_html(
-                        company_name=clean_target_name,
-                        ticker=clean_target_ticker,
-                        mode_label=mode_pill,
-                        est_label=est_label,
-                        est_sec_typical=est_sec_typical,
-                        completed_sec=total_elapsed,
-                        is_error=True
-                    ), height=130)
-                status.update(label=f"Evaluation Failed after {total_elapsed:.1f}s", state="error")
-                raw_err = str(e)
-                # Redact raw API key patterns to prevent client-side credential exposure
-                clean_err = raw_err
-                if active_api_key and len(active_api_key) > 8:
-                    clean_err = clean_err.replace(active_api_key, "AIzaSy***[REDACTED]***")
-                clean_err = re.sub(r'AIza[0-9A-Za-z-_]{35}', 'AIzaSy***[REDACTED]***', clean_err)
-                clean_err = re.sub(r'key=[0-9A-Za-z-_]{20,}', 'key=***[REDACTED]***', clean_err)
-                st.error(f"Analysis Error: {clean_err}")
-                with st.expander("Technical Details"):
-                    st.write(f"Diagnostic detail: {clean_err}")
+                try:
+                    sentinel_rep = st.session_state.get("sentinel_report", None)
+                    forensic_rep = st.session_state.get("forensic_report", None)
+                    if demo_mode:
+                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` Generating synthetic demonstration vector...")
+                        result = get_demo_analysis(target_company_name, target_sector, live_data, sentinel_report=sentinel_rep, forensic_report=forensic_rep)
+                    else:
+                        pdf_bytes = None
+                        filing_meta = None
+                        if doc_type == "⚡ Auto-fetch BSE filing" and selected_filing_metadata:
+                            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Downloading BSE-hosted filing PDF ({selected_filing_metadata.get('title')})...")
+                            pdf_bytes = download_annual_report_bytes(selected_filing_metadata["url"])
+                            filing_meta = selected_filing_metadata
+                            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Retrieved BSE statutory PDF ({len(pdf_bytes)/(1024*1024):.1f} MB).")
+                        elif doc_type == "📂 Upload custom PDF" and uploaded_file:
+                            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📥 Ingesting user uploaded document ({uploaded_file.name})...")
+                            raw_bytes = uploaded_file.getvalue()
+                            max_upload_size = MAX_PDF_MB * 1024 * 1024
+                            if len(raw_bytes) > max_upload_size:
+                                raise ValueError(f"Uploaded file exceeds maximum limit of {MAX_PDF_MB}MB (received {len(raw_bytes)/(1024*1024):.1f}MB).")
+                            if not raw_bytes.startswith(b"%PDF-"):
+                                raise ValueError("Not a valid PDF (missing '%PDF-' header).")
+                            pdf_bytes = raw_bytes
+                            filing_meta = selected_filing_metadata
+                            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 📄 Uploaded PDF validated ({len(pdf_bytes)/(1024*1024):.1f} MB).")
+
+                        st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 🧠 Launching Gemini {selected_gemini_model} multimodal audit...")
+                        result = analyze_document_with_gemini(
+                            company_name=target_company_name,
+                            sector=target_sector,
+                            api_key=active_api_key,
+                            pdf_bytes=pdf_bytes,
+                            live_data=live_data,
+                            custom_prompt=custom_prompt,
+                            sentinel_report=sentinel_rep,
+                            selected_model=selected_gemini_model,
+                            filing_metadata=filing_meta,
+                            forensic_report=forensic_rep,
+                            skip_web_search=skip_web_search
+                        )
+                    total_elapsed = time.time() - t_start
+                    result["analysis_pipeline_version"] = ANALYSIS_PIPELINE_VERSION
+                    result["execution_time_seconds"] = round(total_elapsed, 1)
+                    result["estimated_time_seconds"] = est_sec_typical
+                    result["estimated_time_label"] = est_label
+
+                    # Save to local cache for instant zero-cost replays (Save site)
+                    if not demo_mode and use_eval_cache:
+                        result["document_hash"] = document_hash
+                        save_cached_evaluation(
+                            company_name=clean_target_name,
+                            ticker=clean_target_ticker,
+                            model=selected_gemini_model,
+                            pipeline_version=ANALYSIS_PIPELINE_VERSION,
+                            result=result,
+                            document_hash=document_hash,
+                            sector=target_sector,
+                            skip_web_search=skip_web_search,
+                            analysis_mode=mode_pill,
+                        )
+
+                    st.session_state["idex_result"] = result
+                    st.session_state["kusha_runs"] = st.session_state.get("kusha_runs", 0) + 1
+                    st.session_state["kusha_last_run_time"] = time.time()
+                    logger.info("Analysis completed | Model: %s | Elapsed: %.2fs", selected_gemini_model, total_elapsed)
+                    
+                    with timer_placeholder:
+                        st.iframe(render_live_analysis_timer_html(
+                            company_name=clean_target_name,
+                            ticker=clean_target_ticker,
+                            mode_label=mode_pill,
+                            est_label=est_label,
+                            est_sec_typical=est_sec_typical,
+                            completed_sec=total_elapsed
+                        ), height=130)
+                    
+                    st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` ✅ Scoring complete in {total_elapsed:.1f}s (Est: {est_label}).")
+                    status.update(label=f"Evaluation Complete for {clean_target_name} in {total_elapsed:.1f}s (Estimated: {est_label})!", state="complete", expanded=False)
+                except Exception as e:
+                    total_elapsed = time.time() - t_start
+                    with timer_placeholder:
+                        st.iframe(render_live_analysis_timer_html(
+                            company_name=clean_target_name,
+                            ticker=clean_target_ticker,
+                            mode_label=mode_pill,
+                            est_label=est_label,
+                            est_sec_typical=est_sec_typical,
+                            completed_sec=total_elapsed,
+                            is_error=True
+                        ), height=130)
+                    status.update(label=f"Evaluation Failed after {total_elapsed:.1f}s", state="error")
+                    raw_err = str(e)
+                    # Redact raw API key patterns to prevent client-side credential exposure
+                    clean_err = raw_err
+                    if active_api_key and len(active_api_key) > 8:
+                        clean_err = clean_err.replace(active_api_key, "AIzaSy***[REDACTED]***")
+                    clean_err = re.sub(r'AIza[0-9A-Za-z-_]{35}', 'AIzaSy***[REDACTED]***', clean_err)
+                    clean_err = re.sub(r'key=[0-9A-Za-z-_]{20,}', 'key=***[REDACTED]***', clean_err)
+                    st.error(f"Analysis Error: {clean_err}")
+                    with st.expander("Technical Details"):
+                        st.write(f"Diagnostic detail: {clean_err}")
+    finally:
+        st.session_state["kusha_running"] = False
 
 # --- RESULTS DASHBOARD ---
 if "idex_result" in st.session_state:
@@ -4057,6 +4281,10 @@ if "idex_result" in st.session_state:
             st.caption(f"Evidence status: {source_summary} · {gap_summary}. {class_summary}. Sources are retrieved, not independently verified; open the panel for queries, dates, and citations.")
             st.caption("Link counts do not confirm complete annual-report, auditor, shareholding/pledge, regulatory, or peer coverage; review the evidence gaps and citations per claim.")
 
+    degraded = res.get("data_quality", {}).get("degraded_sources", [])
+    if degraded:
+        st.warning("⚠️ **Data Quality Notice**: " + " • ".join(esc(d) for d in degraded))
+
     if res.get("analysis_status") == "insufficient_evidence":
         st.error("Insufficient evidence: " + "; ".join(res.get("evidence_gaps", [])))
 
@@ -4123,7 +4351,7 @@ if "idex_result" in st.session_state:
         score_badge_bg = "#FEF2F2"
         score_badge_bdr = "#FECACA"
 
-    determ_label = "SYNTHETIC TEST VECTOR COMPUTATION" if is_demo else "MATHEMATICAL DETERMINISM VERIFIED ✔"
+    determ_label = "SYNTHETIC TEST VECTOR COMPUTATION" if is_demo else "DETERMINISTIC POST-PROCESSING APPLIED ✔"
 
     kpi_cards_html = (
         f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);">'
@@ -4238,7 +4466,7 @@ if "idex_result" in st.session_state:
 
     combined = (str(final_call_str) + " " + str(verdict_str) + " " + str(guardrail_tag)).upper()
 
-    if pio_trig or "RED" in guardrail_tag or final_score < 55.0 or any(k in combined for k in ["AVOID", "PRUDENCE", "SELL", "EXIT", "REDUCE", "UNINVESTABLE", "HIGH RISK"]):
+    if pio_trig or analyzer.guardrail_level(guardrail_tag) == analyzer.GUARDRAIL_RED or final_score < 55.0 or any(k in combined for k in ["AVOID", "PRUDENCE", "SELL", "EXIT", "REDUCE", "UNINVESTABLE", "HIGH RISK"]):
         stance = "AVOID"
     elif final_score >= 70.0 and any(k in combined for k in ["BUY", "ACCUMULATE", "OVERWEIGHT", "LONG", "COMPOUNDER"]):
         stance = "BUY"
@@ -4356,24 +4584,25 @@ if "idex_result" in st.session_state:
 
         # Mandatory Guardrail Tag & Promoter Integrity Verdict
         tag = res.get("guardrail_tag", "GOV-CLEAN 🟢")
+        tag_esc = html.escape(str(tag))
         evidence_list = res.get("guardrail_evidence", [])
-        ev_html_items = "".join([f'<li style="margin-bottom: 4px;">{e}</li>' for e in evidence_list])
-        if "GOV-RED" in tag or res.get("pio_triggered", False):
+        ev_html_items = "".join([f'<li style="margin-bottom: 4px;">{html.escape(str(e))}</li>' for e in evidence_list])
+        if analyzer.guardrail_level(tag) == analyzer.GUARDRAIL_RED or res.get("pio_triggered", False):
             st.html(
                 f'<div style="background: #FEF2F2; border: 1.5px solid #FECACA; border-left: 5px solid #DC2626; border-radius: 12px; padding: 18px 22px; margin-bottom: 16px;">'
                 f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-                f'<span style="font-weight: 800; font-size: 1.1rem; color: #DC2626;">🚨 MANDATORY GUARDRAIL TAG: {tag} (PIO HARD TRIGGER FIRED)</span>'
+                f'<span style="font-weight: 800; font-size: 1.1rem; color: #DC2626;">🚨 MANDATORY GUARDRAIL TAG: {tag_esc} (PIO HARD TRIGGER FIRED)</span>'
                 f'<span style="background: #FEE2E2; color: #DC2626; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #FCA5A5; font-family: monospace;">CRITICAL FORENSIC RISK</span>'
                 f'</div>'
-                f'<p style="margin: 0 0 10px 0; font-weight: 600; color: #DC2626;">{res.get("pio_reason", "Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone.")}</p>'
+                f'<p style="margin: 0 0 10px 0; font-weight: 600; color: #DC2626;">{html.escape(str(res.get("pio_reason") or "Promoter Integrity Override triggered. Governance pillar capped at ≤6.0/20. Bonuses blocked. Forced into Red Zone."))}</p>'
                 f'<ul style="margin: 0; padding-left: 20px; color: #334155;">{ev_html_items}</ul>'
                 f'</div>'
             )
-        elif "PROM-ALERT" in tag:
+        elif analyzer.guardrail_level(tag) == analyzer.GUARDRAIL_ALERT:
             st.html(
                 f'<div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-left: 5px solid #D97706; border-radius: 12px; padding: 18px 22px; margin-bottom: 16px;">'
                 f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-                f'<span style="font-weight: 800; font-size: 1.1rem; color: #D97706;">⚠️ MANDATORY GUARDRAIL TAG: {tag}</span>'
+                f'<span style="font-weight: 800; font-size: 1.1rem; color: #D97706;">⚠️ MANDATORY GUARDRAIL TAG: {tag_esc}</span>'
                 f'<span style="background: #FEF3C7; color: #D97706; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #FCD34D; font-family: monospace;">PROMOTER ALERT</span>'
                 f'</div>'
                 f'<p style="margin: 0 0 10px 0; color: #D97706; font-weight: 600;">Elevated promoter pledging or dilution observed under PPRM rules.</p>'
@@ -4384,7 +4613,7 @@ if "idex_result" in st.session_state:
             st.html(
                 f'<div style="background: #ECFDF5; border: 1.5px solid #A7F3D0; border-left: 5px solid #059669; border-radius: 12px; padding: 18px 22px; margin-bottom: 16px;">'
                 f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
-                f'<span style="font-weight: 800; font-size: 1.1rem; color: #059669;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag}</span>'
+                f'<span style="font-weight: 800; font-size: 1.1rem; color: #059669;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag_esc}</span>'
                 f'<span style="background: #D1FAE5; color: #059669; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #6EE7B7; font-family: monospace;">INSTITUTIONAL GRADE</span>'
                 f'</div>'
                 f'<p style="margin: 0 0 8px 0; color: #059669; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm-length related-party disclosures.</p>'
@@ -4473,7 +4702,7 @@ if "idex_result" in st.session_state:
         with st.expander("📄 Appendix A — Load-Bearing Forensic Citations (Auditor Excerpts)", expanded=False):
             ev_items = "".join([
                 f'<div style="font-size: 13px; line-height: 1.6; color: #334155; margin-bottom: 10px; padding: 12px 16px; background: #F8FAFC; border-left: 3.5px solid #059669; border-radius: 0 8px 8px 0; border: 1.5px solid #E2E8F0;">'
-                f'<span style="color: #059669; font-weight: 800; margin-right: 6px;">●</span> {e}'
+                f'<span style="color: #059669; font-weight: 800; margin-right: 6px;">●</span> {esc(e)}'
                 f'</div>'
                 for e in res.get("appendix_a_forensic_evidence", [])
             ])
@@ -4582,7 +4811,7 @@ if "idex_result" in st.session_state:
                     if not found_colors:
                         found_colors = ("#F8FAFC", "#475569", "#E2E8F0")
                     bg, fg, bdr = found_colors
-                    tag_pills.append(f'<span style="background: {bg}; color: {fg}; border: 1px solid {bdr}; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; display: inline-block; margin-right: 6px; margin-bottom: 6px; font-family: monospace;">{t}</span>')
+                    tag_pills.append(f'<span style="background: {bg}; color: {fg}; border: 1px solid {bdr}; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; display: inline-block; margin-right: 6px; margin-bottom: 6px; font-family: monospace;">{esc(t)}</span>')
                 st.html(f'<div style="display: flex; flex-wrap: wrap; margin-top: 6px;">{"".join(tag_pills)}</div>')
 
         with split_col2:
@@ -4602,22 +4831,22 @@ if "idex_result" in st.session_state:
                     f'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">'
                     f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px 16px;">'
                     f'<div style="font-size: 10.5px; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.5px;">DSO (Days Sales)</div>'
-                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{dso_display}</div>'
-                    f'<div style="font-size: 11px; color: #64748B;">Sector Benchmark: {ideal_dso}</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{esc(dso_display)}</div>'
+                    f'<div style="font-size: 11px; color: #64748B;">Sector Benchmark: {esc(ideal_dso)}</div>'
                     f'</div>'
                     f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px 16px;">'
                     f'<div style="font-size: 10.5px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.5px;">Receivables / Sales</div>'
-                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{rec_sales}</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{esc(rec_sales)}</div>'
                     f'<div style="font-size: 11px; color: #64748B;">Balance Sheet Weight</div>'
                     f'</div>'
                     f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px 16px;">'
                     f'<div style="font-size: 10.5px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px;">>90 Days Overdue</div>'
-                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{over_90}</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{esc(over_90)}</div>'
                     f'<div style="font-size: 11px; color: #64748B;">Delinquency Risk</div>'
                     f'</div>'
                     f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 12px 16px;">'
                     f'<div style="font-size: 10.5px; font-weight: 700; color: #7C3AED; text-transform: uppercase; letter-spacing: 0.5px;">Provision Coverage</div>'
-                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{prov_cov}</div>'
+                    f'<div style="font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace; margin: 4px 0;">{esc(prov_cov)}</div>'
                     f'<div style="font-size: 11px; color: #64748B;">ECL Buffer</div>'
                     f'</div>'
                     f'</div>'
@@ -4625,7 +4854,7 @@ if "idex_result" in st.session_state:
                     f'<span style="font-size: 18px;">🛡️</span>'
                     f'<div>'
                     f'<div style="font-size: 10.5px; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.5px;">Forensic Assessment</div>'
-                    f'<div style="font-size: 13px; font-weight: 700; color: #0F172A;">{verdict_text}</div>'
+                    f'<div style="font-size: 13px; font-weight: 700; color: #0F172A;">{esc(verdict_text)}</div>'
                     f'</div>'
                     f'</div>'
                 )
@@ -4682,19 +4911,19 @@ if "idex_result" in st.session_state:
 
             rec_html = ""
             if "receivable_subscore" in p:
-                rec_html = f'<div style="margin-top: 8px; background: #ECFDF5; border-left: 3px solid #059669; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #059669; border-radius: 0 4px 4px 0;">⚡ Sector Receivable Health Subscore: <strong>{p["receivable_subscore"]}</strong></div>'
+                rec_html = f'<div style="margin-top: 8px; background: #ECFDF5; border-left: 3px solid #059669; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #059669; border-radius: 0 4px 4px 0;">⚡ Sector Receivable Health Subscore: <strong>{html.escape(str(p["receivable_subscore"]))}</strong></div>'
 
             pillar_citations = p.get("citations", [])
             c_links = []
             if pillar_citations:
                 for c in pillar_citations:
-                    u = c.get("url", "")
-                    if str(u).startswith(("https://", "http://")):
+                    u = safe_url(c.get("url", ""))
+                    if u:
                         raw_title = c.get("title") or c.get("source_id") or "Source"
                         clean_t = str(raw_title).replace("https://", "").replace("http://", "").rstrip("/")
                         if len(clean_t) > 35:
                             clean_t = clean_t[:32] + "…"
-                        c_links.append(f'<a href="{html.escape(u, quote=True)}" target="_blank" rel="noopener noreferrer" style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 11.5px;">{html.escape(clean_t)} ↗</a>')
+                        c_links.append(f'<a href="{esc(u)}" target="_blank" rel="noopener noreferrer" style="color: #2563EB; font-weight: 700; text-decoration: underline; font-size: 11.5px;">{esc(clean_t)} ↗</a>')
 
             if c_links:
                 citation_html = f'<div style="font-size:11.5px; margin-top:6px; color:#64748B;">🔗 <strong>Sources:</strong> {" &bull; ".join(c_links)}</div>'
@@ -4764,10 +4993,10 @@ if "idex_result" in st.session_state:
                         pen_html.append(
                             f'<div style="background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #DC2626; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px;">'
                             f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">'
-                            f'<span style="font-size: 13.5px; font-weight: 800; color: #DC2626;">{pen.get("penalty_name")}</span>'
+                            f'<span style="font-size: 13.5px; font-weight: 800; color: #DC2626;">{esc(pen.get("penalty_name"))}</span>'
                             f'<span style="background: #DC2626; color: #FFFFFF; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 9999px; font-family: monospace;">-{pts_val:.1f} pts</span>'
                             f'</div>'
-                            f'<div style="font-size: 12.5px; color: #475569; line-height: 1.5;">{pen.get("reason")}</div>'
+                            f'<div style="font-size: 12.5px; color: #475569; line-height: 1.5;">{esc(pen.get("reason"))}</div>'
                             f'</div>'
                         )
                     st.html("".join(pen_html))
@@ -4809,10 +5038,11 @@ if "idex_result" in st.session_state:
                     f'</div>'
                 )
 
-        # Valuation Compass & DCF Intrinsic Value Corridors
+        # Valuation Compass & model-estimated fair-value corridor
         compass_html = render_valuation_compass_html(res, live_data)
         if compass_html:
-            st.markdown("##### 🧭 Valuation Compass & DCF Intrinsic Value Corridors")
+            st.markdown("##### 🧭 Valuation Compass & Model Fair-Value Corridor")
+            st.caption("The fair-value band is a Gemini-generated estimate, not a computed discounted-cash-flow model. Treat it as an opinion, not a valuation.")
             st.html(compass_html)
 
         # Appendix B — Forensic Calculations & Stress Tests
@@ -4822,8 +5052,8 @@ if "idex_result" in st.session_state:
             for k, v in calcs.items():
                 calc_cards.append(
                     f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">'
-                    f'<div style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">{k.replace("_", " ").title()}</div>'
-                    f'<div style="font-size: 13.5px; font-weight: 700; color: #0F172A; margin-top: 6px; line-height: 1.45; font-family: monospace;">{v}</div>'
+                    f'<div style="font-size: 10.5px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">{html.escape(str(k).replace("_", " ").title())}</div>'
+                    f'<div style="font-size: 13.5px; font-weight: 700; color: #0F172A; margin-top: 6px; line-height: 1.45; font-family: monospace;">{html.escape(str(v))}</div>'
                     f'</div>'
                 )
             if calc_cards:
@@ -4844,11 +5074,11 @@ if "idex_result" in st.session_state:
             st.markdown("##### 🔍 Data Consistency Sentinel Audit Certificate")
             st.html(
                 f'<div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-left: 5px solid #059669; border-radius: 8px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 18px;">'
-                f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15px;">🔍 {sentinel_audit.get("agent_name", "Data Consistency Engine")}</span>'
-                f'<div style="font-size: 13px; color: #475569; margin-top: 3px;">{sentinel_audit.get("verdict_desc", "")}</div>'
+                f'<div><span style="font-weight: 800; color: #0F172A; font-size: 15px;">🔍 {esc(sentinel_audit.get("agent_name", "Data Consistency Engine"))}</span>'
+                f'<div style="font-size: 13px; color: #475569; margin-top: 3px;">{esc(sentinel_audit.get("verdict_desc", ""))}</div>'
                 f'<div style="font-size: 11px; color: #64748B; margin-top: 5px;">Score: <strong>{s_score_text}</strong> • Verified Checks: <strong>{sentinel_audit.get("passed_count", 0)}/{sentinel_audit.get("total_count", 0)}</strong></div></div>'
-                f'<div style="text-align: right;"><span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px; font-family: monospace;">{sentinel_audit.get("status", "EVALUATED")}</span>'
-                f'<div style="font-size: 11px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: monospace;">Run ID: {s_run_id}</div></div>'
+                f'<div style="text-align: right;"><span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 4px 11px; border-radius: 9999px; font-family: monospace;">{esc(sentinel_audit.get("status", "EVALUATED"))}</span>'
+                f'<div style="font-size: 11px; font-weight: 700; color: #64748B; margin-top: 5px; font-family: monospace;">Run ID: {esc(s_run_id)}</div></div>'
                 f'</div>'
             )
 
@@ -4860,10 +5090,10 @@ if "idex_result" in st.session_state:
             p_rows.append(
                 f'<tr style="background: #ECFDF5; border-bottom: 1.5px solid #A7F3D0;">'
                 f'<td style="padding: 12px 16px; font-weight: 900; color: #059669;">'
-                f'{target_company_name} <span style="background: #059669; color: #FFFFFF; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 4px; margin-left: 6px; font-family: monospace;">EVALUATED</span>'
+                f'{esc(target_company_name)} <span style="background: #059669; color: #FFFFFF; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 4px; margin-left: 6px; font-family: monospace;">EVALUATED</span>'
                 f'</td>'
                 f'<td style="padding: 12px 16px; text-align: center;"><span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 6px; font-weight: 900; font-family: monospace; font-size: 14px;">{final_score:.1f} / 100</span></td>'
-                f'<td style="padding: 12px 16px;"><span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 11.5px; font-family: monospace;">Active Target ({verdict})</span></td>'
+                f'<td style="padding: 12px 16px;"><span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 11.5px; font-family: monospace;">Active Target ({esc(verdict)})</span></td>'
                 f'</tr>'
             )
             for p in peers:
@@ -4872,9 +5102,9 @@ if "idex_result" in st.session_state:
                 p_pos = p.get("position", "Peer Competitor")
                 p_rows.append(
                     f'<tr style="background: #FFFFFF; border-bottom: 1px solid #F1F5F9;">'
-                    f'<td style="padding: 11px 16px; font-weight: 700; color: #0F172A;">{p_name}</td>'
-                    f'<td style="padding: 11px 16px; text-align: center;"><span style="background: #F8FAFC; color: #2563EB; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-family: monospace; font-size: 13px;">{p_sc} / 100</span></td>'
-                    f'<td style="padding: 11px 16px;"><span style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 11.5px; font-family: monospace;">{p_pos}</span></td>'
+                    f'<td style="padding: 11px 16px; font-weight: 700; color: #0F172A;">{esc(p_name)}</td>'
+                    f'<td style="padding: 11px 16px; text-align: center;"><span style="background: #F8FAFC; color: #2563EB; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-family: monospace; font-size: 13px;">{esc(p_sc)} / 100</span></td>'
+                    f'<td style="padding: 11px 16px;"><span style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; padding: 3px 9px; border-radius: 6px; font-weight: 700; font-size: 11.5px; font-family: monospace;">{esc(p_pos)}</span></td>'
                     f'</tr>'
                 )
 
@@ -4949,75 +5179,105 @@ if "idex_result" in st.session_state:
             ) if is_demo_export else ""
 
             def source_refs(items):
-                return ", ".join(f"[{c.get('source_id', 'source')}]({c.get('url', '')})" for c in items if str(c.get("url", "")).startswith(("https://", "http://"))) or "Insufficient evidence citation"
+                refs = []
+                for c in (items or []):
+                    u = safe_url(c.get("url", ""))
+                    sid = sanitize_memo_field(c.get("source_id", "source"), max_len=40)
+                    if u and sid:
+                        refs.append(f"[{sid}]({u})")
+                return ", ".join(refs) or "Insufficient evidence citation"
 
             web_sources_md = "\n".join(
-                f"- [{s.get('source_id')}: {s.get('title')}]({s.get('url')}) — published: {s.get('published_date') or 'not supplied by API'}; retrieved: {s.get('retrieved_at', 'unknown')} ({s.get('source_type', 'web evidence')})"
+                f"- [{sanitize_memo_field(s.get('source_id', 'source'), 40)}: {sanitize_memo_field(s.get('title', 'Source'), 100)}]({safe_url(s.get('url'))}) — published: {sanitize_memo_field(s.get('published_date') or 'not supplied by API', 60)}; retrieved: {sanitize_memo_field(s.get('retrieved_at', 'unknown'), 60)} ({sanitize_memo_field(s.get('source_type', 'web evidence'), 40)})"
                 for s in res.get("web_research", {}).get("sources", [])
+                if safe_url(s.get("url"))
             ) or "Insufficient evidence: no grounded web sources returned."
+
             pillars_md = "\n".join(
-                f"- **Pillar {p.get('id')}: {p.get('name')}**: {p.get('score')}/{p.get('max_score')} ({p.get('justification')}) — {source_refs(p.get('citations', []))}"
+                f"- **Pillar {p.get('id')}: {sanitize_memo_field(p.get('name', 'Pillar'), 60)}**: {p.get('score')}/{p.get('max_score')} ({sanitize_memo_field(p.get('justification'), 400)}) — {source_refs(p.get('citations', []))}"
                 for p in res.get("pillars", [])
             )
+
             penalties_md = "\n".join(
-                f"- **{p.get('penalty_name')} ({p.get('points')} pts):** {p.get('reason')} — {source_refs(p.get('citations', []))}"
+                f"- **{sanitize_memo_field(p.get('penalty_name', 'Penalty'), 60)} ({p.get('points')} pts):** {sanitize_memo_field(p.get('reason'), 300)} — {source_refs(p.get('citations', []))}"
                 for p in res.get("penalties_breakdown", [])
             ) or "No penalties applied."
+
             bonus = res.get("bonuses_breakdown", {})
             call_refs = source_refs(res.get("final_call_citations", []))
 
             filing_meta_md = ""
             if res.get("filing_metadata"):
                 fm = res["filing_metadata"]
-                f_u = fm.get("url") or "Uploaded directly"
-                filing_meta_md = f"- **Statutory Filing Analyzed:** [{fm.get('title')}]({f_u}) ({fm.get('source', 'Archive')}, Period: {fm.get('year', 'Latest')})\n"
+                f_u = safe_url(fm.get("url")) or "Uploaded directly"
+                f_title = sanitize_memo_field(fm.get('title', 'Statutory Filing'), 80)
+                f_src = sanitize_memo_field(fm.get('source', 'Archive'), 40)
+                f_yr = sanitize_memo_field(fm.get('year', 'Latest'), 30)
+                filing_meta_md = f"- **Statutory Filing Analyzed:** [{f_title}]({f_u}) ({f_src}, Period: {f_yr})\n"
 
             sentinel_sec = ""
             if res.get("sentinel_audit"):
                 sa = res["sentinel_audit"]
-                sa_checks_md = "\n".join(f"- **{c.get('name')}:** {c.get('status')} — {c.get('detail')}" for c in sa.get("checks", []))
-                sentinel_sec = f"\n## Automated Data Consistency Sentinel\n- **Integrity Score:** {sa.get('integrity_score')}/100 ({sa.get('status')})\n- **Checks Evaluated:** {sa.get('passed_count')}/{sa.get('total_count')}\n{sa_checks_md}\n"
+                sa_checks_md = "\n".join(f"- **{sanitize_memo_field(c.get('name'))}:** {sanitize_memo_field(c.get('status'))} — {sanitize_memo_field(c.get('detail'), 250)}" for c in sa.get("checks", []))
+                sa_score = sa.get('integrity_score')
+                sentinel_sec = f"\n## Automated Data Consistency Sentinel\n- **Integrity Score:** {f'{sa_score:.1f}' if isinstance(sa_score, (int, float)) else 'N/A (not evaluated)'}/100 ({sanitize_memo_field(sa.get('status'))})\n- **Checks Evaluated:** {sa.get('passed_count')}/{sa.get('total_count')}\n{sa_checks_md}\n"
 
             forensic_sec = ""
             if res.get("forensic_report"):
                 fr = res["forensic_report"]
-                fr_checks_md = "\n".join(f"- **{c.get('title')}:** {c.get('status')} ({c.get('metric', 'N/A')}) — {c.get('detail')}" for c in fr.get("checks", []))
-                forensic_sec = f"\n## Forensic Accounting & Concealed Risk Audit\n- **Forensic Quality Index (FQI):** {fr.get('fqi_score')}/100 ({fr.get('verdict_badge')})\n- **External Solvency:** {fr.get('credit_rating', {}).get('rating', 'N/A')}\n{fr_checks_md}\n"
+                fr_checks_md = "\n".join(f"- **{sanitize_memo_field(c.get('title'))}:** {sanitize_memo_field(c.get('status'))} ({sanitize_memo_field(c.get('metric', 'N/A'))}) — {sanitize_memo_field(c.get('detail'), 250)}" for c in fr.get("checks", []))
+                fr_fqi = fr.get('fqi_score')
+                forensic_sec = f"\n## Forensic Accounting & Concealed Risk Audit\n- **Forensic Quality Index (FQI):** {f'{fr_fqi:.1f}' if isinstance(fr_fqi, (int, float)) else 'N/A (insufficient evidence)'}/100 ({sanitize_memo_field(fr.get('verdict_badge'))})\n- **Evidence coverage:** {fr.get('evaluated_count', 0)}/{fr.get('total_checks', 8)} checks • External rating: {sanitize_memo_field(fr.get('credit_rating', {}).get('rating', 'N/A'))}\n{fr_checks_md}\n"
 
-            md_text = f"""{demo_header}# StockSage | Institutional Research Memo: {res.get('company_name')}
+            provenance_memo_block = (
+                f"> **Document Provenance & Model Audit Notice**\n"
+                f"> - **Target Entity:** {sanitize_memo_field(res.get('company_name'))} ({sanitize_memo_field(target_ticker or res.get('ticker'))})\n"
+                f"> - **Model Requested:** {sanitize_memo_field(res.get('model_requested') or selected_gemini_model)}\n"
+                f"> - **Model Used:** {sanitize_memo_field(res.get('model_used') or selected_gemini_model)}\n"
+                f"> - **Model Fallback Occurred:** {bool(res.get('model_fallback_used', False))}\n"
+                f"> - **Retrieval Timestamp:** {sanitize_memo_field(res.get('retrieved_at', 'unknown'))}\n"
+                f"> - **Pipeline Version:** {sanitize_memo_field(res.get('analysis_pipeline_version', ANALYSIS_PIPELINE_VERSION))}\n"
+                f"> - **Notice:** This document is algorithmically generated by an AI model, unaudited, and provided for research and educational purposes only.\n\n"
+            )
 
-## Metadata
-- **Target Company:** {res.get('company_name')}
-- **Sector Benchmark:** {res.get('sector')}
-- **Reporting Period:** {res.get('financial_year')}
-{filing_meta_md}- **Final Rating:** {res.get('verdict')} (Score: {res.get('final_score')}/100)
-- **Risk Allocation Sizing:** {res.get('position_sizing')} (Illustrative Model Exposure Tier — Not SEBI Investment Advice)
-- **Evidence status:** {res.get('analysis_status', 'unknown')}
-- **Evidence gaps:** {', '.join(res.get('evidence_gaps', [])) or 'None reported'}
+            guardrail_ev_md = "\n".join([f"- {sanitize_memo_field(ev)}" for ev in res.get('guardrail_evidence', [])])
+            evidence_gaps_md = ", ".join([sanitize_memo_field(g) for g in res.get('evidence_gaps', [])]) or "None reported"
+            search_queries_md = ", ".join([sanitize_memo_field(q) for q in res.get('web_research', {}).get('search_queries', [])]) or "No query metadata returned"
+
+            md_text = f"""{demo_header}# StockSage | Institutional Research Memo: {sanitize_memo_field(res.get('company_name'))}
+
+{provenance_memo_block}## Metadata
+- **Target Company:** {sanitize_memo_field(res.get('company_name'))}
+- **Sector Benchmark:** {sanitize_memo_field(res.get('sector'))}
+- **Reporting Period:** {sanitize_memo_field(res.get('financial_year'))}
+{filing_meta_md}- **Final Rating:** {sanitize_memo_field(res.get('verdict'))} (Score: {res.get('final_score')}/100)
+- **Risk Allocation Sizing:** {sanitize_memo_field(res.get('position_sizing'))} (Illustrative Model Exposure Tier — Not SEBI Investment Advice)
+- **Evidence status:** {sanitize_memo_field(res.get('analysis_status', 'unknown'))}
+- **Evidence gaps:** {evidence_gaps_md}
 
 ## Web Research Sources
-Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])) or 'No query metadata returned'}
+Search queries: {search_queries_md}
 {web_sources_md}
 
 ## Mandatory Guardrail Tag
-**{res.get('guardrail_tag')}**
-{chr(10).join(['- ' + ev for ev in res.get('guardrail_evidence', [])])}
+**{sanitize_memo_field(res.get('guardrail_tag'))}**
+{guardrail_ev_md}
 {sentinel_sec}{forensic_sec}
 ## Core 8-Pillar Scorecard
 {pillars_md}
 
 ## Penalties and Bonuses
 {penalties_md}
-- **Bonus total ({bonus.get('total_bonus_applied', 0)} pts):** {bonus.get('reason', 'Insufficient evidence rationale.')} — {source_refs(bonus.get('citations', []))}
+- **Bonus total ({bonus.get('total_bonus_applied', 0)} pts):** {sanitize_memo_field(bonus.get('reason', 'Insufficient evidence rationale.'))} — {source_refs(bonus.get('citations', []))}
 
 ## Sector-Sensitive Receivable Layer
-- DSO: {rec.get('dso_days')} days (Ideal: {rec.get('sector_ideal_dso')})
-- Overdue >90 Days: {rec.get('pct_over_90_days')}
-- Receivables / Sales: {rec.get('receivables_to_sales_pct')}
-- Verdict: {rec.get('receivable_verdict')}
+- DSO: {sanitize_memo_field(rec.get('dso_days'))} days (Ideal: {sanitize_memo_field(rec.get('sector_ideal_dso'))})
+- Overdue >90 Days: {sanitize_memo_field(rec.get('pct_over_90_days'))}
+- Receivables / Sales: {sanitize_memo_field(rec.get('receivables_to_sales_pct'))}
+- Verdict: {sanitize_memo_field(rec.get('receivable_verdict'))}
 
 ## Final Call
-**{res.get('final_call')}** — {call_refs}
+**{sanitize_memo_field(res.get('final_call'))}** — {call_refs}
 
 ---
 *Regulatory Disclaimer: This research memo is programmatically generated by Project KUSHA / StockSage for informational and educational screening purposes only. It is not SEBI-registered investment advice or a statutory audit.*
@@ -5042,7 +5302,7 @@ Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])
                 sa = res["sentinel_audit"]
                 sa_rows = "".join(f"<tr><td><strong>{html.escape(str(c.get('name') or ''))}</strong></td><td>{html.escape(str(c.get('status') or ''))}</td><td>{html.escape(str(c.get('detail') or ''))}</td></tr>" for c in sa.get("checks", []))
                 sentinel_html_table = f"""
-                <h2>Data Consistency Sentinel ({html.escape(str(sa.get('integrity_score', 'N/A')))}/100 - {html.escape(str(sa.get('status', 'N/A')))})</h2>
+                <h2>Data Consistency Sentinel ({html.escape(str(sa.get('integrity_score') if sa.get('integrity_score') is not None else 'N/A'))}/100 - {html.escape(str(sa.get('status', 'N/A')))})</h2>
                 <table>
                     <thead><tr><th>Sanity Check</th><th>Status</th><th>Verification Detail</th></tr></thead>
                     <tbody>{sa_rows}</tbody>
@@ -5054,7 +5314,7 @@ Search queries: {', '.join(res.get('web_research', {}).get('search_queries', [])
                 fr = res["forensic_report"]
                 fr_rows = "".join(f"<tr><td><strong>{html.escape(str(c.get('title') or ''))}</strong></td><td><strong>{html.escape(str(c.get('status') or ''))}</strong></td><td>{html.escape(str(c.get('metric', 'N/A')))}</td><td>{html.escape(str(c.get('detail') or ''))}</td></tr>" for c in fr.get("checks", []))
                 forensic_html_table = f"""
-                <h2>Forensic Accounting Audit (FQI: {html.escape(str(fr.get('fqi_score', 'N/A')))}/100 - {html.escape(str(fr.get('verdict_badge', 'N/A')))})</h2>
+                <h2>Forensic Accounting Audit (FQI: {html.escape(str(fr.get('fqi_score') if fr.get('fqi_score') is not None else 'N/A'))}/100 - {html.escape(str(fr.get('verdict_badge', 'N/A')))})</h2>
                 <table>
                     <thead><tr><th>Forensic Test</th><th>Status</th><th>Metric</th><th>Findings &amp; Stress Test</th></tr></thead>
                     <tbody>{fr_rows}</tbody>

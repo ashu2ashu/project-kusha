@@ -31,7 +31,7 @@ class TestBytecodeCompilation(unittest.TestCase):
             "annual_report_fetcher.py",
             "forensic_risk_engine.py"
         ]
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for mod in modules:
             path = os.path.join(base_dir, mod)
             self.assertTrue(os.path.exists(path), f"Module {mod} does not exist at {path}")
@@ -165,7 +165,7 @@ class TestNiftyPeerComparisonFunctions(unittest.TestCase):
 
 class TestCSSMotionAndFluidity(unittest.TestCase):
     def setUp(self):
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         with open(os.path.join(base_dir, "app.py"), "r", encoding="utf-8") as f:
             self.app_content = f.read()
         with open(os.path.join(base_dir, "nifty_peer_comparison.py"), "r", encoding="utf-8") as f:
@@ -287,12 +287,10 @@ class TestForensicLensSafety(unittest.TestCase):
         self.assertIn("DSO: 87 DAYS", html)
         # 5. Leverage must pass
         self.assertIn("DEBT FREE", html)
-        # 6. Regulatory must pass
-        self.assertIn("CLEAN RECORD", html)
-        # Overall badge: 6 / 6 CHECKS PASSED — ALL CLEAR
-        self.assertIn("6 / 6 CHECKS PASSED — ALL CLEAR", html)
-        # No unverified warning
-        self.assertNotIn("NOT VERIFIED", html)
+        # 6. Regulatory check without explicit enforcement data is truthfully NOT VERIFIED
+        self.assertIn("NOT VERIFIED", html)
+        # Overall badge: 5 / 6 PASSED · 1 NOT VERIFIED
+        self.assertIn("5 / 6 PASSED · 1 NOT VERIFIED", html)
 
     def test_traffic_light_handles_insufficient_evidence(self):
         """Ensure render_traffic_light_and_eli15_html handles evidence gaps honestly."""
@@ -352,7 +350,7 @@ class TestForensicLensSafety(unittest.TestCase):
         
         # 1. Ensure no double signs like '+-'
         self.assertNotIn("+-", html)
-        self.assertIn("-4.7% to DCF", html)  # (5850 - 6140) / 6140 = -4.72%
+        self.assertIn("-4.7% to model fair value", html)  # (5850 - 6140) / 6140 = -4.72%
 
         # 2. Ensure no identical range repetition like '₹5,850 – ₹5,850'
         self.assertNotIn("₹5,850 – ₹5,850", html)
@@ -377,7 +375,7 @@ class TestForensicLensSafety(unittest.TestCase):
         }
         html_under = render_valuation_compass_html(res, live_under)
         self.assertIn("Margin of Safety", html_under)
-        self.assertIn("+30.0% to DCF", html_under)
+        self.assertIn("+30.0% to model fair value", html_under)
         self.assertNotIn("+-", html_under)
 
 

@@ -5,11 +5,15 @@ Provides comprehensive 16-metric comparison across Dalal Street's premier index 
 """
 
 import os
+import html
 import pandas as pd
 import numpy as np
 from typing import Dict, Any, List, Optional
 import streamlit as st
 from nifty_universe import find_company_info
+import kusha_logging
+
+logger = kusha_logging.get_logger("kusha.nifty_peer_comparison")
 
 # The 16 Canonical Screener Metrics matching user's template:
 # 1. CMP Rs.
@@ -1132,49 +1136,44 @@ def get_peers_for_company(ticker_symbol: str, target_sector: str, limit: int = 4
     """
     Finds the target company plus 2–3 closest peers in the same sector.
     If the target company is in Nifty 50, it is prioritized first.
-    If not, it builds a placeholder or pulls from live data.
+    If not, it builds a target record with None values (never fabricated).
+    Strictly same-sector: never silently appends peers from other sectors.
     """
     sym = ticker_symbol.upper() if ticker_symbol else ""
     target_item = _NIFTY_LOOKUP.get(sym)
     
-    # Same sector peers from Nifty 50
+    # Same sector peers from Nifty 50 only (never substitute across sectors)
     sector_peers = [c for c in NIFTY_50_DATA if c["sector"] == target_sector and c["symbol"] != sym]
-    
-    # If not enough sector peers in Nifty 50, look across related sectors or top market cap peers
-    if len(sector_peers) < (limit - 1):
-        other_peers = [c for c in NIFTY_50_DATA if c["symbol"] != sym and c not in sector_peers]
-        sector_peers.extend(other_peers[:limit - 1 - len(sector_peers)])
-        
     peers = sector_peers[:limit - 1]
     
     result = []
     if target_item:
-        result.append(target_item)
+        result.append(dict(target_item))
     else:
-        # Build target company record from live / estimated values
+        # Unknown or non-Nifty-50 target: all metrics None (never fabricate)
         result.append({
             "company": sym,
             "symbol": sym,
             "sector": target_sector,
-            "cmp": 0.0,
-            "mar_cap": 0.0,
-            "sales": 0.0,
-            "sales_var_3yr": 0.0,
-            "profit_var_3yr": 0.0,
-            "qtr_sales_var": 0.0,
-            "npm_ann": 0.0,
-            "ind_pe": 25.0,
-            "pe": 0.0,
-            "peg": 1.0,
-            "ev_ebitda": 15.0,
-            "roic": 15.0,
-            "croic": 12.0,
-            "roce": 18.0,
-            "fcf_3yr": 0.0,
-            "down_pct": 0.0
+            "cmp": None,
+            "mar_cap": None,
+            "sales": None,
+            "sales_var_3yr": None,
+            "profit_var_3yr": None,
+            "qtr_sales_var": None,
+            "npm_ann": None,
+            "ind_pe": None,
+            "pe": None,
+            "peg": None,
+            "ev_ebitda": None,
+            "roic": None,
+            "croic": None,
+            "roce": None,
+            "fcf_3yr": None,
+            "down_pct": None
         })
         
-    result.extend(peers)
+    result.extend([dict(p) for p in peers])
     return result
 
 
@@ -1189,7 +1188,12 @@ def render_head_to_head_comparison_html(
     Renders an institutional Head-to-Head Peer Comparison Matrix with the exact 16 metrics
     from the user's Screener.in template, with leader badges for Dalal Street benchmark leadership.
     """
-    peers = get_peers_for_company(target_ticker, target_sector, limit=4)
+    raw_peers = get_peers_for_company(target_ticker, target_sector, limit=4)
+    if not raw_peers:
+        return "<div style='color: #64748B; padding: 18px;'>No sector peers found.</div>"
+    peers = [dict(p) for p in raw_peers]
+    for p in peers:
+        p["period_label"] = NIFTY_50_DATASET_AS_OF
     
     sym = (target_ticker or "").upper().strip()
     is_nifty50 = sym in _NIFTY_LOOKUP
@@ -1199,16 +1203,18 @@ def render_head_to_head_comparison_html(
         try:
             from nifty_universe import fetch_live_market_data
             live_data = fetch_live_market_data(sym)
-        except Exception:
-            pass
+        except Exception as e:
+            # Category A: Lazy live market data fetch failed for custom peer
+            logger.warning("Lazy live market data fetch failed for custom peer %s: %s", sym, e)
 
     # Lazily fetch financial statements if missing for custom or non-Nifty-50 stock
     if not financial_data and not is_nifty50 and sym:
         try:
             from financial_trends import fetch_financial_statements
             financial_data = fetch_financial_statements(sym)
-        except Exception:
-            pass
+        except Exception as e:
+            # Category A: Lazy financial statement fetch failed for custom peer
+            logger.warning("Lazy financial statement fetch failed for custom peer %s: %s", sym, e)
 
     # If target is first in list, sync latest market and statement metrics
     if peers:
@@ -1217,6 +1223,7 @@ def render_head_to_head_comparison_html(
             target_p["company"] = target_company_name
 
         if live_data:
+            target_p["period_label"] = "live"
             cur_p = live_data.get("current_price") or live_data.get("cmp")
             if cur_p and isinstance(cur_p, (int, float)):
                 target_p["cmp"] = float(cur_p)
@@ -1239,6 +1246,7 @@ def render_head_to_head_comparison_html(
                 try:
                     target_p["ev_ebitda"] = round(float(ev_eb), 2)
                 except (ValueError, TypeError):
+                    # Category C: Non-numeric metric string format; retain default
                     pass
 
             # PEG Ratio from live data
@@ -1247,6 +1255,7 @@ def render_head_to_head_comparison_html(
                 try:
                     target_p["peg"] = round(float(peg_val), 2)
                 except (ValueError, TypeError):
+                    # Category C: Non-numeric metric string format; retain default
                     pass
 
             # Profit margin from live data
@@ -1257,6 +1266,7 @@ def render_head_to_head_comparison_html(
                 try:
                     target_p["npm_ann"] = round(float(pm.replace("%", "").strip()), 2)
                 except (ValueError, TypeError):
+                    # Category C: Non-numeric metric string format; retain default
                     pass
 
             # Free cashflow from live data
@@ -1325,13 +1335,47 @@ def render_head_to_head_comparison_html(
                     target_p["croic"] = round(float(roe_v), 2)
 
             # Reconcile PEG if still default 1.0 or 0
-            if (target_p.get("peg") in (1.0, 0.0, None)) and target_p.get("pe", 0) > 0 and target_p.get("profit_var_3yr", 0) > 0:
+            if (target_p.get("peg") in (1.0, 0.0, None)) and (target_p.get("pe") or 0) > 0 and (target_p.get("profit_var_3yr") or 0) > 0:
                 target_p["peg"] = round(target_p["pe"] / target_p["profit_var_3yr"], 2)
 
         # Sync Industry P/E from peer group
-        other_pes = [p.get("pe", 0) for p in peers[1:] if p.get("pe", 0) > 0]
+        other_pes = [p.get("pe") for p in peers[1:] if p.get("pe") is not None and p.get("pe") > 0]
         if other_pes:
             target_p["ind_pe"] = round(sum(other_pes) / len(other_pes), 2)
+
+    # Check target valuation availability
+    has_target_valuation = any(
+        target_p.get(k) is not None for k in ["pe", "cmp", "ev_ebitda", "mar_cap", "sales"]
+    )
+    
+    notice_banner = ""
+    if not has_target_valuation:
+        peers_to_display = peers[1:] if len(peers) > 1 else peers
+        notice_banner = (
+            '<div style="background:#F8FAFC; border:1px solid #CBD5E1; color:#475569; '
+            'padding:10px 14px; border-radius:8px; font-size:12px; margin-bottom:12px; font-weight:600;">'
+            'Target valuation data unavailable — comparison shows peers only</div>'
+        )
+    else:
+        peers_to_display = peers
+
+    # Period alignment analysis
+    period_labels = [p.get("period_label", NIFTY_50_DATASET_AS_OF) for p in peers_to_display]
+    mixed_periods = len(set(period_labels)) > 1
+
+    warning_banner = ""
+    if mixed_periods:
+        warning_banner = (
+            f'<div style="background:#FFFBEB; border:1.5px solid #FCD34D; color:#92400E; '
+            f'padding:12px 16px; border-radius:8px; margin-bottom:14px; font-size:12.5px; font-weight:700;">'
+            f'⚠️ Periods differ — this table mixes live market data with {NIFTY_50_DATASET_AS_OF} reference data. '
+            f'Values are not directly comparable and no ranking is shown.</div>'
+        )
+        top_badge = '<span style="background:#FFFBEB; color:#92400E; border:1px solid #FCD34D; font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:9999px;">Ranking Withheld (Mixed Periods)</span>'
+        bottom_note = '<span style="font-weight:600; color:#92400E;">Ranking suppressed: mixed periods</span>'
+    else:
+        top_badge = '<span style="background:#ECFDF5; color:#059669; border:1px solid #A7F3D0; font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:9999px;">★ Leader Highlighted</span>'
+        bottom_note = '<span style="font-weight:600; color:#059669;">★ Indicates sector category leader</span>'
 
     # Categories and metrics to compare:
     # label, key, format_type, lower_is_better
@@ -1360,16 +1404,21 @@ def render_head_to_head_comparison_html(
 
     # Build Header Columns
     header_th = ['<th style="background:#F8FAFC; color:#0F172A; padding:12px 14px; text-align:left; font-size:13px; font-weight:800; border-bottom:2px solid #E2E8F0; width:28%;">METRIC</th>']
-    for idx, p in enumerate(peers):
-        is_target = (idx == 0)
+    for idx, p in enumerate(peers_to_display):
+        is_target = (p.get("symbol") == sym)
         bg = "#ECFDF5" if is_target else "#F8FAFC"
         text_color = "#059669" if is_target else "#0F172A"
         sym_color = "#059669" if is_target else "#64748B"
         border_b = "2px solid #A7F3D0" if is_target else "2px solid #E2E8F0"
         crown = ' <span style="background:#059669; color:#FFFFFF; font-size:10px; font-weight:800; padding:2px 6px; border-radius:9999px;">TARGET</span>' if is_target else ''
+        p_period = p.get("period_label", NIFTY_50_DATASET_AS_OF)
+        esc_comp = html.escape(str(p["company"]))
+        esc_sym = html.escape(str(p["symbol"]))
+        esc_period = html.escape(str(p_period))
         header_th.append(
             f'<th style="background:{bg}; color:{text_color}; padding:12px 14px; text-align:right; font-size:13px; font-weight:800; border-bottom:{border_b};">'
-            f'{p["company"]}<br><span style="font-size:11px; color:{sym_color}; font-family:monospace;">{p["symbol"]}</span>{crown}'
+            f'{esc_comp}<br><span style="font-size:11px; color:{sym_color}; font-family:monospace;">{esc_sym}</span>{crown}'
+            f'<div style="font-size:10px; color:{sym_color}; font-weight:600; margin-top:3px; font-family:\'JetBrains Mono\', monospace;">Period: {esc_period}</div>'
             f'</th>'
         )
     header_row = "".join(header_th)
@@ -1377,21 +1426,23 @@ def render_head_to_head_comparison_html(
     # Build Table Rows
     rows_html = []
     for m_label, m_key, m_type, lower_better in metric_defs:
-        vals = [p.get(m_key, 0.0) for p in peers]
+        vals = [p.get(m_key) for p in peers_to_display]
         
-        # Determine leader
+        # Determine leader only when periods match
         valid_vals = [v for v in vals if v is not None and v != 0.0]
         leader_val = None
-        if valid_vals:
+        if not mixed_periods and valid_vals:
             leader_val = min(valid_vals) if lower_better else max(valid_vals)
 
         td_cells = [f'<td style="padding:10px 14px; font-weight:700; color:#0F172A; font-size:13px; background:#FFFFFF; border-bottom:1px solid #F1F5F9; position:sticky; left:0; z-index:2; transition:background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);">{m_label}</td>']
-        for p in peers:
-            v = p.get(m_key, 0.0)
-            is_leader = (leader_val is not None and v == leader_val and len(valid_vals) > 1)
+        for p in peers_to_display:
+            v = p.get(m_key)
+            is_leader = (not mixed_periods and leader_val is not None and v == leader_val and len(valid_vals) > 1)
             
             # Format string
-            if m_type == "curr":
+            if v is None:
+                fmt_str = "N/A"
+            elif m_type == "curr":
                 fmt_str = f"₹{v:,.2f}"
             elif m_type == "num_cr":
                 fmt_str = f"₹{v:,.1f} Cr"
@@ -1415,13 +1466,15 @@ def render_head_to_head_comparison_html(
 
     table_body = "".join(rows_html)
 
-    html = (
+    table_html = (
         f'<style>'
         f'.peer-matrix-row {{ transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1); }}'
         f'.peer-matrix-row:hover td {{ background-color: #F8FAFC !important; }}'
         f'.peer-matrix-row:hover td:first-child {{ background-color: #EFF6FF !important; }}'
         f'</style>'
         f'<div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-radius:16px; padding:24px 26px; margin-top:22px; margin-bottom:24px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">'
+        f'{notice_banner}'
+        f'{warning_banner}'
         f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">'
         f'<div>'
         f'<div style="display:flex; align-items:center; gap:8px;">'
@@ -1430,7 +1483,7 @@ def render_head_to_head_comparison_html(
         f'</div>'
         f'<div style="font-size:12px; color:#64748B; margin-top:3px;">Benchmarking {target_company_name} ({target_ticker}) against top {target_sector} peers on the 16 canonical Screener metrics</div>'
         f'</div>'
-        f'<span style="background:#ECFDF5; color:#059669; border:1px solid #A7F3D0; font-size:11.5px; font-weight:800; padding:4px 10px; border-radius:9999px;">★ Leader Highlighted</span>'
+        f'{top_badge}'
         f'</div>'
         f'<div style="overflow-x:auto; border-radius:10px; border:1.5px solid #E2E8F0;">'
         f'<table style="width:100%; border-collapse:collapse; background:#FFFFFF;">'
@@ -1440,11 +1493,11 @@ def render_head_to_head_comparison_html(
         f'</div>'
         f'<div style="font-size:12px; color:#64748B; margin-top:10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">'
         f'<span>Source: Screener.in institutional 16-metric framework & BSE/NSE audited filings</span>'
-        f'<span style="font-weight:600; color:#059669;">★ Indicates sector category leader</span>'
+        f'{bottom_note}'
         f'</div>'
         f'</div>'
     )
-    return html
+    return table_html
 
 
 def render_nifty50_screener_view():
@@ -1452,7 +1505,7 @@ def render_nifty50_screener_view():
     Renders the complete Screener.in-grade 'Companies in Nifty 50' view matching
     the user's template with all 16 metrics, sector filtering, searching, and CSV export.
     """
-    st.html("""
+    st.html(f"""
     <div style="background:#FFFFFF; border:1.5px solid #E2E8F0; border-radius:12px; padding:18px 24px; margin-bottom:18px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
@@ -1460,17 +1513,20 @@ def render_nifty50_screener_view():
             <span>⚡</span> Quantum Nifty 50 Screener Matrix
           </div>
           <div style="font-size:12.5px; color:#64748B; margin-top:2px;">
-            50 Dalal Street Bluechips • 16 Canonical Institutional Factors • Historical FY24 Reference Basis
+            50 Dalal Street Bluechips • 16 Canonical Institutional Factors • {NIFTY_50_DATASET_AS_OF}
           </div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <span style="background:#FFFBEB; color:#D97706; border:1px solid #FDE68A; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace;">
-            📅 FY24 Audited Basis
+            📅 {NIFTY_50_DATASET_AS_OF}
           </span>
           <span style="background:#ECFDF5; color:#059669; border:1px solid #A7F3D0; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; font-family:'JetBrains Mono', monospace;">
             16 Canonical Metrics
           </span>
         </div>
+      </div>
+      <div style="font-size:12px; color:#92400E; background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:8px 12px; margin-top:12px; font-weight:500;">
+        ℹ️ {NIFTY_50_DATASET_DISCLAIMER} (Dataset As Of: {NIFTY_50_DATASET_AS_OF})
       </div>
     </div>
     """)

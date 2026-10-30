@@ -1,9 +1,10 @@
 """
-test_key.py
-Security-hardened utility to verify Google Gemini API connectivity.
-Reads API key securely from environment variable GEMINI_API_KEY or prompts
-interactively via masked input (getpass) to prevent exposure in shell history
-and process listings.
+check_api_key.py
+Manual connectivity verification script for Google Gemini API.
+
+NOTE: This is a manual diagnostic tool, not an automated unit test.
+It makes a live network API call to Google Gemini servers to verify
+key validity and model response capabilities.
 """
 
 import os

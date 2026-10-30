@@ -77,7 +77,7 @@ echo 'GEMINI_API_KEY="your_actual_key_here"' > .env
 
 ### 3. Verify Key Connectivity
 ```bash
-python3 test_key.py
+python tools/check_api_key.py
 ```
 
 ### 4. Launch the Terminal
@@ -107,10 +107,27 @@ StockSage supports Google Gemini models configurable directly from the sidebar:
 
 ---
 
-## 🔒 Security Best Practices
-- **Protections Enabled**: Streamlit CORS and XSRF protections are active by default in `.streamlit/config.toml`.
-- **Secret Hygiene**: Do not pass API keys as command-line arguments. Keep secrets in environment variables or Streamlit secrets (`.streamlit/secrets.toml`), which are excluded by `.gitignore`.
-- **Untrusted Input Protection**: Uploaded PDFs and financial texts are treated strictly as untrusted external evidence; prompt injection defenses prevent uploaded text from altering evaluation methodology or scoring schema.
+## 🔒 Security & Trust Boundary
+
+- The app runs locally and is not multi-user.
+- Uploaded PDFs and all model output are treated as untrusted.
+- PDFs are uploaded to Google's Gemini API — they leave the machine.
+- Analyses are cached in plain JSON on local disk.
+- Data comes from Yahoo Finance (delayed, unaudited) and Gemini web grounding.
+- The app is not a registered investment adviser and outputs are not advice.
+- The Gemini API key is used for the operator's own quota and is never persisted; on a shared machine, use a dedicated key.
+
+---
+
+## Testing
+
+```bash
+python -m unittest discover -s tests                # full suite
+python -m unittest tests.test_golden_companies -v   # scoring invariants only
+coverage run -m unittest discover -s tests && coverage report
+```
+
+Tests require no API key, make zero network calls, and write only to temporary directories.
 
 ---
 

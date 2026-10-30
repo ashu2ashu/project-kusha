@@ -51,13 +51,14 @@ LEDGER_MD_PATH = "IMPROVEMENT_LEDGER.md"
 LEDGER_JSON_PATH = "improvement_ledger.json"
 FEEDBACK_DIR = os.path.join(".cache", "feedback")
 
+import kusha_logging
+logger = kusha_logging.get_logger("kusha.self_improvement")
+
 
 def safe_print(*args, **kwargs):
-    """Prints safely to stdout, ignoring broken pipes or closed descriptors in daemon modes."""
-    try:
-        print(*args, **kwargs)
-    except (OSError, IOError):
-        pass
+    """Logs telemetry message at INFO level, preserving console output behaviour for CLI use."""
+    msg = " ".join(str(a) for a in args)
+    logger.info("%s", msg)
 
 
 class SignalCollector:
@@ -356,24 +357,27 @@ class ImprovementLedgerManager:
     """
 
     @classmethod
-    def load_json_ledger(cls) -> List[Dict[str, Any]]:
-        if os.path.exists(LEDGER_JSON_PATH):
+    def load_json_ledger(cls, ledger_json_path: Optional[str] = None) -> List[Dict[str, Any]]:
+        path = ledger_json_path or LEDGER_JSON_PATH
+        if os.path.exists(path):
             try:
-                with open(LEDGER_JSON_PATH, "r", encoding="utf-8") as f:
+                with open(path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception:
                 return []
         return []
 
     @classmethod
-    def save_json_ledger(cls, entries: List[Dict[str, Any]]) -> None:
-        with open(LEDGER_JSON_PATH, "w", encoding="utf-8") as f:
+    def save_json_ledger(cls, entries: List[Dict[str, Any]], ledger_json_path: Optional[str] = None) -> None:
+        path = ledger_json_path or LEDGER_JSON_PATH
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(entries, f, indent=2)
 
     @classmethod
-    def append_to_markdown_ledger(cls, entry: Dict[str, Any]) -> None:
+    def append_to_markdown_ledger(cls, entry: Dict[str, Any], ledger_md_path: Optional[str] = None) -> None:
         """Appends a structured markdown record to IMPROVEMENT_LEDGER.md."""
-        is_new = not os.path.exists(LEDGER_MD_PATH) or os.path.getsize(LEDGER_MD_PATH) == 0
+        path = ledger_md_path or LEDGER_MD_PATH
+        is_new = not os.path.exists(path) or os.path.getsize(path) == 0
 
         header = """# Project KUSHA — Autonomous Improvement Ledger
 **Framework:** IDEX-7.5SC Hybrid Pro  
@@ -382,7 +386,7 @@ class ImprovementLedgerManager:
 
 ---
 """
-        with open(LEDGER_MD_PATH, "a", encoding="utf-8") as f:
+        with open(path, "a", encoding="utf-8") as f:
             if is_new:
                 f.write(header)
 
@@ -404,21 +408,23 @@ class ImprovementLedgerManager:
             f.write(entry_md)
 
     @classmethod
-    def record_entry(cls, entry: Dict[str, Any]) -> None:
+    def record_entry(cls, entry: Dict[str, Any], ledger_md_path: Optional[str] = None, ledger_json_path: Optional[str] = None) -> None:
         """Records entry in both markdown and json ledger."""
+        path_md = ledger_md_path or LEDGER_MD_PATH
+        path_json = ledger_json_path or LEDGER_JSON_PATH
         entry["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
         # Update JSON
-        entries = cls.load_json_ledger()
+        entries = cls.load_json_ledger(ledger_json_path=path_json)
         # Replace if ID exists or append
         existing_idx = next((i for i, e in enumerate(entries) if e.get("finding_id") == entry.get("finding_id")), None)
         if existing_idx is not None:
             entries[existing_idx] = entry
         else:
             entries.append(entry)
-        cls.save_json_ledger(entries)
+        cls.save_json_ledger(entries, ledger_json_path=path_json)
 
         # Update Markdown
-        cls.append_to_markdown_ledger(entry)
+        cls.append_to_markdown_ledger(entry, ledger_md_path=path_md)
 
 
 class SelfImprovementLoop:
@@ -428,8 +434,10 @@ class SelfImprovementLoop:
     Supports dry-run mode and enforces all bounded limits.
     """
 
-    def __init__(self, dry_run: bool = True):
+    def __init__(self, dry_run: bool = True, ledger_md_path: Optional[str] = None, ledger_json_path: Optional[str] = None):
         self.dry_run = dry_run
+        self.ledger_md_path = ledger_md_path or LEDGER_MD_PATH
+        self.ledger_json_path = ledger_json_path or LEDGER_JSON_PATH
         self.cycle_count = 0
         self.repair_attempts: Dict[str, int] = {}
 
@@ -506,7 +514,11 @@ class SelfImprovementLoop:
                 "requires_human_approval": False,
                 "lessons_learned": "All 8 IDEX-7.5SC scoring invariants, PIO guardrails, and financial reconciliations operate without variance."
             }
-            ImprovementLedgerManager.record_entry(baseline_entry)
+            ImprovementLedgerManager.record_entry(
+                baseline_entry,
+                ledger_md_path=self.ledger_md_path,
+                ledger_json_path=self.ledger_json_path
+            )
         else:
             for p, f in zip(proposals, prioritized):
                 entry = {
@@ -522,7 +534,11 @@ class SelfImprovementLoop:
                     "requires_human_approval": p["requires_human_approval"],
                     "lessons_learned": "Autonomous diagnostic captured signal; proposal drafted for peer review."
                 }
-                ImprovementLedgerManager.record_entry(entry)
+                ImprovementLedgerManager.record_entry(
+                    entry,
+                    ledger_md_path=self.ledger_md_path,
+                    ledger_json_path=self.ledger_json_path
+                )
 
         return {
             "status": "COMPLETED",
@@ -552,7 +568,7 @@ def main():
     safe_print(f"   Tests: {result.get('total_tests')} passed ({result.get('tests_passed')})")
     safe_print(f"   Findings Identified: {result.get('findings_count')}")
     safe_print(f"   Proposals Generated: {len(result.get('proposals', []))}")
-    safe_print(f"   Ledger Updated: {LEDGER_MD_PATH} & {LEDGER_JSON_PATH}")
+    safe_print(f"   Ledger Updated: {loop.ledger_md_path} & {loop.ledger_json_path}")
     safe_print("=======================================================\n")
 
 

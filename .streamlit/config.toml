@@ -2,7 +2,12 @@
 
 [server]
 port = 8501
+# Default to loopback interface for local safety; avoids exposing port on untrusted LANs.
+# To deliberately expose across LAN/container: streamlit run app.py --server.address 0.0.0.0
+# (Only do so behind an authenticating reverse proxy or with KUSHA_ACCESS_PASSWORD configured).
+address = "127.0.0.1"
 headless = true
+# CORS and XSRF protection enabled to prevent cross-origin state tampering even on localhost.
 enableCORS = true
 enableXsrfProtection = true
 runOnSave = true

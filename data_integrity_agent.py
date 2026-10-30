@@ -152,10 +152,30 @@ class DataIntegritySentinel:
                     accrual_status = "PASSED"
                     accrual_passed = True
                     accrual_detail = f"Sound Cash Conversion: CFO covers {conv_ratio:.1f}% of reported Net Profit."
+            elif latest_pat < 0:
+                # A loss-maker must never be scored as passing this check.
+                audit_flags.append("Loss-Making Period (PAT < 0)")
+                if latest_cfo < 0:
+                    accrual_status = "FAILED"
+                    accrual_passed = False
+                    accrual_detail = (
+                        f"Dual Deficit: PAT is negative (₹{latest_pat:,.1f} Cr) and operating "
+                        f"cash flow is also negative (₹{latest_cfo:,.1f} Cr)."
+                    )
+                    penalties += 2.5
+                else:
+                    accrual_status = "PASSED"
+                    accrual_passed = True
+                    accrual_detail = (
+                        f"Loss-Making but Cash-Generative: PAT is negative (₹{latest_pat:,.1f} Cr) "
+                        f"while CFO is positive (₹{latest_cfo:,.1f} Cr). The CFO/PAT ratio is "
+                        f"not meaningful for a loss period; accrual risk is not indicated."
+                    )
+                    penalties += 1.0
             else:
-                accrual_status = "PASSED"
-                accrual_passed = True
-                accrual_detail = "Base period PAT is negative or zero; cash conversion ratio not stressed."
+                accrual_status = "INSUFFICIENT_DATA"
+                accrual_passed = None
+                accrual_detail = "Reported PAT is zero; cash conversion ratio is undefined and was not evaluated."
         else:
             accrual_status = "INSUFFICIENT_DATA"
             accrual_passed = None
@@ -300,9 +320,10 @@ class DataIntegritySentinel:
             verdict_desc = "None of the 6 consistency checks could be evaluated because financial statements were empty or missing. Scoring cannot proceed on unverified data."
             can_score = False
         else:
-            # Score proportional to evaluated checks
-            base_score = 100.0
-            integrity_score = max(0.0, min(100.0, base_score - penalties))
+            # Score only the checks that were actually evaluated. A raw
+            # "100 - penalties" let 2/6 evaluated checks masquerade as 100/100.
+            pass_ratio = passed_count / evaluated_count if evaluated_count else 0.0
+            integrity_score = round(max(0.0, min(100.0, 100.0 * pass_ratio - penalties)), 1)
 
             if failed_count == 0 and skipped_count == 0:
                 status = "CONSISTENCY CHECKS PASSED 🟢"

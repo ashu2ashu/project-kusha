@@ -12,6 +12,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
+import kusha_logging
+
+logger = kusha_logging.get_logger("kusha.financial_trends")
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -49,18 +52,72 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
     if fin is None or fin.empty:
         return {"error": f"No annual financial statements found for {sym}."}
 
-    # Identify valid annual periods with recorded revenue
-    valid_cols = [
-        c for c in sorted(fin.columns)
-        if 'Total Revenue' in fin.index and pd.notna(fin.loc['Total Revenue', c]) and fin.loc['Total Revenue', c] > 0
-    ]
-    if len(valid_cols) < 2:
-        valid_cols = sorted(fin.columns)
+    # Identify valid annual periods across statements to build a unified chronological axis
+    def col_to_date(c):
+        try:
+            return pd.to_datetime(c)
+        except Exception as e:
+            # Category A: Non-date column header fallback; returns None for chronological filter
+            logger.debug("Column header %s not parseable as datetime: %s", c, e)
+            return None
 
-    year_labels = [c.strftime("Mar %Y") if c.month in [3, 4] else c.strftime("%b %Y") for c in valid_cols]
+    def col_to_label(c):
+        if hasattr(c, "strftime"):
+            return c.strftime("Mar %Y") if getattr(c, "month", None) in [3, 4] else c.strftime("%b %Y")
+        try:
+            dt = pd.to_datetime(c)
+            return dt.strftime("Mar %Y") if dt.month in [3, 4] else dt.strftime("%b %Y")
+        except Exception as e:
+            # Category A: Non-date column header formatting fallback to raw string
+            logger.debug("Column header %s date formatting failed: %s", c, e)
+            return str(c)
+
+    pnl_raw_cols = [
+        c for c in sorted(fin.columns, key=lambda x: pd.to_datetime(x))
+        if 'Total Revenue' in fin.index and pd.notna(fin.loc['Total Revenue', c]) and fin.loc['Total Revenue', c] > 0
+    ] if fin is not None and not fin.empty else []
+    if len(pnl_raw_cols) < 2 and fin is not None and not fin.empty:
+        pnl_raw_cols = sorted(fin.columns, key=lambda x: pd.to_datetime(x))
+
+    bs_raw_cols = sorted(bs.columns, key=lambda x: pd.to_datetime(x)) if bs is not None and not bs.empty else []
+    cf_raw_cols = sorted(cf.columns, key=lambda x: pd.to_datetime(x)) if cf is not None and not cf.empty else []
+
+    all_dates = set()
+    for c in pnl_raw_cols:
+        d = col_to_date(c)
+        if d is not None:
+            all_dates.add(d)
+    for c in bs_raw_cols:
+        d = col_to_date(c)
+        if d is not None:
+            all_dates.add(d)
+    for c in cf_raw_cols:
+        d = col_to_date(c)
+        if d is not None:
+            all_dates.add(d)
+
+    if not all_dates and fin is not None and not fin.empty:
+        sorted_dates = list(fin.columns)
+    else:
+        sorted_dates = sorted(list(all_dates))
+
+    year_labels = [col_to_label(d) for d in sorted_dates]
+    bs_years = list(year_labels)
+    cf_years = list(year_labels)
+
+    def find_statement_col(df, target_date):
+        if df is None or df.empty:
+            return None
+        if target_date in df.columns:
+            return target_date
+        target_dt = col_to_date(target_date)
+        for c in df.columns:
+            if col_to_date(c) == target_dt:
+                return c
+        return None
 
     def get_val(df, candidates, col, scale=1e7):
-        if df is None or df.empty:
+        if df is None or df.empty or col is None:
             return None
         for cand in candidates:
             if cand in df.index and col in df.columns:
@@ -68,6 +125,12 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
                 if pd.notna(val):
                     return float(val) / scale
         return None
+
+    def get_val_for_date(df, candidates, target_date, scale=1e7):
+        col = find_statement_col(df, target_date)
+        if col is None:
+            return None
+        return get_val(df, candidates, col, scale)
 
     # 1. P&L Statement (Annual)
     pnl_keys = [
@@ -90,7 +153,7 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
         cands = item[1]
         is_highlight = item[2]
         scale = item[3] if len(item) > 3 else 1e7
-        row_vals = [round(v, 1) if v is not None else None for v in [get_val(fin, cands, c, scale) for c in valid_cols]]
+        row_vals = [round(v, 1) if v is not None else None for v in [get_val_for_date(fin, cands, d, scale) for d in sorted_dates]]
         extracted_pnl[label] = {
             "values": row_vals,
             "highlight": is_highlight,
@@ -108,11 +171,6 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
     extracted_pnl["NPM %"] = {"values": npm_vals, "highlight": False, "is_pct": True}
 
     # 2. Balance Sheet (Annual)
-    bs_cols = [c for c in sorted(bs.columns) if c in valid_cols or c in fin.columns] if bs is not None and not bs.empty else []
-    if not bs_cols and bs is not None and not bs.empty:
-        bs_cols = sorted(bs.columns)[-len(valid_cols):]
-    bs_years = [c.strftime("Mar %Y") if c.month in [3, 4] else c.strftime("%b %Y") for c in bs_cols]
-
     bs_keys = [
         ("Equity Share Capital", ["Common Stock", "Capital Stock"], False),
         ("Reserves & Surplus", ["Retained Earnings", "Other Equity Gross"], False),
@@ -131,18 +189,13 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
 
     extracted_bs = {}
     for label, cands, is_highlight in bs_keys:
-        row_vals = [round(v, 1) if v is not None else None for v in [get_val(bs, cands, c, 1e7) for c in bs_cols]]
+        row_vals = [round(v, 1) if v is not None else None for v in [get_val_for_date(bs, cands, d, 1e7) for d in sorted_dates]]
         extracted_bs[label] = {
             "values": row_vals,
             "highlight": is_highlight
         }
 
     # 3. Cash Flow Statement (Annual)
-    cf_cols = [c for c in sorted(cf.columns) if c in valid_cols] if cf is not None and not cf.empty else []
-    if not cf_cols and cf is not None and not cf.empty:
-        cf_cols = sorted(cf.columns)[-len(valid_cols):]
-    cf_years = [c.strftime("Mar %Y") if c.month in [3, 4] else c.strftime("%b %Y") for c in cf_cols]
-
     cf_keys = [
         ("Cash from Operations (CFO)", ["Operating Cash Flow", "Cash Flow From Continuing Operating Activities"], True),
         ("Capital Expenditure (Capex)", ["Capital Expenditure", "Net PPE Purchase And Sale"], True),
@@ -154,7 +207,7 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
 
     extracted_cf = {}
     for label, cands, is_highlight in cf_keys:
-        row_vals = [round(v, 1) if v is not None else None for v in [get_val(cf, cands, c, 1e7) for c in cf_cols]]
+        row_vals = [round(v, 1) if v is not None else None for v in [get_val_for_date(cf, cands, d, 1e7) for d in sorted_dates]]
         if label == "Capital Expenditure (Capex)":
             row_vals = [-abs(x) if x is not None else None for x in row_vals]
         extracted_cf[label] = {
@@ -176,13 +229,19 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             reconciled_fcf.append(None)
     extracted_cf["Free Cash Flow (FCF)"]["values"] = reconciled_fcf
 
-    # Reconcile CFO to PAT by exact matching fiscal dates to prevent period drift
-    pat_by_date = {c: p for c, p in zip(valid_cols, pat_vals)}
+    # Reconcile CFO to PAT by exact unified date matching to prevent period drift
     cfo_to_pat = []
-    for c, cfo in zip(cf_cols, cfo_vals):
-        pat_matched = pat_by_date.get(c)
-        if cfo is not None and pat_matched is not None and pat_matched > 0:
-            cfo_to_pat.append(round((cfo / pat_matched) * 100, 1))
+    cfo_pat_pairing = []
+    for yr, cfo, pat in zip(year_labels, cfo_vals, pat_vals):
+        if cfo is not None and pat is not None and pat > 0:
+            ratio = round((cfo / pat) * 100, 1)
+            cfo_to_pat.append(ratio)
+            cfo_pat_pairing.append({
+                "year": yr,
+                "cfo": cfo,
+                "pat": pat,
+                "conversion_pct": ratio
+            })
         else:
             cfo_to_pat.append(None)
     extracted_cf["CFO / PAT Conversion %"] = {"values": cfo_to_pat, "highlight": False, "is_pct": True}
@@ -213,10 +272,15 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
             return round(((end_v / start_v) ** (1.0 / periods) - 1.0) * 100, 1)
         return None
 
-    n_years = len(valid_cols) - 1
-    sales_cagr = calc_cagr(rev_vals[0], rev_vals[-1], n_years) if n_years >= 2 and rev_vals else None
-    pat_cagr = calc_cagr(pat_vals[0], pat_vals[-1], n_years) if n_years >= 2 and pat_vals else None
-    ebitda_cagr = calc_cagr(ebitda_vals[0], ebitda_vals[-1], n_years) if n_years >= 2 and ebitda_vals else None
+    valid_pnl_rev = [r for r in rev_vals if r is not None and r > 0]
+    n_years = len(valid_pnl_rev) - 1
+    sales_cagr = calc_cagr(valid_pnl_rev[0], valid_pnl_rev[-1], n_years) if n_years >= 2 else None
+
+    valid_pnl_pat = [p for p in pat_vals if p is not None]
+    pat_cagr = calc_cagr(valid_pnl_pat[0], valid_pnl_pat[-1], len(valid_pnl_pat) - 1) if len(valid_pnl_pat) >= 3 else None
+
+    valid_pnl_ebitda = [e for e in ebitda_vals if e is not None]
+    ebitda_cagr = calc_cagr(valid_pnl_ebitda[0], valid_pnl_ebitda[-1], len(valid_pnl_ebitda) - 1) if len(valid_pnl_ebitda) >= 3 else None
 
     # Latest YoY Growth
     sales_yoy = round(((rev_vals[-1] - rev_vals[-2]) / abs(rev_vals[-2])) * 100, 1) if len(rev_vals) >= 2 and rev_vals[-1] is not None and rev_vals[-2] is not None and rev_vals[-2] > 0 else None
@@ -226,20 +290,42 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
     valid_conversions = [x for x in cfo_to_pat if x is not None and x > 0]
     avg_cfo_pat = round(float(np.mean(valid_conversions)), 1) if valid_conversions else None
 
+    # Alignment mismatch detection
+    alignment_warning = None
+    pnl_dates = set(col_to_date(c) for c in pnl_raw_cols if col_to_date(c) is not None)
+    cf_dates = set(col_to_date(c) for c in cf_raw_cols if col_to_date(c) is not None)
+    if cf_raw_cols and pnl_raw_cols and not (pnl_dates & cf_dates):
+        alignment_warning = "P&L and Cash Flow statements have no overlapping fiscal periods; conversion ratio withheld."
+        avg_cfo_pat = None
+    elif len(pnl_raw_cols) < 2:
+        alignment_warning = "Insufficient chronological P&L periods to compute multi-year CAGR."
+        sales_cagr = None
+        pat_cagr = None
+        ebitda_cagr = None
+
     nw_vals = extracted_bs.get("Total Net Worth / Equity", {}).get("values", [])
-    latest_roe = round((pat_vals[-1] / nw_vals[-1] * 100), 1) if nw_vals and pat_vals and nw_vals[-1] is not None and pat_vals[-1] is not None and nw_vals[-1] > 0 else None
+    aligned_pat_nw = [(p, nw) for p, nw in zip(pat_vals, nw_vals) if p is not None and nw is not None and nw > 0]
+    latest_roe = round((aligned_pat_nw[-1][0] / aligned_pat_nw[-1][1] * 100), 1) if aligned_pat_nw else None
 
     debt_vals = extracted_bs.get("Total Borrowings / Debt", {}).get("values", [])
-    latest_de = round((debt_vals[-1] / nw_vals[-1]), 2) if nw_vals and debt_vals and nw_vals[-1] is not None and debt_vals[-1] is not None and nw_vals[-1] > 0 else None
+    aligned_debt_nw = [(d, nw) for d, nw in zip(debt_vals, nw_vals) if d is not None and nw is not None and nw > 0]
+    latest_de = round((aligned_debt_nw[-1][0] / aligned_debt_nw[-1][1]), 2) if aligned_debt_nw else None
 
-    # Calculate ROCE (Return on Capital Employed) = EBIT / Capital Employed * 100
-    ebit_last = ebitda_vals[-1] if (ebitda_vals and ebitda_vals[-1] is not None) else None
-    nw_last = nw_vals[-1] if (nw_vals and nw_vals[-1] is not None) else None
-    debt_last = debt_vals[-1] if (debt_vals and debt_vals[-1] is not None) else 0.0
-    cap_emp = (nw_last + debt_last) if (nw_last is not None and nw_last > 0) else None
-    latest_roce = round((ebit_last / cap_emp * 100), 2) if (ebit_last is not None and cap_emp is not None and cap_emp > 0) else None
+    # Calculate ROCE = EBIT / Capital Employed * 100
+    aligned_ebit_nw_debt = [(e, nw, d) for e, nw, d in zip(ebitda_vals, nw_vals, debt_vals) if e is not None and nw is not None and nw > 0]
+    if aligned_ebit_nw_debt:
+        ebit_last, nw_last, debt_last = aligned_ebit_nw_debt[-1]
+        debt_last = debt_last if debt_last is not None else 0.0
+        cap_emp = nw_last + debt_last
+        latest_roce = round((ebit_last / cap_emp * 100), 2) if cap_emp > 0 else None
+    else:
+        ebit_last = ebitda_vals[-1] if (ebitda_vals and ebitda_vals[-1] is not None) else None
+        nw_last = nw_vals[-1] if (nw_vals and nw_vals[-1] is not None) else None
+        debt_last = debt_vals[-1] if (debt_vals and debt_vals[-1] is not None) else 0.0
+        cap_emp = (nw_last + debt_last) if (nw_last is not None and nw_last > 0) else None
+        latest_roce = round((ebit_last / cap_emp * 100), 2) if (ebit_last is not None and cap_emp is not None and cap_emp > 0) else None
 
-    # Calculate ROIC (Return on Invested Capital) = NOPAT / Invested Capital * 100
+    # Calculate ROIC = NOPAT / Invested Capital * 100
     cash_vals = extracted_bs.get("Cash & Equivalents", {}).get("values", [])
     cash_last = cash_vals[-1] if (cash_vals and cash_vals[-1] is not None) else 0.0
     inv_cap = max(1.0, cap_emp - cash_last) if cap_emp is not None else None
@@ -263,16 +349,15 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
 
     # Asset Turnover = Total Revenue / Total Assets
     assets_vals = extracted_bs.get("Total Liabilities & Assets", {}).get("values", [])
-    asset_last = assets_vals[-1] if (assets_vals and assets_vals[-1] is not None) else None
+    aligned_rev_assets = [(r, a) for r, a in zip(rev_vals, assets_vals) if r is not None and a is not None and a > 0]
+    latest_asset_turnover = round(aligned_rev_assets[-1][0] / aligned_rev_assets[-1][1], 2) if aligned_rev_assets else None
     rev_last = rev_vals[-1] if (rev_vals and rev_vals[-1] is not None) else None
-    latest_asset_turnover = round(rev_last / asset_last, 2) if (rev_last and asset_last and asset_last > 0) else None
 
     # Current Ratio = Current Assets / Current Liabilities
     ca_vals = extracted_bs.get("Current & Other Assets", {}).get("values", [])
     cl_vals = extracted_bs.get("Current Liabilities", {}).get("values", [])
-    ca_last = ca_vals[-1] if (ca_vals and ca_vals[-1] is not None) else None
-    cl_last = cl_vals[-1] if (cl_vals and cl_vals[-1] is not None) else None
-    latest_current_ratio = round(ca_last / cl_last, 2) if (ca_last and cl_last and cl_last > 0) else None
+    aligned_ca_cl = [(ca, cl) for ca, cl in zip(ca_vals, cl_vals) if ca is not None and cl is not None and cl > 0]
+    latest_current_ratio = round(aligned_ca_cl[-1][0] / aligned_ca_cl[-1][1], 2) if aligned_ca_cl else None
 
     # CROIC = Free Cash Flow / Invested Capital * 100
     fcf_vals = extracted_cf.get("Free Cash Flow (FCF)", {}).get("values", [])
@@ -281,10 +366,11 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
 
     # Receivables & DSO = Trade Receivables / Revenue * 365
     rec_vals = extracted_bs.get("Trade Receivables", {}).get("values", [])
-    rec_last = rec_vals[-1] if (rec_vals and rec_vals[-1] is not None) else None
-    if rec_last is not None and rev_last is not None and rev_last > 0:
-        latest_dso = round((rec_last / rev_last) * 365, 0)
-        latest_rec_to_sales = round((rec_last / rev_last) * 100, 1)
+    aligned_rec_rev = [(rec, r) for rec, r in zip(rec_vals, rev_vals) if rec is not None and r is not None and r > 0]
+    if aligned_rec_rev:
+        rec_val, rev_val = aligned_rec_rev[-1]
+        latest_dso = round((rec_val / rev_val) * 365, 0)
+        latest_rec_to_sales = round((rec_val / rev_val) * 100, 1)
     else:
         latest_dso = None
         latest_rec_to_sales = None
@@ -296,6 +382,12 @@ def fetch_financial_statements(ticker_symbol: str) -> Dict[str, Any]:
         "bs_years": bs_years,
         "cf_years": cf_years,
         "q_years": q_years,
+        "pnl": extracted_pnl,
+        "bs": extracted_bs,
+        "cf": extracted_cf,
+        "quarterly": extracted_quarterly,
+        "alignment_warning": alignment_warning,
+        "cfo_pat_pairing": cfo_pat_pairing,
         "pnl": extracted_pnl,
         "bs": extracted_bs,
         "cf": extracted_cf,
@@ -433,7 +525,15 @@ def build_cashflow_health_chart(fin_data: Dict[str, Any], company_name: str) -> 
     cfo = cf.get("Cash from Operations (CFO)", {}).get("values", [])
     capex = cf.get("Capital Expenditure (Capex)", {}).get("values", [])
     fcf = cf.get("Free Cash Flow (FCF)", {}).get("values", [])
-    pat = pnl.get("Net Profit (PAT)", {}).get("values", [])[-len(cf_years):]
+    raw_pat = pnl.get("Net Profit (PAT)", {}).get("values", [])
+    
+    # Truthful fiscal period alignment: match PAT to cf_years without shifting
+    if len(raw_pat) == len(cf_years):
+        pat = raw_pat
+    else:
+        pnl_years = fin_data.get("years", [])
+        pat_by_year = dict(zip(pnl_years, raw_pat))
+        pat = [pat_by_year.get(yr) for yr in cf_years]
 
     fig = go.Figure()
 

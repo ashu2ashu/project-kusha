@@ -163,9 +163,17 @@ class TestImprovementPlanner(unittest.TestCase):
 class TestSelfImprovementLoop(unittest.TestCase):
     """Verifies loop execution, dry-run safety, and bounded cycle limits."""
 
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_md_path = os.path.join(self.tmp_dir, "test_ledger.md")
+        self.tmp_json_path = os.path.join(self.tmp_dir, "test_ledger.json")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir, ignore_errors=True)
+
     def test_bounded_cycle_limits(self):
         """Loop must safely halt when max cycles are reached."""
-        loop = SelfImprovementLoop(dry_run=True)
+        loop = SelfImprovementLoop(dry_run=True, ledger_md_path=self.tmp_md_path, ledger_json_path=self.tmp_json_path)
         loop.cycle_count = MAX_CYCLES_PER_RUN
         result = loop.run_cycle()
         self.assertEqual(result["status"], "HALTED")
@@ -185,11 +193,47 @@ class TestSelfImprovementLoop(unittest.TestCase):
         }
         mock_verify.return_value = (True, "Passed: True | Duration: 0.45s | Status: OK")
 
-        loop = SelfImprovementLoop(dry_run=True)
+        loop = SelfImprovementLoop(dry_run=True, ledger_md_path=self.tmp_md_path, ledger_json_path=self.tmp_json_path)
         res = loop.run_cycle()
         self.assertEqual(res["status"], "COMPLETED")
         self.assertTrue(res["dry_run"])
         self.assertTrue(res["tests_passed"])
+
+    @patch("self_improvement_engine.VerificationRunner.verify_all")
+    @patch("self_improvement_engine.SignalCollector.collect_test_signals")
+    def test_ledger_files_remain_unmodified_during_loop_run(self, mock_collect, mock_verify):
+        """Dry-run cycle with temp paths must leave repository's real ledger files byte-identical."""
+        import hashlib
+        from self_improvement_engine import LEDGER_MD_PATH, LEDGER_JSON_PATH
+
+        def hash_file(path):
+            if not os.path.exists(path):
+                return None
+            with open(path, "rb") as f:
+                return hashlib.sha256(f.read()).hexdigest()
+
+        before_md_hash = hash_file(LEDGER_MD_PATH)
+        before_json_hash = hash_file(LEDGER_JSON_PATH)
+
+        mock_collect.return_value = {
+            "signal_type": "TEST_SUITE",
+            "passed": True,
+            "total_ran": 102,
+            "duration_seconds": 0.45,
+            "failures": [],
+            "raw_summary": "OK"
+        }
+        mock_verify.return_value = (True, "Passed: True | Duration: 0.45s | Status: OK")
+
+        loop = SelfImprovementLoop(dry_run=True, ledger_md_path=self.tmp_md_path, ledger_json_path=self.tmp_json_path)
+        res = loop.run_cycle()
+        self.assertEqual(res["status"], "COMPLETED")
+
+        after_md_hash = hash_file(LEDGER_MD_PATH)
+        after_json_hash = hash_file(LEDGER_JSON_PATH)
+
+        self.assertEqual(before_md_hash, after_md_hash, "Real IMPROVEMENT_LEDGER.md was modified during test run!")
+        self.assertEqual(before_json_hash, after_json_hash, "Real improvement_ledger.json was modified during test run!")
 
 
 if __name__ == "__main__":

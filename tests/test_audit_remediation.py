@@ -57,8 +57,10 @@ class TestSecurityConfiguration(unittest.TestCase):
         self.assertIn(".streamlit/secrets.toml", content)
 
     def test_test_key_does_not_encourage_cli_args(self):
-        """Verify that test_key.py explicitly discourages command line API keys."""
-        test_key_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "test_key.py"))
+        """Verify that check_api_key.py explicitly discourages command line API keys."""
+        test_key_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tools", "check_api_key.py"))
+        if not os.path.exists(test_key_path):
+            test_key_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "test_key.py"))
         with open(test_key_path, "r", encoding="utf-8") as f:
             content = f.read()
 
@@ -417,7 +419,7 @@ class TestProductDesignAndEvidenceExperience(unittest.TestCase):
 
         # 2. Where did this information come from?
         self.assertIn("2. Source Provenance", html)
-        self.assertIn("BSE India Statutory Annual Report", html)
+        self.assertIn("Official BSE India statutory filing", html)
 
         # 3. How fresh and complete is it?
         self.assertIn("3. Freshness &amp; Sanity Audit", html)

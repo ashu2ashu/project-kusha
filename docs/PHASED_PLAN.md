@@ -143,8 +143,7 @@ CSS extracted to `assets/kusha.css`; 14 streamlit-free functions moved to
       `NOT EVALUATED` instead of the removed `CLEAN AUDIT` / `DSO: N/A`.
 - Verified: 179 tests, `unittest discover` prints `OK`.
 
-**Caveat:** all of Phase 6 is still uncommitted on `phase-6-architecture`
-(last commit `063a509`). Commit before running Phase 7.
+**Status:** Phase 6 complete and committed on `phase-6-architecture` (commit `72584a1`), 179 tests passing.
 
 ## Phase 7 — Docs, legal & positioning `[ ]`
 

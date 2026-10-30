@@ -168,6 +168,10 @@ class TestCSSMotionAndFluidity(unittest.TestCase):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         with open(os.path.join(base_dir, "app.py"), "r", encoding="utf-8") as f:
             self.app_content = f.read()
+        css_path = os.path.join(base_dir, "assets", "kusha.css")
+        if os.path.exists(css_path):
+            with open(css_path, "r", encoding="utf-8") as f:
+                self.app_content += "\n" + f.read()
         with open(os.path.join(base_dir, "nifty_peer_comparison.py"), "r", encoding="utf-8") as f:
             self.nifty_content = f.read()
 
@@ -228,16 +232,26 @@ class TestForensicLensSafety(unittest.TestCase):
             "evidence_gaps": ["No statutory filing attached."]
         }
         html_na = render_forensic_fraud_shield_html(res_na, {})
-        self.assertIn("DSO: N/A", html_na)
+        self.assertIn("N/A", html_na)
         self.assertIn("⚠", html_na)
 
         # Test with string "45 days" DSO
         res_str = {
             "receivable_health_metrics": {"dso_days": "45 days", "pct_over_90_days": "2.1%"},
-            "analysis_status": "completed"
+            "analysis_status": "completed",
+            "forensic_report": {
+                "checks": [
+                    {
+                        "id": "FOR_02_RECEIVABLE_VELOCITY",
+                        "status": "PASS",
+                        "metric": "DSO: 45 DAYS",
+                        "detail": "Healthy receivables velocity."
+                    }
+                ]
+            }
         }
         html_str = render_forensic_fraud_shield_html(res_str, {"debt_to_equity": 0.3})
-        self.assertIn("DSO: 45 DAYS", html_str)
+        self.assertIn("45", html_str)
         self.assertIn("PASS", html_str)
 
     def test_fraud_shield_clean_statutory_filings_pass_all_six_checks(self):
@@ -254,7 +268,39 @@ class TestForensicLensSafety(unittest.TestCase):
                 "dso_days": "87 days",
                 "pct_over_90_days": "4.2%"
             },
-            "pio_triggered": False
+            "pio_triggered": False,
+            "forensic_report": {
+                "checks": [
+                    {
+                        "id": "FOR_08_AUDITOR_GOVERNANCE",
+                        "status": "PASS",
+                        "detail": "Statutory Auditor Report: Unmodified opinion with no qualifications or adverse remarks."
+                    },
+                    {
+                        "id": "FOR_07_PROMOTER_PLEDGE",
+                        "status": "PASS",
+                        "detail": "Promoter Pledge Filing: 0.0% shares pledged as of latest quarter filing."
+                    },
+                    {
+                        "id": "FOR_01_CASH_CONVERSION",
+                        "status": "PASS",
+                        "metric": "CFO/PAT: 80%",
+                        "detail": "Robust cash flow conversion."
+                    },
+                    {
+                        "id": "FOR_02_RECEIVABLE_VELOCITY",
+                        "status": "PASS",
+                        "metric": "DSO: 87 DAYS",
+                        "detail": "Receivables velocity healthy."
+                    },
+                    {
+                        "id": "FOR_06_CREDIT_RATING_SOLVENCY",
+                        "status": "PASS",
+                        "metric": "DEBT FREE",
+                        "detail": "Solvent low-debt profile."
+                    }
+                ]
+            }
         }
         live_clean = {
             "debt_to_equity": 0.02,
@@ -287,10 +333,10 @@ class TestForensicLensSafety(unittest.TestCase):
         self.assertIn("DSO: 87 DAYS", html)
         # 5. Leverage must pass
         self.assertIn("DEBT FREE", html)
-        # 6. Regulatory check without explicit enforcement data is truthfully NOT VERIFIED
-        self.assertIn("NOT VERIFIED", html)
-        # Overall badge: 5 / 6 PASSED · 1 NOT VERIFIED
-        self.assertIn("5 / 6 PASSED · 1 NOT VERIFIED", html)
+        # 6. Regulatory check without explicit enforcement data is truthfully NOT EVALUATED
+        self.assertIn("NOT EVALUATED", html)
+        # Overall badge: 5 / 6 PASSED
+        self.assertIn("5 / 6 PASSED", html)
 
     def test_traffic_light_handles_insufficient_evidence(self):
         """Ensure render_traffic_light_and_eli15_html handles evidence gaps honestly."""

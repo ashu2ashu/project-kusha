@@ -124,32 +124,67 @@ the code does not do.
 - Verified: 169 tests, `unittest discover` prints `OK`; `test_hygiene.py` enforces
   the no-network / no-outside-write rules.
 
-## Phase 6 — Architecture & packaging `[ ]`
+## Phase 6 — Architecture & packaging `[x]`
 
-- [ ] Extract the 606-line inline CSS block and the 13 streamlit-free render
-      functions out of `app.py`. **Do not** attempt to split the 1,236-line main
-      flow in this phase — no test executes it, so a bad split would still go green.
-- [ ] Single source of truth for pillars (analyzer, app, prompt template).
-- [ ] Single source of truth for score bands (analyzer verdicts vs app ELI15/gauge).
-- [ ] Merge the duplicated fraud-shield logic into `forensic_risk_engine` output.
-- [ ] Move magic constants (score bands, thresholds, retry defaults) into config.
-- [ ] Add `pyproject.toml`, bound dependencies, add missing `numpy`, raise the
-      `streamlit` floor to a version that actually has `st.iframe` / `width="stretch"`.
-- [ ] Delete duplicate `FORENSIC_FRAMEWORK_ANALYSIS.md`.
+CSS extracted to `assets/kusha.css`; 14 streamlit-free functions moved to
+`kusha_render.py`; fraud shield reduced to engine statuses (`shield_rows`,
+`_display_status`); score bands centralised in `analyzer.SCORE_BANDS` /
+`verdict_band()`. `app.py` is down to ~3,031 lines.
+
+- [x] Extract the inline CSS block and the render functions out of `app.py`.
+      The 1,236-line main flow is deliberately untouched — no test executes it.
+- [x] Merge the duplicated fraud-shield logic into `forensic_risk_engine` output.
+- [x] Single source of truth for score bands (`analyzer.verdict_band`).
+- [x] Single source of truth for pillars (styles keyed by id; prompt asserted).
+- [x] `pyproject.toml`, bounded dependencies, `numpy` added, `streamlit>=1.66.1,<2.0`.
+- [x] Delete duplicate root `FORENSIC_FRAMEWORK_ANALYSIS.md`.
+- [x] Fix the migration tests and restore `OK`. The two fraud-shield tests were
+      **rewritten**, not reverted: they now assert engine statuses and
+      `NOT EVALUATED` instead of the removed `CLEAN AUDIT` / `DSO: N/A`.
+- Verified: 179 tests, `unittest discover` prints `OK`.
+
+**Caveat:** all of Phase 6 is still uncommitted on `phase-6-architecture`
+(last commit `063a509`). Commit before running Phase 7.
 
 ## Phase 7 — Docs, legal & positioning `[ ]`
 
-- [ ] Rewrite README to match code exactly (remove DCF / IP / injection claims).
-- [ ] Add `LICENSE`.
-- [ ] Accurate privacy notice (PDFs are sent to Google).
-- [ ] `[!]` Decide SEBI posture: strip buy/sell + sizing, or register.
-- [ ] Update or delete stale `docs/REMEDIATION_PLAN.md` (references dead models).
+- [ ] Rewrite README so every claim is checkable: remove "deterministic",
+      "trade secret / IP safeguards", "100% free", "institutional-grade"; correct
+      Python floor (3.10 → 3.11) and the deprecated `gemini-3.5-flash` default.
+- [ ] `docs/PRIVACY.md`: what leaves the machine (PDFs → Gemini), what is stored
+      locally, retention, API-key handling, single-user assumption.
+- [ ] `docs/LIMITATIONS.md`: AI scores are not reproducible, FQI coverage gate,
+      peer data is FY24, no auditor/RPT source, cache replay, "fair value" is an
+      opinion.
+- [ ] `docs/LEGAL_DECISIONS.md` + owner decisions: SEBI posture (default:
+      de-advisory reframing), distribution, licence, data redistribution.
+- [ ] Retire false/stale reports to `docs/history/` with a HISTORICAL banner
+      (`BROWSER_VERIFICATION_REPORT`, `EXTENSIVE_BROWSER_WALKTHROUGH_REPORT`,
+      `FORENSIC_FRAMEWORK_ANALYSIS`, `PRODUCT_DESIGN_AND_IMPLEMENTATION_REPORT`,
+      `REMEDIATION_PLAN`).
+- [ ] Remove in-app overclaims ("Proprietary Quantitative Engine … trade secrets",
+      "institutional-grade") and the advisory stance/allocation bands if the owner
+      selects the conservative option.
+- [ ] `tests/test_phase7_docs.py`: banned claims, required links, history banners,
+      model-list equality, no stale test counts, licence consistency.
 
 ## Phase 8 — Permanent data-truth monitoring `[ ]`
 
-- [ ] Scheduled staleness checks for index/peer data.
-- [ ] Alert on PASS → INSUFFICIENT_DATA without a source change.
-- [ ] Re-run golden company suite on every release.
+Prompt: `docs/prompts/phase-8-monitoring.md`. Run **after** Phase 7 is committed.
+
+- [ ] `NIFTY_50_DATASET_DATE` ISO constant (`2024-03-31`, statement date, not edit date).
+- [ ] `monitoring/baseline.json` — generated, fingerprinted, one entry per golden fixture.
+- [ ] `tools/monitor.py` — offline + online checks, exit codes 0/1/2/3/4.
+- [ ] `tools/alert_issue.py` — GitHub Issues as the alert channel, redacted bodies.
+- [ ] `.github/workflows/monitor.yml` — daily schedule, `issues: write`, 15-min timeout.
+- [ ] `monitoring/model_watchlist.json` — verified date, must equal `SUPPORTED_MODELS`.
+- [ ] `docs/MONITORING.md` — including what is *not* monitored.
+- [ ] `tests/test_monitoring.py` — 11 tests, no network.
+- [ ] README badge + Monitoring section.
+
+**Honest caveats:** the monitor is only as permanent as the repository's activity —
+GitHub disables scheduled workflows after 60 days without a commit. The workflow has
+**not run** until the repo is pushed with Actions enabled.
 
 ---
 

@@ -16,6 +16,18 @@ import random
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
+# Canonical 8 Pillars and maximum point allocations (Sum = 100.0)
+CANONICAL_PILLARS = [
+    {"id": 1, "name": "Governance & Capital Allocation", "max_score": 20.0},
+    {"id": 2, "name": "Forensic Accounting & Cash Flow", "max_score": 20.0},
+    {"id": 3, "name": "Risk, ESG & Fragility", "max_score": 12.0},
+    {"id": 4, "name": "Valuation & Sanity Layer", "max_score": 6.0},
+    {"id": 5, "name": "Moat Durability & Scalability", "max_score": 13.0},
+    {"id": 6, "name": "Simplicity & Repeatability", "max_score": 5.0},
+    {"id": 7, "name": "Innovation & TAM Optionality", "max_score": 18.0},
+    {"id": 8, "name": "Insider & Minority Shareholder Risk", "max_score": 6.0},
+]
+
 from prompt_template import IDEX_SYSTEM_INSTRUCTION, IDEX_ANALYSIS_PROMPT
 import kusha_logging
 
@@ -32,18 +44,6 @@ SUPPORTED_MODELS = [
 ]
 DEFAULT_MODEL = "gemini-3.5-flash"
 ANALYSIS_PIPELINE_VERSION = "evidence-gate-2026-10-25-v1"
-
-# Canonical 8 Pillars and maximum point allocations (Sum = 100.0)
-CANONICAL_PILLARS = [
-    {"id": 1, "name": "Governance & Capital Allocation", "max_score": 20.0},
-    {"id": 2, "name": "Forensic Accounting & Cash Flow", "max_score": 20.0},
-    {"id": 3, "name": "Risk, ESG & Fragility", "max_score": 12.0},
-    {"id": 4, "name": "Valuation & Sanity Layer", "max_score": 6.0},
-    {"id": 5, "name": "Moat Durability & Scalability", "max_score": 13.0},
-    {"id": 6, "name": "Simplicity & Repeatability", "max_score": 5.0},
-    {"id": 7, "name": "Innovation & TAM Optionality", "max_score": 18.0},
-    {"id": 8, "name": "Insider & Minority Shareholder Risk", "max_score": 6.0},
-]
 
 # Guardrail levels. Never substring-match display tags: "GOV-CREDIBLE" contains "RED".
 GUARDRAIL_CLEAN = "CLEAN"
@@ -63,6 +63,40 @@ def guardrail_level(tag: Any) -> str:
     if normalized.startswith("PROM-ALERT"):
         return GUARDRAIL_ALERT
     return GUARDRAIL_CLEAN
+
+
+SCORE_BANDS = [
+    (90.0, "OCGC", "OCGC (≥90) — Outstanding Capital Allocator & Governance Compounder", "10–15%", "#059669"),
+    (85.0, "PCGC", "PCGC (85–89) — Potential Capital Allocator & Governance Compounder", "5–10%", "#059669"),
+    (75.0, "QTC",  "QTC (75–84) — Quality Compounder & Moat Tracker", "0–5%",   "#2563EB"),
+    (60.0, "VTC",  "VTC (60–74) — Value Compounder", "0–3%",   "#2563EB"),
+    (50.0, "STC",  "STC (50–59) — Speculative / Cyclical Turnaround", "0%",     "#D97706"),
+    (0.0,  "FRAGILE", "FRAGILE (<50) — High Risk / Governance Deficient", "0%",    "#DC2626"),
+]
+
+
+def verdict_band(score: Any) -> Dict[str, Any]:
+    """Returns {code, label, color, position_sizing} for a 0-100 score."""
+    try:
+        s = float(score)
+    except (ValueError, TypeError):
+        s = 0.0
+
+    for threshold, code, label, pos_size, color in SCORE_BANDS:
+        if s >= threshold:
+            return {
+                "code": code,
+                "label": label,
+                "color": color,
+                "position_sizing": pos_size,
+            }
+    threshold, code, label, pos_size, color = SCORE_BANDS[-1]
+    return {
+        "code": code,
+        "label": label,
+        "color": color,
+        "position_sizing": pos_size,
+    }
 
 
 def verify_gemini_api_key(api_key: str, model_name: Optional[str] = None) -> tuple[bool, str]:
@@ -250,24 +284,10 @@ def validate_and_reconcile_idex_analysis(raw: Any, is_demo: bool = False) -> Dic
     if pio_triggered:
         verdict = "FRAGILE / GOVERNANCE DEFICIENT — Auto-Red Flag due to PIO (GOV-RED 🔴)"
         position_sizing = "0%"
-    elif final_score >= 90.0:
-        verdict = "OCGC (≥90) — Outstanding Capital Allocator & Governance Compounder"
-        position_sizing = "10–15%"
-    elif final_score >= 85.0:
-        verdict = "PCGC (85–89) — Potential Capital Allocator & Governance Compounder"
-        position_sizing = "5–10%"
-    elif final_score >= 75.0:
-        verdict = "QTC (75–84) — Quality Compounder & Moat Tracker"
-        position_sizing = "0–5%"
-    elif final_score >= 60.0:
-        verdict = "VTC (60–74) — Value Compounder"
-        position_sizing = "0–3%"
-    elif final_score >= 50.0:
-        verdict = "STC (50–59) — Speculative / Cyclical Turnaround"
-        position_sizing = "0%"
     else:
-        verdict = "FRAGILE (<50) — High Risk / Governance Deficient"
-        position_sizing = "0%"
+        band = verdict_band(final_score)
+        verdict = band["label"]
+        position_sizing = band["position_sizing"]
 
     if is_demo:
         verdict += " [SYNTHETIC DEMO ONLY]"

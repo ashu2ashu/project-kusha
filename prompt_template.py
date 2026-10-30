@@ -208,3 +208,10 @@ Return ONLY valid JSON matching this exact structure:
 
 Return ONLY the JSON. No conversational fluff or text outside the JSON block.
 """
+
+# Import-time assertion guaranteeing synchronization between prompt text and canonical pillars
+from analyzer import CANONICAL_PILLARS
+
+for _p in CANONICAL_PILLARS:
+    if _p["name"] not in IDEX_ANALYSIS_PROMPT:
+        raise AssertionError(f"Canonical pillar '{_p['name']}' missing from IDEX_ANALYSIS_PROMPT")

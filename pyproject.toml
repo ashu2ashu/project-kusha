@@ -1,0 +1,26 @@
+[project]
+name = "project-kusha"
+version = "0.1.0"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+py-modules = [
+    "analyzer",
+    "app",
+    "cli",
+    "data_integrity_agent",
+    "evaluation_cache",
+    "financial_trends",
+    "forensic_risk_engine",
+    "kusha_logging",
+    "kusha_render",
+    "nifty_peer_comparison",
+    "nifty_universe",
+    "prompt_template",
+    "self_improvement_engine",
+    "annual_report_fetcher",
+]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}

@@ -6,6 +6,7 @@
 | 2. Distribution Model | Personal/local workstation only<br>Publicly hosted SaaS | **Personal/local only (PROVISIONAL)** | 2026-10-31 | Product Owner | No multi-tenant hosting; single-user local execution; documented in README. |
 | 3. Repository Licensing | Proprietary / all rights reserved<br>Permissive (MIT / Apache-2.0) | **Proprietary / all rights reserved (PROVISIONAL)** | 2026-10-31 | Product Owner | All rights reserved; no license granted to public; all unbacked IP secrecy claims removed. |
 | 4. Third-Party Data Redistribution | On-demand transient fetching<br>Redistributed raw datasets | **On-demand transient fetching** | 2026-10-31 | Product Owner | Raw Yahoo Finance / BSE filings queried on demand; no dataset redistribution. |
+| 5. Repository Visibility | Public repository / Private repository | **OPEN — not decided** | — | Product Owner | Source is currently PUBLIC with no licence granted. One of: make private, keep public under all-rights-reserved, or adopt an OSS licence. |
 
 ## Reasoning and Context
 

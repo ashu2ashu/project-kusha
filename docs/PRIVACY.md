@@ -33,7 +33,7 @@ All persistent artifacts remain strictly on your local disk:
 Streamlit usage statistics are permanently disabled via `.streamlit/config.toml` (`gatherUsageStats = false`). Project KUSHA includes zero analytics SDKs, third-party trackers, or crash reporting aggregators.
 
 ## 6. Single-User Workstation Assumption
-Project KUSHA lacks multi-tenant access control, encrypted session boundaries, and user isolation. Anyone with access to the host machine or local port can inspect cached evaluations and session data. Do not host this app as a shared or public service.
+Project KUSHA lacks multi-tenant access control, encrypted session boundaries, and user isolation. Anyone with access to the host machine or local port can inspect cached evaluations and session data. Do not host this app as a shared or public service. The source is public but the tool is not hosted; no user data is published.
 
 ## 7. How to Delete Your Data
 To purge all cached evaluations, feedback, and logs, execute from the repository root:

@@ -180,12 +180,16 @@ Prompt: `docs/prompts/phase-8-monitoring.md`. Run **after** Phase 7 is committed
 - [x] `docs/MONITORING.md` — including what is *not* monitored.
 - [x] `tests/test_monitoring.py` — 11 test cases, no network.
 - [x] README badge + Monitoring section.
+- [ ] Model list provenance is docs_review, not api_call — add the GEMINI_API_KEY secret to enable a real probe.
 
 **Honest caveats:** the monitor is only as permanent as the repository's activity —
-GitHub disables scheduled workflows after 60 days without a commit. The workflow has
-not run in cloud CI until the repo is pushed with Actions enabled. Peer dataset age is
-currently 944 days old (statement date: 2024-03-31), exceeding the 900-day soft threshold
-and flagged as a warning by the monitor.
+GitHub disables scheduled workflows after 60 days without a commit. The monitor has run
+in cloud CI: run 41227247509 (workflow_dispatch, 2026-10-31) — 5/5 jobs green; offline
+truth exit 0 with a WARN that the peer dataset is 944 days old; Yahoo 3/3 live; 14 BSE
+filings discovered for RELIANCE; Gemini probe skipped (no GEMINI_API_KEY secret
+configured). Scheduled runs begin at 21:30 UTC daily. Peer dataset age is currently 944
+days old (statement date: 2024-03-31), exceeding the 900-day soft threshold and flagged
+as a warning by the monitor.
 
 ---
 

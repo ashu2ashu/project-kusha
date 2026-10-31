@@ -173,6 +173,74 @@ class TestMonitoringSuite(unittest.TestCase):
         )
         self.assertNotIn("pull_request:", content, "Workflow must not trigger on pull_request")
 
+    def test_12_watchlist_schema_requires_provenance(self):
+        """12. Watchlist schema requires provenance -> missing verification_method -> MISCONFIGURED, exit 4."""
+        orig_loads = json.loads
+
+        def mock_loads(s, *args, **kwargs):
+            val = orig_loads(s, *args, **kwargs)
+            if isinstance(val, dict) and "models" in val and "verification_method" in val:
+                val = dict(val)
+                del val["verification_method"]
+            return val
+
+        with patch("json.loads", side_effect=mock_loads):
+            exit_code, status, findings, _ = run_offline_checks(REPO_ROOT)
+            self.assertEqual(exit_code, 4, f"Expected exit 4 for missing verification_method, got {exit_code}")
+            self.assertEqual(status, "MISCONFIGURED")
+            self.assertIn("verification_method", " ".join(findings))
+
+    def test_13_watchlist_self_contradiction_exits_4(self):
+        """13. Watchlist self contradiction exits 4 -> verification_method='api_call' with verified_with_api=false -> exit 4."""
+        orig_loads = json.loads
+
+        def mock_loads(s, *args, **kwargs):
+            val = orig_loads(s, *args, **kwargs)
+            if isinstance(val, dict) and "verification_method" in val:
+                val = dict(val)
+                val["verification_method"] = "api_call"
+                val["verified_with_api"] = False
+            return val
+
+        with patch("json.loads", side_effect=mock_loads):
+            exit_code, status, findings, _ = run_offline_checks(REPO_ROOT)
+            self.assertEqual(exit_code, 4, f"Expected exit 4 for self-contradiction, got {exit_code}")
+            self.assertEqual(status, "MISCONFIGURED")
+            self.assertIn("contradicts itself", " ".join(findings))
+
+    def test_14_non_api_verification_warns_but_exits_0(self):
+        """14. Non-API verification warns but exits 0 -> docs_review -> WARN mentioning 'NOT verified', exit 0."""
+        exit_code, status, findings, _ = run_offline_checks(REPO_ROOT)
+        self.assertEqual(exit_code, 0, f"Expected exit 0 for docs_review, got {exit_code}")
+        findings_text = " ".join(findings)
+        self.assertIn("NOT verified", findings_text)
+        self.assertIn("docs_review", findings_text)
+
+    def test_15_watchlist_last_verified_not_in_future(self):
+        """15. Watchlist last verified not in future -> parse last_verified; if it is after today -> fail."""
+        # 1. Assert committed watchlist is not in the future
+        watchlist = json.loads((REPO_ROOT / "monitoring" / "model_watchlist.json").read_text(encoding="utf-8"))
+        if watchlist.get("last_verified"):
+            wl_date = date.fromisoformat(watchlist["last_verified"])
+            self.assertLessEqual(wl_date, date.today(), f"Committed last_verified {wl_date} is in the future")
+
+        # 2. Assert monitor catches a simulated future date and fails with exit 1 (DRIFT)
+        future_date = (date.today() + timedelta(days=1)).isoformat()
+        orig_loads = json.loads
+
+        def mock_loads(s, *args, **kwargs):
+            val = orig_loads(s, *args, **kwargs)
+            if isinstance(val, dict) and "last_verified" in val and "models" in val:
+                val = dict(val)
+                val["last_verified"] = future_date
+            return val
+
+        with patch("json.loads", side_effect=mock_loads):
+            exit_code, status, findings, _ = run_offline_checks(REPO_ROOT)
+            self.assertEqual(exit_code, 1, f"Expected exit 1 for future last_verified, got {exit_code}")
+            self.assertEqual(status, "DRIFT")
+            self.assertIn("future", " ".join(findings).lower())
+
 
 if __name__ == "__main__":
     unittest.main()

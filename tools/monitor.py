@@ -260,7 +260,7 @@ def run_offline_checks(repo_root: Path) -> Tuple[int, str, List[str], Dict[str, 
     except Exception as e:
         findings.append(f"WARN: Could not parse dataset date {dataset_date_str!r}: {e}")
 
-    # 4. Model watchlist age and models list equality
+    # 4. Model watchlist age, models list equality, and provenance
     watchlist_path = repo_root / "monitoring" / "model_watchlist.json"
     if not watchlist_path.exists():
         findings.append(f"MISCONFIGURED: Missing model watchlist at {watchlist_path}")
@@ -271,16 +271,40 @@ def run_offline_checks(repo_root: Path) -> Tuple[int, str, List[str], Dict[str, 
     except Exception as e:
         return 4, "MISCONFIGURED", [f"Unreadable model watchlist: {e}"], {}
 
-    try:
-        wl_date = date.fromisoformat(watchlist.get("last_verified", "1970-01-01"))
-        wl_age_days = (date.today() - wl_date).days
-        max_wl_days = baseline.get("thresholds", {}).get("model_watchlist_max_age_days", 90)
-        if wl_age_days > max_wl_days:
-            findings.append(f"WARN: Model watchlist is {wl_age_days} days old (last verified: {watchlist.get('last_verified')}, threshold: {max_wl_days} days)")
-        else:
-            findings.append(f"OK: Model watchlist age {wl_age_days} days is within threshold ({max_wl_days} days)")
-    except Exception as e:
-        findings.append(f"WARN: Could not parse model watchlist date: {e}")
+    # Check schema provenance fields
+    if "verification_method" not in watchlist or watchlist.get("verification_method") is None:
+        return 4, "MISCONFIGURED", ["MISCONFIGURED: Missing required 'verification_method' in model_watchlist.json"], {}
+
+    v_method = watchlist.get("verification_method")
+    v_with_api = watchlist.get("verified_with_api")
+
+    # Contradiction check
+    if v_method == "api_call" and not v_with_api:
+        return 4, "MISCONFIGURED", ["MISCONFIGURED: model_watchlist.json contradicts itself: verification_method='api_call' but verified_with_api is false"], {}
+    if v_method != "api_call" and v_with_api:
+        return 4, "MISCONFIGURED", [f"MISCONFIGURED: model_watchlist.json contradicts itself: verification_method='{v_method}' but verified_with_api is true"], {}
+
+    # Date parsing and future date check
+    last_verified_str = watchlist.get("last_verified")
+    if last_verified_str:
+        try:
+            wl_date = date.fromisoformat(last_verified_str)
+            if wl_date > date.today():
+                exit_code = 1
+                status = "DRIFT"
+                findings.append(f"DRIFT: Model watchlist last_verified date {last_verified_str} is in the future")
+            else:
+                wl_age_days = (date.today() - wl_date).days
+                max_wl_days = baseline.get("thresholds", {}).get("model_watchlist_max_age_days", 90)
+                if wl_age_days > max_wl_days:
+                    findings.append(f"WARN: Model watchlist is {wl_age_days} days old (last verified: {last_verified_str}, threshold: {max_wl_days} days)")
+                else:
+                    findings.append(f"OK: Model watchlist age {wl_age_days} days is within threshold ({max_wl_days} days)")
+        except Exception as e:
+            findings.append(f"WARN: Could not parse model watchlist date {last_verified_str!r}: {e}")
+    else:
+        if v_method != "unverified":
+            findings.append(f"WARN: Model watchlist last_verified is null for method '{v_method}'")
 
     wl_models = watchlist.get("models", [])
     supp_models = analyzer.SUPPORTED_MODELS
@@ -290,6 +314,12 @@ def run_offline_checks(repo_root: Path) -> Tuple[int, str, List[str], Dict[str, 
         findings.append(f"DRIFT: Model watchlist does not match analyzer.SUPPORTED_MODELS (watchlist={wl_models}, supported={supp_models})")
     else:
         findings.append(f"OK: Model watchlist matches analyzer.SUPPORTED_MODELS ({len(supp_models)} models)")
+
+    # Provenance reporting
+    if v_method == "api_call":
+        findings.append(f"OK: Model list verified against the live Gemini API on {last_verified_str}")
+    else:
+        findings.append(f"WARN: Model list is NOT verified against the live API (method={v_method}); ids may be stale or retired")
 
     details = {
         "fingerprint": curr_fp,

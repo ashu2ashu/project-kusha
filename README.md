@@ -1,6 +1,6 @@
 # StockSage / Project KUSHA — Equity Research & Forensic Screening Aid
 
-[![CI](https://github.com/ashu2ashu/project-kusha/actions/workflows/ci.yml/badge.svg)](https://github.com/ashu2ashu/project-kusha/actions/workflows/ci.yml)
+[![Tests & Code Quality](https://github.com/ashu2ashu/project-kusha/actions/workflows/tests.yml/badge.svg)](https://github.com/ashu2ashu/project-kusha/actions/workflows/tests.yml)
 [![Data Truth Monitor](https://github.com/ashu2ashu/project-kusha/actions/workflows/monitor.yml/badge.svg)](https://github.com/ashu2ashu/project-kusha/actions/workflows/monitor.yml)
 
 ## 1. What this is
@@ -105,7 +105,12 @@ coverage run -m unittest discover -s tests && coverage report
 
 ## 10. Licence
 
-All rights reserved. No licence granted. Keep the repository private.
+All rights reserved. No licence is granted; no permission to use, copy, modify, or
+redistribute is given. The source is currently published at
+https://github.com/ashu2ashu/project-kusha. Publication is not a licence grant.
+
+The distribution decision (public repository vs private workspace) is recorded as **OPEN** in
+[docs/LEGAL_DECISIONS.md](docs/LEGAL_DECISIONS.md); it has not been confirmed by the owner.
 
 ## 11. Monitoring
 

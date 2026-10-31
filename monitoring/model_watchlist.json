@@ -1,5 +1,8 @@
 {
+  "schema": 1,
   "last_verified": "2026-10-31",
+  "verification_method": "docs_review",
+  "verified_with_api": false,
   "models": [
     "gemini-3.5-flash",
     "gemini-3.5-flash-lite",
@@ -8,5 +11,5 @@
     "gemini-3.8-flash",
     "gemini-flash-latest"
   ],
-  "notes": "Verified against the Gemini API on 2026-10-31. gemini-3.5-flash is deprecated and auto-routed; gemini-3.8-flash experienced temporary 503 high demand."
+  "notes": "Checked against published Gemini model documentation only; not verified against the live API."
 }

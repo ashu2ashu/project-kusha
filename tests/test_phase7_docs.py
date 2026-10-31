@@ -225,6 +225,26 @@ class TestPhase7DocsRatchets(unittest.TestCase):
                 f"Required privacy disclosure '{req}' missing from docs/PRIVACY.md",
             )
 
+    def test_12_every_readme_badge_resolves(self):
+        """12. Every README badge resolves: extract every actions/workflows/<file>/badge.svg from README, assert <file> exists under .github/workflows/."""
+        readme_text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        badge_pat = re.compile(r"actions/workflows/([^/]+)/badge\.svg")
+        matches = badge_pat.findall(readme_text)
+        self.assertGreater(len(matches), 0, "No GitHub workflow badges found in README.md")
+
+        for workflow_file in matches:
+            target_path = REPO_ROOT / ".github" / "workflows" / workflow_file
+            self.assertTrue(
+                target_path.exists(),
+                f"Badge in README references non-existent workflow file: .github/workflows/{workflow_file}",
+            )
+
+    def test_13_licence_statement_matches_repo_state(self):
+        """13. Licence statement matches repo state: assert README contains 'No licence is granted' and does not contain 'Keep the repository private'."""
+        readme_text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("No licence is granted", readme_text)
+        self.assertNotIn("Keep the repository private", readme_text)
+
 
 if __name__ == "__main__":
     unittest.main()

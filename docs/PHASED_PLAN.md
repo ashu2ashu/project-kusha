@@ -167,23 +167,25 @@ CSS extracted to `assets/kusha.css`; 14 streamlit-free functions moved to
 - [x] `tests/test_phase7_docs.py`: banned claims, required links, history banners,
       model-list equality, no stale test counts, licence consistency.
 
-## Phase 8 — Permanent data-truth monitoring `[ ]`
+## Phase 8 — Permanent data-truth monitoring `[x]`
 
 Prompt: `docs/prompts/phase-8-monitoring.md`. Run **after** Phase 7 is committed.
 
-- [ ] `NIFTY_50_DATASET_DATE` ISO constant (`2024-03-31`, statement date, not edit date).
-- [ ] `monitoring/baseline.json` — generated, fingerprinted, one entry per golden fixture.
-- [ ] `tools/monitor.py` — offline + online checks, exit codes 0/1/2/3/4.
-- [ ] `tools/alert_issue.py` — GitHub Issues as the alert channel, redacted bodies.
-- [ ] `.github/workflows/monitor.yml` — daily schedule, `issues: write`, 15-min timeout.
-- [ ] `monitoring/model_watchlist.json` — verified date, must equal `SUPPORTED_MODELS`.
-- [ ] `docs/MONITORING.md` — including what is *not* monitored.
-- [ ] `tests/test_monitoring.py` — 11 test cases, no network.
-- [ ] README badge + Monitoring section.
+- [x] `NIFTY_50_DATASET_DATE` ISO constant (`2024-03-31`, statement date, not edit date).
+- [x] `monitoring/baseline.json` — generated, fingerprinted, one entry per golden fixture.
+- [x] `tools/monitor.py` — offline + online checks, exit codes 0/1/2/3/4.
+- [x] `tools/alert_issue.py` — GitHub Issues as the alert channel, redacted bodies.
+- [x] `.github/workflows/monitor.yml` — daily schedule, `issues: write`, 15-min timeout.
+- [x] `monitoring/model_watchlist.json` — verified date, must equal `SUPPORTED_MODELS`.
+- [x] `docs/MONITORING.md` — including what is *not* monitored.
+- [x] `tests/test_monitoring.py` — 11 test cases, no network.
+- [x] README badge + Monitoring section.
 
 **Honest caveats:** the monitor is only as permanent as the repository's activity —
 GitHub disables scheduled workflows after 60 days without a commit. The workflow has
-**not run** until the repo is pushed with Actions enabled.
+not run in cloud CI until the repo is pushed with Actions enabled. Peer dataset age is
+currently 944 days old (statement date: 2024-03-31), exceeding the 900-day soft threshold
+and flagged as a warning by the monitor.
 
 ---
 

@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "generated_at": "2026-10-31T17:37:02.665907+00:00",
+  "reason": "initial baseline after phase 7",
+  "fingerprint": "8bdd11b12f74bfde3eec20d72982334950f576d7a7f40970c363f3557a0207ef",
+  "inputs": {
+    "pipeline_version": "evidence-gate-2026-10-25-v1",
+    "engine_version": "2026.1",
+    "dataset_date": "2024-03-31",
+    "fixtures_sha256": "60d22af173ac5d026f9c9762f453495703ff7a60998664cad21f343c6cce986a",
+    "pillars": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+    ]
+  },
+  "thresholds": {
+    "peer_dataset_max_age_days": 900,
+    "model_watchlist_max_age_days": 90,
+    "market_data_max_age_hours": 48
+  },
+  "fixtures": {
+    "CLEAN_LARGECAP": {
+      "fqi_score": 100.0,
+      "verdict_badge": "PRISTINE",
+      "score_issued": true,
+      "checks": {
+        "FOR_01_CASH_CONVERSION": "PASS",
+        "FOR_02_RECEIVABLE_VELOCITY": "PASS",
+        "FOR_03_CWIP_AGING": "PASS",
+        "FOR_04_TAX_DIVERGENCE": "PASS",
+        "FOR_05_OTHER_INCOME_DEPENDENCY": "PASS",
+        "FOR_06_CREDIT_RATING_SOLVENCY": "PASS",
+        "FOR_07_PROMOTER_PLEDGE": "PASS",
+        "FOR_08_AUDITOR_GOVERNANCE": "PASS"
+      }
+    },
+    "LOSS_MAKER": {
+      "fqi_score": 25.0,
+      "verdict_badge": "HIGH RISK",
+      "score_issued": true,
+      "checks": {
+        "FOR_01_CASH_CONVERSION": "CRITICAL",
+        "FOR_02_RECEIVABLE_VELOCITY": "MONITOR",
+        "FOR_03_CWIP_AGING": "PASS",
+        "FOR_04_TAX_DIVERGENCE": "INSUFFICIENT_DATA",
+        "FOR_05_OTHER_INCOME_DEPENDENCY": "INSUFFICIENT_DATA",
+        "FOR_06_CREDIT_RATING_SOLVENCY": "CRITICAL",
+        "FOR_07_PROMOTER_PLEDGE": "CRITICAL",
+        "FOR_08_AUDITOR_GOVERNANCE": "CRITICAL"
+      }
+    },
+    "HIGH_PLEDGE": {
+      "fqi_score": 80.0,
+      "verdict_badge": "HIGH RISK",
+      "score_issued": true,
+      "checks": {
+        "FOR_01_CASH_CONVERSION": "PASS",
+        "FOR_02_RECEIVABLE_VELOCITY": "PASS",
+        "FOR_03_CWIP_AGING": "PASS",
+        "FOR_04_TAX_DIVERGENCE": "PASS",
+        "FOR_05_OTHER_INCOME_DEPENDENCY": "PASS",
+        "FOR_06_CREDIT_RATING_SOLVENCY": "MONITOR",
+        "FOR_07_PROMOTER_PLEDGE": "CRITICAL",
+        "FOR_08_AUDITOR_GOVERNANCE": "PASS"
+      }
+    },
+    "CHANNEL_STUFFING": {
+      "fqi_score": 66.0,
+      "verdict_badge": "HIGH RISK",
+      "score_issued": true,
+      "checks": {
+        "FOR_01_CASH_CONVERSION": "CRITICAL",
+        "FOR_02_RECEIVABLE_VELOCITY": "CRITICAL",
+        "FOR_03_CWIP_AGING": "PASS",
+        "FOR_04_TAX_DIVERGENCE": "PASS",
+        "FOR_05_OTHER_INCOME_DEPENDENCY": "PASS",
+        "FOR_06_CREDIT_RATING_SOLVENCY": "MONITOR",
+        "FOR_07_PROMOTER_PLEDGE": "PASS",
+        "FOR_08_AUDITOR_GOVERNANCE": "PASS"
+      }
+    },
+    "EMPTY": {
+      "fqi_score": null,
+      "verdict_badge": "INSUFFICIENT DATA",
+      "score_issued": false,
+      "checks": {
+        "FOR_01_CASH_CONVERSION": "INSUFFICIENT_DATA",
+        "FOR_02_RECEIVABLE_VELOCITY": "INSUFFICIENT_DATA",
+        "FOR_03_CWIP_AGING": "INSUFFICIENT_DATA",
+        "FOR_04_TAX_DIVERGENCE": "INSUFFICIENT_DATA",
+        "FOR_05_OTHER_INCOME_DEPENDENCY": "INSUFFICIENT_DATA",
+        "FOR_06_CREDIT_RATING_SOLVENCY": "INSUFFICIENT_DATA",
+        "FOR_07_PROMOTER_PLEDGE": "INSUFFICIENT_DATA",
+        "FOR_08_AUDITOR_GOVERNANCE": "INSUFFICIENT_DATA"
+      }
+    }
+  }
+}

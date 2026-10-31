@@ -35,6 +35,8 @@ logger = kusha_logging.get_logger("kusha.nifty_peer_comparison")
 
 # Canonical dataset metadata
 NIFTY_50_DATASET_AS_OF = "FY24 financial basis; updated Q2 FY25"
+# Date of the underlying financial statements, not the date the file was edited.
+NIFTY_50_DATASET_DATE = "2024-03-31"
 NIFTY_50_DATASET_TYPE = "Historical Benchmark Reference Sample"
 NIFTY_50_DATASET_DISCLAIMER = "Peer comparison uses historical FY24 audited financial disclosures as a standardized reference set. Not real-time exchange ticks."
 

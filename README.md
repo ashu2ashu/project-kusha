@@ -1,5 +1,8 @@
 # StockSage / Project KUSHA — Equity Research & Forensic Screening Aid
 
+[![CI](https://github.com/ashu2ashu/project-kusha/actions/workflows/ci.yml/badge.svg)](https://github.com/ashu2ashu/project-kusha/actions/workflows/ci.yml)
+[![Data Truth Monitor](https://github.com/ashu2ashu/project-kusha/actions/workflows/monitor.yml/badge.svg)](https://github.com/ashu2ashu/project-kusha/actions/workflows/monitor.yml)
+
 ## 1. What this is
 
 A local Streamlit app that sends Indian listed company financials and optional annual-report PDFs to Google Gemini, and renders an AI-generated 8-pillar quality score, forensic checks, and evidence gaps. It is a screening aid, not an audit, valuation, or advice.
@@ -103,3 +106,8 @@ coverage run -m unittest discover -s tests && coverage report
 ## 10. Licence
 
 All rights reserved. No licence granted. Keep the repository private.
+
+## 11. Monitoring
+
+StockSage runs a scheduled GitHub Actions data-truth monitor to detect silent schema drift, upstream source breakages, and model deprecations. Alerts are filed as GitHub Issues without storing API keys or financial statements. Baseline updates cannot be applied by CI and require an explicit human commit with a documented reason; see [docs/MONITORING.md](docs/MONITORING.md).
+

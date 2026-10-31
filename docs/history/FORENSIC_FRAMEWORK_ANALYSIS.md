@@ -1,3 +1,5 @@
+> **HISTORICAL — superseded.** This document describes a DCF model with WACC 11.2% / g 5.0% and claims "every analytical layer operates deterministically". The DCF calculation does not exist in the product, and AI model outputs are probabilistic extractions.
+
 # Comprehensive Institutional Framework & Forensic Due Diligence Analysis
 
 This document provides an exhaustive, granular analysis of each analytical dimension, quantitative formula, forensic threshold, and visualization model implemented in **StockSage (IDEX-7.5SC)**. It concludes with a live case-study walkthrough of **ABB India Ltd**.

@@ -2,12 +2,12 @@
 
 ## Post-Phase 6 Module Map
 
-- `analyzer.py`: Canonical pillars, score bands, deterministic reconciliation, and verdict classification (pure).
+- `analyzer.py`: Canonical pillars, score bands, deterministic arithmetic reconciliation, and verdict classification (pure).
 - `annual_report_fetcher.py`: Statutory annual report retrieval and ingestion helpers (pure).
 - `app.py`: Streamlit entrypoint, session state orchestration, user inputs, and top-level analysis execution flow.
 - `cli.py`: Headless command-line execution runner for automated audits (pure).
 - `data_integrity_agent.py`: Pre-flight sanity checks, schema validation, and outlier detection (pure).
-- `evaluation_cache.py`: Deterministic content-hashed disk evaluation cache with 24h TTL policy (pure).
+- `evaluation_cache.py`: Content-hashed disk evaluation cache with 24h TTL policy (pure).
 - `financial_trends.py`: Balance sheet metrics, DuPont breakdown, CAGR, and financial ratio math (pure).
 - `forensic_risk_engine.py`: Multi-check forensic accounting engine and fraud risk heuristics (pure).
 - `kusha_logging.py`: Standardized stderr logging with security redaction filters (pure).

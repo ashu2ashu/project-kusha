@@ -1,62 +1,32 @@
-# 🇮🇳 StockSage / Project KUSHA — Equity Research & Forensic Screening Terminal
+# StockSage / Project KUSHA — Equity Research & Forensic Screening Aid
 
-StockSage is an equity intelligence and forensic screening terminal designed for evaluating Indian NSE/BSE listed companies. It pairs automated data consistency checks and public market data feeds with the 8-Pillar IDEX-7.5SC evaluation framework powered by Google Gemini.
+## 1. What this is
 
----
+A local Streamlit app that sends Indian listed company financials and optional annual-report PDFs to Google Gemini, and renders an AI-generated 8-pillar quality score, forensic checks, and evidence gaps. It is a screening aid, not an audit, valuation, or advice.
 
-## 🏛️ The 8-Pillar IDEX-7.5SC Framework (Core Score: 0–100)
+## 2. What this is not
 
-StockSage evaluates companies deterministically across 8 canonical vectors:
+- **Not SEBI-registered:** StockSage is an educational and analytical research prototype; it is not registered with SEBI under Research Analysts Regulations (2014) or Investment Advisers Regulations (2013).
+- **Not an audit:** Automated forensic consistency checks evaluate reported mathematical relationships; they do not audit books or verify statutory authenticity.
+- **Not a DCF:** Price anchors in the Valuation Compass are qualitative model heuristics; no discounted cash flow, WACC, or terminal value is computed.
+- **Not real-time:** Market feeds and quote data are delayed and subject to provider revision.
+- **Not reproducible across model versions:** The arithmetic after the model returns is deterministic; the scores are not. Identical prompts evaluated across runs or model updates may vary.
 
-1. **Governance & Capital Allocation** — Promoter integrity, capital reinvestment discipline, board independence, dilution control, and M&A track record.
-2. **Forensic Accounting & Cash Flow** — Cash flow conversion (CFO vs PAT), accrual quality, working capital sanity, and embedded **Sector-Specific Receivable Health Layer** (DSO, aging >90 days, provision coverage).
-3. **Risk, ESG & Fragility** — Balance sheet leverage (Net Debt/EBITDA), debt service coverage, environmental/litigation exposure, and raw material volatility.
-4. **Valuation & Sanity Layer** — Relative valuation multiples (P/E, EV/EBITDA, P/B), DCF margin of safety corridors, and operational stress testing.
-5. **Moat Durability & Scalability** — Pricing power, distribution reach, network effects, cost advantage, and brand durability.
-6. **Simplicity & Repeatability** — Business clarity, revenue predictability, subsidiary hygiene, and low execution complexity.
-7. **Innovation & TAM Optionality** — R&D velocity, new market adjacency expansion, and addressable total market optionality.
-8. **Insider & Minority Shareholder Risk** — Promoter share pledging (PPRM), insider transactions, and related-party transaction (RPT) transparency.
+## 3. Data sources and freshness
 
-### Deterministic Application Guardrails
-- **Promoter Integrity Override (PIO)**: Hard distress triggers (auditor qualifications/resignations, regulatory enforcement, material RPT misuse, or excessive promoter share pledging) automatically trigger a governance circuit breaker, revoke upside bonuses, enforce `GOV-RED 🔴`, and clamp the overall score into high-risk territory.
-- **Controlled Penalty & Bonus Curves**: Risk deductions and trajectory bonuses are mathematically bounded to prevent outsized distortions and eliminate black-box volatility.
-- **Trade Secret Protection**: Exact algorithmic weights, penalty multipliers, and non-linear scoring curves are compiled under internal IP safeguards.
+- [Yahoo Finance](https://finance.yahoo.com): Provides ~4 years of unaudited historical statements and delayed price telemetry, subject to provider restatements.
+- [BSE India Public Filing Archive](https://www.bseindia.com): Exchange archive queried on-demand to fetch official annual report PDFs; retrieval depends on public availability.
+- [Google Gemini Search Grounding](https://ai.google.dev): Web retrieval for recent developments; coverage is bounded by Google Search indexing.
 
----
-
-## 🔍 Data Consistency Engine (Internal Quality Checks)
-
-Before scoring proceeds, the built-in consistency engine evaluates ingested statements against 6 mathematical sanity checks:
-1. **Balance Sheet Equation**: Confirms Assets cover Net Worth and Liabilities.
-2. **Cash Flow Reconcilement**: Tests CFO - |Capex| against Free Cash Flow.
-3. **Accrual Quality**: Compares Operating Cash Flow to Net Profit to flag non-cash earnings.
-4. **P&L Structural Hierarchy**: Verifies Revenue covers Operating Profit and Net Profit.
-5. **Market Pricing Bounds**: Checks current price within official 52-week channels.
-6. **Reporting History Depth**: Confirms multi-year reporting depth.
-
-> [!NOTE]
-> **Data Scope Disclosure**: Automated consistency checks evaluate internal arithmetic relationships within ingested third-party data. They do **not** constitute an independent statutory audit, certification of filing authenticity, or guarantee against accounting fraud. Market data is provided via Yahoo Finance (unverified third-party feeds; delayed).
-
----
-
-## ⚡ Automated Statutory Annual Report Ingestion (BSE India)
-
-StockSage automatically queries public exchange archives to discover and stream official statutory annual report PDFs directly into Google Gemini for analysis:
-- **1-Click Regulatory Retrieval**: Selecting any tracked Indian equity displays available official annual reports (2024, 2023, etc.) with verified exchange links.
-- **100% Free Public Access**: Zero marker/API costs—streams official statutory filings directly from BSE India regulatory archives (`bseindia.com/xml-data/corpfiling/AttachHis/...`).
-- **Native Multimodal Extraction**: Official PDFs are ingested natively by Gemini's multimodal document engine alongside live Google Search grounding.
-- **Statutory Provenance Tracking**: Every evaluation retains document metadata and a direct link to the official BSE India regulatory filing.
-
----
-
-## 🚀 Quickstart & Installation
+## 4. Quickstart
 
 ### Prerequisites
-- Python 3.10+ (tested on Python 3.11)
+- Python 3.11+ (tested on Python 3.11 and 3.12; Python 3.10 is unsupported)
 - Google Gemini API key from [Google AI Studio](https://aistudio.google.com)
 
-### 1. Clone & Setup Environment
+### Installation
 ```bash
+# Clone the repository
 git clone https://github.com/ashu2ashu/project-kusha.git
 cd project-kusha
 
@@ -68,70 +38,68 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Your API Key
-Copy `.env.example` or create a `.env` file in the project root:
+### Configure Credentials
+Enter your key in session memory in the UI at runtime, or store it in `.env`. Note: if you use `.env`, the key is stored in plaintext on disk. Logs redact it.
 ```bash
-echo 'GEMINI_API_KEY="your_actual_key_here"' > .env
+echo 'GEMINI_API_KEY="your_api_key_here"' > .env
 ```
-*(Alternatively, enter your key securely in the application password field at runtime. Keys are kept in session memory and never persisted to logs or disk.)*
 
-### 3. Verify Key Connectivity
+Verify connectivity before launching:
 ```bash
 python tools/check_api_key.py
 ```
 
-### 4. Launch the Terminal
+### Launch the Application
 ```bash
 streamlit run app.py
 ```
 Open your browser at `http://localhost:8501`.
 
----
+## 5. Models
 
-## 🧪 Demo Mode
-To explore the user interface, interactive charts, and 8-pillar visualizations without an API key:
-- Toggle **Demo Mode** in the sidebar.
-- Click **Quick Demo** to run a sample evaluation on synthetic demonstration data.
-- All demo outputs are visibly marked as `[SYNTHETIC DEMO SAMPLE]` and must not be used as investment research or advice.
+<!-- MODELS:START -->
+gemini-3.5-flash
+gemini-3.5-flash-lite
+gemini-3-flash-preview
+gemini-flash-lite-latest
+gemini-3.8-flash
+gemini-flash-latest
+<!-- MODELS:END -->
 
----
+Model availability and free-tier quotas change; verify in AI Studio. Note that `gemini-3.5-flash` is marked deprecated in Google documentation and auto-routed to `gemini-3.6-flash`.
 
-## 🤖 Supported Gemini Models
-StockSage supports Google Gemini models configurable directly from the sidebar:
-- `gemini-3.5-flash` (Default — fast, ultra-low latency multimodal reasoning)
-- `gemini-3.5-flash-lite` (Lightweight fallback with dedicated free tier quota)
-- `gemini-3-flash-preview`
-- `gemini-flash-lite-latest`
-- `gemini-3.8-flash` (Advanced reasoning, recommended by Google)
-- `gemini-flash-latest`
+## 6. Demo mode
 
----
+Toggle **Demo Mode** in the sidebar to review the user interface and report layouts using synthetic sample data (Tata Consumer Products). Demo evaluations use synthetic fixtures, are marked `[SYNTHETIC SAMPLE]`, and do not represent actual fundamental research.
 
-## 🔒 Security & Trust Boundary
+## 7. Security & privacy
 
-- The app runs locally and is not multi-user.
-- Uploaded PDFs and all model output are treated as untrusted.
-- PDFs are uploaded to Google's Gemini API — they leave the machine.
-- Analyses are cached in plain JSON on local disk.
-- Data comes from Yahoo Finance (delayed, unaudited) and Gemini web grounding.
-- The app is not a registered investment adviser and outputs are not advice.
-- The Gemini API key is used for the operator's own quota and is never persisted; on a shared machine, use a dedicated key.
+PDFs leave your machine and are sent to Google Gemini for token processing; local caches (`.cache/evaluations/`) store analyses in plaintext JSON; Google's free-tier data terms permit training on submitted inputs, which differs from paid tier terms — do not upload confidential filings. Review [docs/PRIVACY.md](docs/PRIVACY.md) for data flows, retention lifecycles, and deletion procedures.
 
----
+## 8. Limitations
 
-## Testing
+Detailed operational constraints are documented in [docs/LIMITATIONS.md](docs/LIMITATIONS.md). Key boundaries include:
+1. AI scores are not reproducible across runs; only the post-model arithmetic is deterministic.
+2. Peer comparisons use an FY24 reference dataset rather than live streaming market feeds.
+3. Auditor and governance checks (e.g. FOR_08) lack automated public feeds and are normally reported as not evaluated.
+
+Refer to [docs/LEGAL_DECISIONS.md](docs/LEGAL_DECISIONS.md) for regulatory framing and product policy decisions.
+
+## 9. Testing
+
+The suite uses Python's standard library `unittest` framework with hermetic test execution (network access disabled, filesystem isolated to temporary directories):
 
 ```bash
-python -m unittest discover -s tests                # full suite
-python -m unittest tests.test_golden_companies -v   # scoring invariants only
+# Run the full test suite
+python -m unittest discover -s tests
+
+# Run scoring invariant tests
+python -m unittest tests.test_golden_companies -v
+
+# Check coverage
 coverage run -m unittest discover -s tests && coverage report
 ```
 
-Tests require no API key, make zero network calls, and write only to temporary directories.
+## 10. Licence
 
----
-
-## ⚖️ Regulatory Notice & Disclaimer
-StockSage / Project KUSHA is an automated analytical research and educational technology prototype. It is NOT registered with the Securities and Exchange Board of India (SEBI) as an Investment Adviser (under IA Regulations, 2013) or Research Analyst (under RA Regulations, 2014).
-
-All valuations, scores, ratings, traffic-light badges, and estimates are generated algorithmically for screening purposes and do NOT constitute financial, investment, legal, tax, or accounting advice. Always consult a qualified SEBI-registered financial advisor before making capital allocation decisions.
+All rights reserved. No licence granted. Keep the repository private.

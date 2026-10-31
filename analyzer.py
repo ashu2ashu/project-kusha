@@ -66,36 +66,36 @@ def guardrail_level(tag: Any) -> str:
 
 
 SCORE_BANDS = [
-    (90.0, "OCGC", "OCGC (≥90) — Outstanding Capital Allocator & Governance Compounder", "10–15%", "#059669"),
-    (85.0, "PCGC", "PCGC (85–89) — Potential Capital Allocator & Governance Compounder", "5–10%", "#059669"),
-    (75.0, "QTC",  "QTC (75–84) — Quality Compounder & Moat Tracker", "0–5%",   "#2563EB"),
-    (60.0, "VTC",  "VTC (60–74) — Value Compounder", "0–3%",   "#2563EB"),
-    (50.0, "STC",  "STC (50–59) — Speculative / Cyclical Turnaround", "0%",     "#D97706"),
-    (0.0,  "FRAGILE", "FRAGILE (<50) — High Risk / Governance Deficient", "0%",    "#DC2626"),
+    (90.0, "OCGC", "OCGC (≥90) — Outstanding Capital Allocator & Governance Compounder", "Constructive", "#059669"),
+    (85.0, "PCGC", "PCGC (85–89) — Potential Capital Allocator & Governance Compounder", "Constructive", "#059669"),
+    (75.0, "QTC",  "QTC (75–84) — Quality Compounder & Moat Tracker", "Monitored", "#2563EB"),
+    (60.0, "VTC",  "VTC (60–74) — Value Compounder", "Monitored", "#2563EB"),
+    (50.0, "STC",  "STC (50–59) — Speculative / Cyclical Turnaround", "Elevated Caution", "#D97706"),
+    (0.0,  "FRAGILE", "FRAGILE (<50) — High Risk / Governance Deficient", "Elevated Caution", "#DC2626"),
 ]
 
 
 def verdict_band(score: Any) -> Dict[str, Any]:
-    """Returns {code, label, color, position_sizing} for a 0-100 score."""
+    """Returns {code, label, color, risk_tier} for a 0-100 score."""
     try:
         s = float(score)
     except (ValueError, TypeError):
         s = 0.0
 
-    for threshold, code, label, pos_size, color in SCORE_BANDS:
+    for threshold, code, label, risk_tier, color in SCORE_BANDS:
         if s >= threshold:
             return {
                 "code": code,
                 "label": label,
                 "color": color,
-                "position_sizing": pos_size,
+                "risk_tier": risk_tier,
             }
-    threshold, code, label, pos_size, color = SCORE_BANDS[-1]
+    threshold, code, label, risk_tier, color = SCORE_BANDS[-1]
     return {
         "code": code,
         "label": label,
         "color": color,
-        "position_sizing": pos_size,
+        "risk_tier": risk_tier,
     }
 
 
@@ -283,11 +283,11 @@ def validate_and_reconcile_idex_analysis(raw: Any, is_demo: bool = False) -> Dic
     # 7. Deterministic Verdict Bands
     if pio_triggered:
         verdict = "FRAGILE / GOVERNANCE DEFICIENT — Auto-Red Flag due to PIO (GOV-RED 🔴)"
-        position_sizing = "0%"
+        risk_tier = "Elevated Caution"
     else:
         band = verdict_band(final_score)
         verdict = band["label"]
-        position_sizing = band["position_sizing"]
+        risk_tier = band["risk_tier"]
 
     if is_demo:
         verdict += " [SYNTHETIC DEMO ONLY]"
@@ -326,7 +326,7 @@ def validate_and_reconcile_idex_analysis(raw: Any, is_demo: bool = False) -> Dic
         "bonuses_breakdown": bonuses_breakdown,
         "final_score": final_score,
         "verdict": verdict,
-        "position_sizing": position_sizing,
+        "risk_tier": risk_tier,
         "tags_applied": raw.get("tags_applied", [guardrail_tag]),
         "pillars": reconciled_pillars,
         "receivable_health_metrics": raw.get("receivable_health_metrics", {

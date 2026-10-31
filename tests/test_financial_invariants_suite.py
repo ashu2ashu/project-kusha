@@ -261,7 +261,7 @@ class TestPromoterAndGovernanceIntegrityInvariants(unittest.TestCase):
         reconciled = validate_and_reconcile_idex_analysis(raw)
         self.assertLessEqual(reconciled["final_score"], 49.0)
         self.assertIn("FRAGILE", reconciled["verdict"])
-        self.assertEqual(reconciled["position_sizing"], "0%")
+        self.assertEqual(reconciled["risk_tier"], "Elevated Caution")
 
     def test_gov_red_tag_automatically_activates_pio(self):
         """Even if pio_triggered is falsely set to False by model, GOV-RED tag deterministically forces PIO."""
@@ -380,14 +380,14 @@ class TestScoringMathematicalInvariants(unittest.TestCase):
     def test_verdict_band_consistency(self):
         """Verifies deterministic mapping of final score to official IDEX verdict bands."""
         bands = [
-            (95.0, "OCGC (≥90)", "10–15%"),
-            (88.0, "PCGC (85–89)", "5–10%"),
-            (80.0, "QTC (75–84)", "0–5%"),
-            (68.0, "VTC (60–74)", "0–3%"),
-            (55.0, "STC (50–59)", "0%"),
-            (42.0, "FRAGILE (<50)", "0%")
+            (95.0, "OCGC (≥90)", "Constructive"),
+            (88.0, "PCGC (85–89)", "Constructive"),
+            (80.0, "QTC (75–84)", "Monitored"),
+            (68.0, "VTC (60–74)", "Monitored"),
+            (55.0, "STC (50–59)", "Elevated Caution"),
+            (42.0, "FRAGILE (<50)", "Elevated Caution")
         ]
-        for target_score, expected_verdict_prefix, expected_sizing in bands:
+        for target_score, expected_verdict_prefix, expected_tier in bands:
             scale = target_score / 100.0
             pillars = [
                 {"id": p["id"], "name": p["name"], "score": p["max_score"] * scale, "justification": "Scale"}
@@ -401,7 +401,7 @@ class TestScoringMathematicalInvariants(unittest.TestCase):
             }
             res = validate_and_reconcile_idex_analysis(raw)
             self.assertIn(expected_verdict_prefix, res["verdict"])
-            self.assertEqual(res["position_sizing"], expected_sizing)
+            self.assertEqual(res["risk_tier"], expected_tier)
 
 
 class TestSyntheticAndEdgeCaseFixtures(unittest.TestCase):
@@ -554,7 +554,7 @@ class TestSyntheticAndEdgeCaseFixtures(unittest.TestCase):
         self.assertEqual(reconciled["total_penalties"], -7.5)
         self.assertLessEqual(reconciled["final_score"], 49.0)
         self.assertIn("FRAGILE", reconciled["verdict"])
-        self.assertEqual(reconciled["position_sizing"], "0%")
+        self.assertEqual(reconciled["risk_tier"], "Elevated Caution")
 
 
 if __name__ == "__main__":

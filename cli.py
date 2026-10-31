@@ -170,7 +170,7 @@ def run_cli_analysis(ticker: str, is_demo: bool = False, model: str = "gemini-3.
     total_bon = idex_res.get("bonuses_breakdown", {}).get("total_bonus_applied", 0.0)
     final_score = idex_res.get("final_score", 0.0)
     verdict = idex_res.get("verdict", "N/A")
-    pos_sizing = idex_res.get("position_sizing", "0%")
+    risk_tier = idex_res.get("risk_tier", "Monitored")
     guardrail = idex_res.get("guardrail_tag", "GOV-CLEAN 🟢")
     pio_trig = idex_res.get("pio_triggered", False)
 
@@ -182,7 +182,7 @@ def run_cli_analysis(ticker: str, is_demo: bool = False, model: str = "gemini-3.
     print(f"│ {BOLD}FINAL IDEX SCORE : {GREEN if final_score >= 75 else (YELLOW if final_score >= 50 else RED)}{BOLD}{final_score:>5.1f} / 100.0{RESET}                                                │")
     print(f"│ Guardrail Tag    : {guardrail:<58} │")
     print(f"│ Verdict Band     : {BOLD}{verdict[:58]:<58}{RESET} │")
-    print(f"│ Allocation Sizing: {BOLD}{pos_sizing:<58}{RESET} │")
+    print(f"│ Risk Tier        : {BOLD}{risk_tier:<58}{RESET} │")
     print(f"{BOLD}└────────────────────────────────────────────────────────────────────────────────┘{RESET}")
     print(f"\n{DIM}Run complete. For the interactive visual dashboard, run: streamlit run app.py{RESET}\n")
 

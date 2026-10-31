@@ -1,3 +1,5 @@
+> **HISTORICAL — superseded.** This report reflects pre-remediation states claiming "73 unit tests" (the suite contains >179 tests), 10 analytical pillars instead of the canonical 8, and pre-remediation product designs.
+
 # StockSage / Project KUSHA — Evidence-Based Equity Research & Product Implementation Report
 
 > [!NOTE]

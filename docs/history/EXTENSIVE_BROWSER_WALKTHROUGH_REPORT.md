@@ -1,3 +1,5 @@
+> **HISTORICAL — superseded.** This report reflects superseded pre-remediation claims including a "10-pillar scorecard" (the canonical architecture has 8 pillars), fabricated CLEAN AUDIT fraud-shield rows, and DCF fair value calculations that were removed in Phase 1.
+
 # Extensive Browser Walkthrough & End-to-End Audit Report
 
 This report presents the findings of the extensive automated browser walkthrough conducted against `http://localhost:8501`. Every view, interactive selector, timeframe control, financial statement expander, and forensic evaluation component was exercised.

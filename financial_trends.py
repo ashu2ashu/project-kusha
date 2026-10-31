@@ -699,7 +699,7 @@ def render_growth_cagr_scorecard_html(cagr: Dict[str, Any]) -> str:
     # Cash conversion forensic tag
     if avg_cfo_pat is not None:
         if avg_cfo_pat >= 100:
-            cfo_badge = '<span style="background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟢 Institutional Grade</span>'
+            cfo_badge = '<span style="background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🟢 Strong Cash Conversion</span>'
         elif avg_cfo_pat >= 75:
             cfo_badge = '<span style="background: #EFF6FF; color: #2563EB; border: 1.5px solid #BFDBFE; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 9999px;">🔵 Sound Accruals</span>'
         elif avg_cfo_pat >= 50:

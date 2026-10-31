@@ -836,7 +836,7 @@ def render_project_kusha_welcome_page():
           </div>
         </div>
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 11.5px; font-weight: 600; color: #475569; text-align: center;">
-          🔒 <strong>Proprietary Quantitative Engine:</strong> Exact algorithmic weights, penalty multipliers, and non-linear scoring curves are compiled trade secrets protected under quantitative IP safeguards.
+          ⚡ <strong>Scoring Architecture:</strong> Scoring rules are open Python in this repository; the thresholds are listed in the Methodology tab.
         </div>
         """, unsafe_allow_html=True)
 
@@ -959,10 +959,10 @@ def render_project_kusha_welcome_page():
                 st.rerun()
             st.caption("Explore a complete, instant walkthrough using synthetic demonstration data for Tata Consumer.")
 
-    # Intellectual Property & Trade Secret Safeguard Notice
+    # Open Methodology & Thresholds Notice
     st.markdown("""
-    <div class="ss-proprietary-shield" style="margin-top: 28px; padding: 12px 18px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; text-align: center; font-size: 11.5px; color: #64748B;">
-      🔒 <strong>Intellectual Property &amp; Trade Secret Safeguard:</strong> Project KUSHA valuation heuristics, multi-factor scoring vectors, and forensic algorithms are protected proprietary IP. Systematic scraping, model reverse-engineering, and unauthorized algorithmic replication are strictly prohibited.
+    <div style="margin-top: 28px; padding: 12px 18px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; text-align: center; font-size: 11.5px; color: #64748B;">
+      ⚡ <strong>Open Scoring Architecture:</strong> Project KUSHA scoring rules are open Python in this repository; the thresholds are listed in the Methodology tab.
     </div>
     """, unsafe_allow_html=True)
 
@@ -1812,7 +1812,7 @@ if "idex_result" in st.session_state:
             f'</div>'
         )
 
-    st.markdown("### Institutional Equity Research Brief" + (" [SYNTHETIC DEMO]" if is_demo else ""))
+    st.markdown("### Equity Research Brief" + (" [SYNTHETIC DEMO]" if is_demo else ""))
 
     # Execution telemetry & audit duration badge
     if res.get("execution_time_seconds") is not None:
@@ -1924,7 +1924,7 @@ if "idex_result" in st.session_state:
     core_score = res.get('core_score', 0)
     total_penalties = res.get('total_penalties', 0)
     total_bonus = res.get('bonuses_breakdown', {}).get('total_bonus_applied', 0)
-    position_sizing = res.get("position_sizing", "0%")
+    risk_tier = res.get("risk_tier", "Monitored")
 
     try:
         f_val = float(final_score)
@@ -2002,21 +2002,21 @@ if "idex_result" in st.session_state:
         f'<div style="font-size: 24px; font-weight: 900; color: #7C3AED; font-family: monospace;">+{total_bonus:.1f} <span style="font-size: 13px; font-weight: 600; color: #7C3AED;">pts</span></div>'
         f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Bounded Growth Factor</div>'
         f'</div>'
-        # Pod 4: Sizing
+        # Pod 4: Qualitative Risk Tier
         f'<div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-top: 4px solid #D97706; border-radius: 12px; padding: 16px 18px;">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">'
         f'<span style="font-size: 11px; font-weight: 800; color: #D97706; text-transform: uppercase; letter-spacing: 0.6px;">RISK TIER</span>'
         f'<span style="font-size: 16px;">⚖️</span>'
         f'</div>'
-        f'<div style="font-size: 20px; font-weight: 900; color: #D97706; font-family: monospace;">{position_sizing}</div>'
-        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Illustrative Non-Advisory Cap</div>'
+        f'<div style="font-size: 16px; font-weight: 900; color: #D97706; font-family: monospace;">{risk_tier}</div>'
+        f'<div style="font-size: 11.5px; color: #64748B; margin-top: 6px;">Qualitative Screening Tier</div>'
         f'</div>'
         f'</div>'
         f'</div>'
         # Formula Bridge Node Strip
         f'<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #E2E8F0; flex-wrap: wrap;">'
         f'<div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-family: monospace; color: #64748B;">'
-        f'<span style="font-weight: 700; color: #0F172A;">⚡ Deterministic Scoring Formula:</span>'
+        f'<span style="font-weight: 700; color: #0F172A;">⚡ Deterministic Arithmetic Formula:</span>'
         f'<span style="background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Core: {core_score:.1f}</span>'
         f'<span style="color: #64748B; font-weight: 800;">−</span>'
         f'<span style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Penalties: {abs(total_penalties):.1f}</span>'
@@ -2042,7 +2042,6 @@ if "idex_result" in st.session_state:
         final_score = 0.0
     drift_str = res.get('drift_optionality_update', 'Monitor upcoming capital deployment and quarterly earnings.')
     esg_str = res.get('fragility_esg_fx_notes', 'No material governance or FX vulnerabilities observed.')
-    position_sizing = res.get("position_sizing", "Risk-Weighted")
     str_list = res.get("strengths", [])
     wk_list = res.get("weaknesses", [])
 
@@ -2058,24 +2057,21 @@ if "idex_result" in st.session_state:
         call_badge = "FORENSIC PROFILE"
         call_summary = final_call_str
 
-    combined = (str(final_call_str) + " " + str(verdict_str) + " " + str(guardrail_tag)).upper()
-
-    if pio_trig or analyzer.guardrail_level(guardrail_tag) == analyzer.GUARDRAIL_RED or final_score < 55.0 or any(k in combined for k in ["AVOID", "PRUDENCE", "SELL", "EXIT", "REDUCE", "UNINVESTABLE", "HIGH RISK"]):
-        stance = "AVOID"
-    elif final_score >= 70.0 and any(k in combined for k in ["BUY", "ACCUMULATE", "OVERWEIGHT", "LONG", "COMPOUNDER"]):
-        stance = "BUY"
+    # Risk tier derived directly from score band and guardrail level (De-advisory reframing)
+    band = analyzer.verdict_band(final_score)
+    if pio_trig or analyzer.guardrail_level(guardrail_tag) == analyzer.GUARDRAIL_RED or band.get("risk_tier") == "Elevated Caution":
+        risk_tier = "Elevated Caution"
     else:
-        stance = "HOLD"
+        risk_tier = band.get("risk_tier", "Monitored")
 
     drift_lower = drift_str.lower() if drift_str else "operational metrics"
 
-    if stance == "AVOID":
+    if risk_tier == "Elevated Caution":
         banner_border = "#DC2626"
         badge_bg = "#FEF2F2"
         badge_border = "#FECACA"
         badge_fg = "#DC2626"
         badge_text = "🛑 ELEVATED CAUTION / HIGH FORENSIC RISK"
-        sizing_display = "0.0% Allocation (Educational Risk Tier — Not Personal Investment Advice)"
         summary_color = "#DC2626"
         cards = [
             {"icon": "🛑", "title": "PRIMARY RED FLAG", "text": wk_list[0] if wk_list else "Serious accounting, governance, or debt anomalies flagged in disclosures.", "hcolor": "#DC2626"},
@@ -2083,13 +2079,12 @@ if "idex_result" in st.session_state:
             {"icon": "📉", "title": "ACCRUAL & CASH DIVERGENCE", "text": esg_str or "Reported profits diverge from actual operating cash flow generation.", "hcolor": "#D97706"},
             {"icon": "🛡️", "title": "REQUISITES BEFORE RE-EVALUATION", "text": "Requires debt deleveraging, unpledged promoter holdings, and unmodified CARO audit opinions.", "hcolor": "#475569"}
         ]
-    elif stance == "BUY":
+    elif risk_tier == "Constructive":
         banner_border = "#059669"
         badge_bg = "#ECFDF5"
         badge_border = "#A7F3D0"
         badge_fg = "#059669"
         badge_text = "🟢 CONSTRUCTIVE WATCHLIST / HIGH QUALITY"
-        sizing_display = "Illustrative Exposure: 2–5% Cap (Educational Risk Tier — Not Personal Investment Advice)"
         summary_color = "#059669"
         cards = [
             {"icon": "🟢", "title": "CORE COMPETITIVE MOAT", "text": str_list[0] if str_list else "Dominant market presence with pricing power and defensible market share.", "hcolor": "#059669"},
@@ -2103,7 +2098,6 @@ if "idex_result" in st.session_state:
         badge_border = "#FDE68A"
         badge_fg = "#D97706"
         badge_text = "🟡 MONITORED / NEUTRAL QUALITY TIER"
-        sizing_display = "Illustrative Exposure: 0–2% Watchlist (Educational Risk Tier — Not Personal Investment Advice)"
         summary_color = "#D97706"
         cards = [
             {"icon": "🟢", "title": "ESTABLISHED BUSINESS FRANCHISE", "text": str_list[0] if str_list else "Established business with respectable market presence and operational scale.", "hcolor": "#059669"},
@@ -2138,7 +2132,7 @@ if "idex_result" in st.session_state:
         f'</div>'
         f'<div style="display: flex; align-items: center; gap: 8px;">'
         f'<span style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: monospace;">⏱️ 1–2 Year Window</span>'
-        f'<span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: monospace;">⚖️ {sizing_display}</span>'
+        f'<span style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-family: monospace;">⚖️ Risk Tier: {risk_tier} (Educational Risk Tier — Not Personal Investment Advice)</span>'
         f'</div>'
         f'</div>'
         f'<div style="font-size: 16px; font-weight: 800; color: {summary_color}; line-height: 1.45; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #E2E8F0;">'
@@ -2148,7 +2142,7 @@ if "idex_result" in st.session_state:
         f'{card_blocks}'
         f'</div>'
         f'<div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #E2E8F0; font-size: 11px; color: #64748B; line-height: 1.4;">'
-        f'⚖️ <strong>Educational Research Stance:</strong> This automated profile is generated from heuristic financial modeling and disclosure cross-referencing. It does NOT constitute SEBI investment advice, trading calls, or a guarantee of future operational performance.'
+        f'⚖️ <strong>Educational Research Stance:</strong> This automated profile is generated from heuristic financial modeling and disclosure cross-referencing. It does NOT constitute SEBI investment advice, trading calls, or an assurance of future operational performance.'
         f'</div>'
         f'</div>'
     )
@@ -2208,7 +2202,7 @@ if "idex_result" in st.session_state:
                 f'<div style="background: #ECFDF5; border: 1.5px solid #A7F3D0; border-left: 5px solid #059669; border-radius: 12px; padding: 18px 22px; margin-bottom: 16px;">'
                 f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">'
                 f'<span style="font-weight: 800; font-size: 1.1rem; color: #059669;">🛡️ PROMOTER INTEGRITY & GOVERNANCE VERDICT: {tag_esc}</span>'
-                f'<span style="background: #D1FAE5; color: #059669; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #6EE7B7; font-family: monospace;">INSTITUTIONAL GRADE</span>'
+                f'<span style="background: #D1FAE5; color: #059669; padding: 4px 12px; border-radius: 9999px; font-weight: 800; font-size: 0.8rem; border: 1px solid #6EE7B7; font-family: monospace;">VERIFIED CLEAN</span>'
                 f'</div>'
                 f'<p style="margin: 0 0 8px 0; color: #059669; font-weight: 600;">10Y+ clean statutory audit history, zero promoter share pledge, verified arm-length related-party disclosures.</p>'
                 f'<ul style="margin: 0; padding-left: 20px; color: #334155;">{ev_html_items}</ul>'
@@ -2731,18 +2725,18 @@ if "idex_result" in st.session_state:
         with st.expander("🧭 StockSage Forensic Architecture & Evaluation Pipeline (Visual Methodology & Benchmarks)", expanded=False):
             st.html(render_graphical_forensic_architecture_html())
 
-        # Confidential Methodology IP Safeguard Notice (High-Level, Non-Revealing)
+        # Open Methodology & Thresholds Notice
         st.markdown("""
         <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 18px; margin-top: 14px; font-size: 12px; color: #475569; line-height: 1.5;">
-          <strong style="color: #0F172A;">🔒 Evaluation Methodology & Safeguard Standard:</strong>
-          Project KUSHA / StockSage utilizes a multi-stage deterministic pipeline combining Google Gemini multimodal ingestion of audited BSE annual reports, automated cash flow reconciliation, and sector-standardized balance sheet stress tests. Exact mathematical weights, proprietary scoring thresholds, and internal decision logic are protected under trade secret guidelines to prevent reverse engineering and ensure analytical objectivity.
+          <strong style="color: #0F172A;">⚡ Evaluation Methodology:</strong>
+          Project KUSHA / StockSage combines Google Gemini multimodal ingestion of audited BSE annual reports, automated cash flow reconciliation, and sector-standardized balance sheet stress tests. Scoring rules are open Python in this repository; the thresholds are listed in the Methodology tab.
         </div>
         """, unsafe_allow_html=True)
 
     # --- TAB 5: EXPORT BRIEF ---
     with tab_export:
         st.markdown("#### 📥 Export Research Brief & Forensic Data")
-        st.caption("Download institutional-grade research outputs in structured JSON, markdown memo, or printable HTML/PDF.")
+        st.caption("Download research outputs in structured JSON, markdown memo, or printable HTML/PDF.")
 
         raw_cname = str(res.get('company_name', 'Company')).replace(" [SYNTHETIC SAMPLE]", "")
         safe_cname = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_cname).strip('_') or "Company"
@@ -2838,14 +2832,14 @@ if "idex_result" in st.session_state:
             evidence_gaps_md = ", ".join([sanitize_memo_field(g) for g in res.get('evidence_gaps', [])]) or "None reported"
             search_queries_md = ", ".join([sanitize_memo_field(q) for q in res.get('web_research', {}).get('search_queries', [])]) or "No query metadata returned"
 
-            md_text = f"""{demo_header}# StockSage | Institutional Research Memo: {sanitize_memo_field(res.get('company_name'))}
+            md_text = f"""{demo_header}# StockSage | Research Memo: {sanitize_memo_field(res.get('company_name'))}
 
 {provenance_memo_block}## Metadata
 - **Target Company:** {sanitize_memo_field(res.get('company_name'))}
 - **Sector Benchmark:** {sanitize_memo_field(res.get('sector'))}
 - **Reporting Period:** {sanitize_memo_field(res.get('financial_year'))}
 {filing_meta_md}- **Final Rating:** {sanitize_memo_field(res.get('verdict'))} (Score: {res.get('final_score')}/100)
-- **Risk Allocation Sizing:** {sanitize_memo_field(res.get('position_sizing'))} (Illustrative Model Exposure Tier — Not SEBI Investment Advice)
+- **Qualitative Risk Tier:** {sanitize_memo_field(res.get('risk_tier', 'Monitored'))} (Qualitative Screening Tier — Not SEBI Investment Advice)
 - **Evidence status:** {sanitize_memo_field(res.get('analysis_status', 'unknown'))}
 - **Evidence gaps:** {evidence_gaps_md}
 
@@ -2870,14 +2864,14 @@ Search queries: {search_queries_md}
 - Receivables / Sales: {sanitize_memo_field(rec.get('receivables_to_sales_pct'))}
 - Verdict: {sanitize_memo_field(rec.get('receivable_verdict'))}
 
-## Final Call
+## Summary Assessment
 **{sanitize_memo_field(res.get('final_call'))}** — {call_refs}
 
 ---
 *Regulatory Disclaimer: This research memo is programmatically generated by Project KUSHA / StockSage for informational and educational screening purposes only. It is not SEBI-registered investment advice or a statutory audit.*
 """
             st.download_button(
-                label="Download Investment Memo (.md)",
+                label="Download Research Memo (.md)",
                 data=md_text,
                 file_name=f"{safe_cname}_StockSage_Memo.md",
                 mime="text/markdown",
@@ -2933,7 +2927,7 @@ Search queries: {search_queries_md}
 <html>
 <head>
 <meta charset="utf-8">
-<title>{c_name_escaped} - StockSage Institutional Report</title>
+<title>{c_name_escaped} - StockSage Research Report</title>
 <style>
     body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #0f172a; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #ffffff; }}
     h1 {{ font-size: 24px; color: #047857; border-bottom: 2px solid #059669; padding-bottom: 8px; }}
@@ -2952,7 +2946,7 @@ Search queries: {search_queries_md}
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
             <h1>StockSage • {c_name_escaped}</h1>
-            <p style="color:#64748b; margin-top:-8px;">Sector: {sector_escaped} • Period: {year_escaped} • Institutional Forensic Research</p>
+            <p style="color:#64748b; margin-top:-8px;">Sector: {sector_escaped} • Period: {year_escaped} • Forensic Research</p>
         </div>
         <div style="text-align:right;">
             <div style="font-size:32px; font-weight:800; color:#047857;">{res.get('final_score', 0):.1f}<span style="font-size:16px; color:#64748b;">/100</span></div>
@@ -2980,7 +2974,7 @@ Search queries: {search_queries_md}
         <ul style="margin: 8px 0 0 0; padding-left: 20px;">{guardrail_ev_items}</ul>
     </div>
 
-    <h2>Analyst Recommendation</h2>
+    <h2>Research Observations</h2>
     <div style="background:#f8fafc; border: 1px solid #e2e8f0; padding:14px; border-radius:6px; font-size:16px; font-weight:600; color: #0f172a;">
         {final_call_escaped}
     </div>
@@ -2991,7 +2985,7 @@ Search queries: {search_queries_md}
 </body>
 </html>"""
             st.download_button(
-                label="Print Analyst Report (PDF/HTML)",
+                label="Print Research Report (PDF/HTML)",
                 data=html_report,
                 file_name=f"{safe_cname}_StockSage_Report.html",
                 mime="text/html",
@@ -3003,7 +2997,7 @@ Search queries: {search_queries_md}
         summary_plain = (
             f"STOCKSAGE RESEARCH BRIEF: {raw_cname} ({target_ticker or 'NSE/BSE'})\n"
             f"Sector: {target_sector or 'Diversified'} | Score: {final_score:.1f}/100 ({verdict})\n"
-            f"Risk Tier: {position_sizing} (Educational Tier - Not Investment Advice)\n"
+            f"Risk Tier: {risk_tier} (Educational Screening Tier - Not Investment Advice)\n"
             f"Takeaway: {call_summary}\n\n"
             f"Key Moats:\n" + "\n".join(f" - {s}" for s in str_list[:3]) + "\n\n"
             f"Key Risks:\n" + "\n".join(f" - {w}" for w in wk_list[:3]) + "\n\n"
@@ -3022,7 +3016,7 @@ st.html("""
   </div>
   <div>
     <strong>Not SEBI Registered:</strong> Project KUSHA / StockSage is an automated analytical research and educational technology prototype. It is NOT registered with the Securities and Exchange Board of India (SEBI) as an Investment Adviser (under IA Regulations, 2013) or Research Analyst (under RA Regulations, 2014).
-    All outputs, forensic scores, traffic light badges, and illustrative allocation bands represent programmatic algorithmic evaluations of public disclosures and do NOT constitute investment advice, financial recommendations, or solicitation to buy or sell securities.
+    All outputs, forensic scores, traffic light badges, and qualitative risk tiers represent programmatic algorithmic evaluations of public disclosures and do NOT constitute investment advice, financial recommendations, or solicitation to buy or sell securities.
   </div>
   <div style="margin-top: 6px;">
     <strong>Data Provenance:</strong> Market data is retrieved via public aggregation endpoints (e.g., Yahoo Finance). Statutory filings are discovered from publicly archived exchange repositories. Metrics are subject to transmission delays and public reporting inconsistencies. Users must perform independent verification and consult a licensed financial advisor before making capital allocation decisions.

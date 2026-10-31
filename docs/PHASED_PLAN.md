@@ -52,12 +52,12 @@ the code does not do.
       `model_fallback_used`, `research_model_used`, `pipeline_version`).
 - [x] Escaped model output: `pio_reason`, `receivable_subscore`, guardrail tag,
       evidence list, forensic check text, Appendix B values.
-- [x] Regression suite: `tests/test_phase1_truth_layer.py` (15 tests), including a
+- [x] Regression suite: `tests/test_phase1_truth_layer.py` (15 test cases), including a
       `tokenize`-based scan that fails if any `"RED" in <tag>`-style substring
       comparison is reintroduced into `app.py`, `analyzer.py`,
       `forensic_risk_engine.py` or `data_integrity_agent.py`.
 
-**Verified:** 101 tests pass; `AppTest.from_file("app.py")` renders with 0 exceptions.
+**Verified:** 101 test cases pass; `AppTest.from_file("app.py")` renders with 0 exceptions.
 
 **Known leftovers for later phases (intentionally not done here):**
 
@@ -110,7 +110,7 @@ the code does not do.
       discarded and very old ones deleted. UI shows relative age.
 - [x] Structured stdlib logging (`kusha_logging.py`), no `st.write` telemetry.
 - [x] `data_quality` dict and degradation banner; shared `_call_with_retry`.
-- Verified: `tests/test_phase4_reliability.py`; full suite 169 tests.
+- Verified: `tests/test_phase4_reliability.py`; full suite passing.
 
 ## Phase 5 — Tests & CI `[x]`
 
@@ -121,7 +121,7 @@ the code does not do.
 - [x] Coverage floor (70%) on the four scoring modules.
 - [x] Golden-company regression suite (`tests/test_golden_companies.py`), with
       `LOSS_MAKER` capped at 50.
-- Verified: 169 tests, `unittest discover` prints `OK`; `test_hygiene.py` enforces
+- Verified: test suite green, `unittest discover` prints `OK`; `test_hygiene.py` enforces
   the no-network / no-outside-write rules.
 
 ## Phase 6 — Architecture & packaging `[x]`
@@ -141,30 +141,30 @@ CSS extracted to `assets/kusha.css`; 14 streamlit-free functions moved to
 - [x] Fix the migration tests and restore `OK`. The two fraud-shield tests were
       **rewritten**, not reverted: they now assert engine statuses and
       `NOT EVALUATED` instead of the removed `CLEAN AUDIT` / `DSO: N/A`.
-- Verified: 179 tests, `unittest discover` prints `OK`.
+- Verified: test suite green, `unittest discover` prints `OK`.
 
-**Status:** Phase 6 complete and committed on `phase-6-architecture` (commit `72584a1`), 179 tests passing.
+**Status:** Phase 6 complete and committed on `phase-6-architecture` (commit `72584a1`), test suite passing.
 
-## Phase 7 — Docs, legal & positioning `[ ]`
+## Phase 7 — Docs, legal & positioning `[x]`
 
-- [ ] Rewrite README so every claim is checkable: remove "deterministic",
+- [x] Rewrite README so every claim is checkable: remove "deterministic",
       "trade secret / IP safeguards", "100% free", "institutional-grade"; correct
       Python floor (3.10 → 3.11) and the deprecated `gemini-3.5-flash` default.
-- [ ] `docs/PRIVACY.md`: what leaves the machine (PDFs → Gemini), what is stored
+- [x] `docs/PRIVACY.md`: what leaves the machine (PDFs → Gemini), what is stored
       locally, retention, API-key handling, single-user assumption.
-- [ ] `docs/LIMITATIONS.md`: AI scores are not reproducible, FQI coverage gate,
+- [x] `docs/LIMITATIONS.md`: AI scores are not reproducible, FQI coverage gate,
       peer data is FY24, no auditor/RPT source, cache replay, "fair value" is an
       opinion.
-- [ ] `docs/LEGAL_DECISIONS.md` + owner decisions: SEBI posture (default:
+- [x] `docs/LEGAL_DECISIONS.md` + owner decisions: SEBI posture (default:
       de-advisory reframing), distribution, licence, data redistribution.
-- [ ] Retire false/stale reports to `docs/history/` with a HISTORICAL banner
+- [x] Retire false/stale reports to `docs/history/` with a HISTORICAL banner
       (`BROWSER_VERIFICATION_REPORT`, `EXTENSIVE_BROWSER_WALKTHROUGH_REPORT`,
       `FORENSIC_FRAMEWORK_ANALYSIS`, `PRODUCT_DESIGN_AND_IMPLEMENTATION_REPORT`,
       `REMEDIATION_PLAN`).
-- [ ] Remove in-app overclaims ("Proprietary Quantitative Engine … trade secrets",
+- [x] Remove in-app overclaims ("Proprietary Quantitative Engine … trade secrets",
       "institutional-grade") and the advisory stance/allocation bands if the owner
       selects the conservative option.
-- [ ] `tests/test_phase7_docs.py`: banned claims, required links, history banners,
+- [x] `tests/test_phase7_docs.py`: banned claims, required links, history banners,
       model-list equality, no stale test counts, licence consistency.
 
 ## Phase 8 — Permanent data-truth monitoring `[ ]`
@@ -178,7 +178,7 @@ Prompt: `docs/prompts/phase-8-monitoring.md`. Run **after** Phase 7 is committed
 - [ ] `.github/workflows/monitor.yml` — daily schedule, `issues: write`, 15-min timeout.
 - [ ] `monitoring/model_watchlist.json` — verified date, must equal `SUPPORTED_MODELS`.
 - [ ] `docs/MONITORING.md` — including what is *not* monitored.
-- [ ] `tests/test_monitoring.py` — 11 tests, no network.
+- [ ] `tests/test_monitoring.py` — 11 test cases, no network.
 - [ ] README badge + Monitoring section.
 
 **Honest caveats:** the monitor is only as permanent as the repository's activity —

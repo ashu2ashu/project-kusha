@@ -1,3 +1,5 @@
+> **HISTORICAL — superseded.** This report reflects pre-remediation states claiming "6 / 6 CHECKS PASSED — ALL CLEAR", unbacked CLEAN AUDIT statuses, and a DCF fair value. The fraud shield was refactored in Phase 6 to report actual engine statuses and NOT EVALUATED for unbacked checks, and DCF was removed in Phase 1.
+
 # Browser Verification & Forensic Lens Quality Report
 
 This report documents the live headless browser verification of **StockSage** conducted via automated Playwright test runs against `http://localhost:8501`.

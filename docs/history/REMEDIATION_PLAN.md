@@ -1,3 +1,5 @@
+> **HISTORICAL — superseded.** This plan references early remediation roadmaps and deprecated model versions (gemini-2.5-flash, gemini-1.5-flash) which have been completed and superseded in Phases 1 through 6.
+
 # StockSage / Project KUSHA — Audit & Remediation Plan
 
 ## Summary of Planned Changes by File

@@ -267,7 +267,7 @@ class TestDeterministicScoringRules(unittest.TestCase):
         # Final score must be in Fragile (<50.0) territory
         self.assertLess(res["final_score"], 50.0)
         self.assertIn("FRAGILE", res["verdict"])
-        self.assertEqual(res["position_sizing"], "0%")
+        self.assertEqual(res["risk_tier"], "Elevated Caution")
 
     def test_receivable_subscore_preservation(self):
         """Verify that receivable_subscore in Pillar 2 is preserved across reconciliation."""

@@ -1678,7 +1678,7 @@ def render_graphical_forensic_architecture_html() -> str:
             <span style="font-size: 17px; font-weight: 800; color: #0F172A; letter-spacing: -0.2px;">StockSage Forensic Architecture & Evaluation Pipeline</span>
           </div>
           <div style="font-size: 13px; color: #64748B; margin-top: 3px;">
-            Deterministic multi-layer forensic audit combining live market context with audited filing telemetry.
+            Multi-layer forensic screening combining market context with audited filing telemetry.
           </div>
         </div>
         <div style="display: flex; gap: 8px;">

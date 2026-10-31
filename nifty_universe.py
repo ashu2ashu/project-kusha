@@ -508,6 +508,7 @@ def fetch_live_market_data(ticker_symbol: str) -> Optional[Dict[str, Any]]:
             "bse_code": bse_code,
             "price_date": price_date,
             "screener_metrics": screener_metrics,
+            "data_status": "live",
             "provider": "Yahoo Finance",
             "data_provider": "Yahoo Finance (unverified third-party dataset / delayed)",
             "is_delayed": True,

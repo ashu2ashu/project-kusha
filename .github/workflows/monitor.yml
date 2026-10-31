@@ -1,0 +1,237 @@
+name: Data Truth Monitor
+
+on:
+  schedule:
+    - cron: "30 21 * * *"   # 03:00 IST daily
+    - cron: "30 21 * * 1"   # same time, Mondays: dependency job
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: data-truth-monitor
+  cancel-in-progress: false
+
+jobs:
+  truth:
+    name: Deterministic Truth & Fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run offline monitor
+        id: monitor
+        run: |
+          set +e
+          python tools/monitor.py --check --offline --json > /tmp/monitor.json
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          cat /tmp/monitor.json
+          exit $EXIT_CODE
+
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          python -c '
+          import json, os
+          with open("/tmp/monitor.json") as f:
+              data = json.load(f)
+          summary = f"""### Data Truth Monitor: Offline Suite
+          - **Status:** `{data.get("status")}`
+          - **Fingerprint:** `{str(data.get("fingerprint"))[:12]}`
+          - **Exit Code:** `{data.get("exit_code")}`
+          - **Findings ({len(data.get("findings", []))}):**
+          """ + "\n".join(f"  - {line}" for line in data.get("findings", []))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write(summary + "\n")
+          '
+
+      - name: Alert on drift or stale baseline
+        if: failure() && steps.monitor.outputs.exit_code != '0'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SIG="fixture-drift"
+          if [ "${{ steps.monitor.outputs.exit_code }}" = "2" ]; then
+            SIG="stale-baseline"
+          fi
+          python tools/alert_issue.py --body-file /tmp/monitor.json --signature "$SIG"
+
+  sources:
+    name: Online Source Availability
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run online probes
+        id: probes
+        run: |
+          set +e
+          python tools/monitor.py --check --online --json > /tmp/monitor.json
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          cat /tmp/monitor.json
+          exit $EXIT_CODE
+
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          python -c '
+          import json, os
+          with open("/tmp/monitor.json") as f:
+              data = json.load(f)
+          summary = f"""### Online Source Availability Probes
+          - **Status:** `{data.get("status")}`
+          - **Exit Code:** `{data.get("exit_code")}`
+          - **Findings ({len(data.get("findings", []))}):**
+          """ + "\n".join(f"  - {line}" for line in data.get("findings", []))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write(summary + "\n")
+          '
+
+      - name: Alert on source unavailability
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python tools/alert_issue.py --body-file /tmp/monitor.json --signature "source-unavailable"
+
+  models:
+    name: Model Availability Watchlist
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check Gemini models availability
+        id: models
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set +e
+          python tools/monitor.py --check --online --json > /tmp/monitor.json
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          cat /tmp/monitor.json
+          exit $EXIT_CODE
+
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          python -c '
+          import json, os
+          with open("/tmp/monitor.json") as f:
+              data = json.load(f)
+          summary = f"""### Gemini Model Availability Watchlist
+          - **Status:** `{data.get("status")}`
+          - **Exit Code:** `{data.get("exit_code")}`
+          - **Findings:**
+          """ + "\n".join(f"  - {line}" for line in data.get("findings", []))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write(summary + "\n")
+          '
+
+      - name: Alert on model unavailability
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python tools/alert_issue.py --body-file /tmp/monitor.json --signature "model-unavailable"
+
+  deps:
+    name: Upstream Dependency Drift (${{ matrix.python-version }})
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && github.event.schedule == '30 21 * * 1')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Fresh install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run complete test suite
+        id: tests
+        run: |
+          set +e
+          python -m unittest discover -s tests 2>&1 | tee /tmp/test_output.log
+          TEST_EXIT=${PIPESTATUS[0]}
+          echo "exit_code=$TEST_EXIT" >> "$GITHUB_OUTPUT"
+          exit $TEST_EXIT
+
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          python -c '
+          import os
+          tail_lines = open("/tmp/test_output.log").readlines()[-10:]
+          summary = f"""### Weekly Upstream Dependency Matrix (Python ${{ matrix.python-version }})
+          - **Exit Code:** `${{ steps.tests.outputs.exit_code }}`
+          - **Suite Tail:**
+          ```
+          {"".join(tail_lines)}
+          ```
+          """
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write(summary + "\n")
+          '
+
+      - name: Alert on dependency drift
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -c '
+          import json
+          payload = {
+            "status": "DRIFT",
+            "findings": ["Upstream package release broke test suite under Python ${{ matrix.python-version }}"]
+          }
+          with open("/tmp/dep_drift.json", "w") as f:
+              json.dump(payload, f)
+          '
+          python tools/alert_issue.py --body-file /tmp/dep_drift.json --signature "dependency-drift"

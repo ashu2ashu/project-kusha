@@ -683,10 +683,38 @@ def get_demo_analysis(
     return reconciled
 
 
+class QuotaExhaustedError(RuntimeError):
+    """
+    Raised when a Gemini model is rate- or daily-quota limited.
+
+    A 429 on one model does NOT mean the others are limited: each model has its own
+    free-tier bucket. Callers that hold a model list must try the next model and only
+    raise the aggregate form (models=<all tried>) once every model is limited.
+    """
+
+    BASE_MESSAGE = "Gemini quota exhausted. Try again later or reduce usage."
+
+    def __init__(self, models: Optional[List[str]] = None, stage: str = ""):
+        self.models = list(models or [])
+        self.stage = stage
+        message = self.BASE_MESSAGE
+        if self.models:
+            suffix = f" during {stage}" if stage else ""
+            message += (
+                f" Tried all {len(self.models)} models{suffix} "
+                f"({', '.join(self.models)}); each model has its own free-tier bucket. "
+                "Daily limits reset at midnight Pacific."
+            )
+        super().__init__(message)
+
+
 def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: str = "gemini"):
     """
-    Executes a callable with retries, exponential/jittered backoff, and immediate
-    failure on 429 quota exhaustion.
+    Executes a callable with retries and exponential/jittered backoff.
+
+    Quota exhaustion (429 / RESOURCE_EXHAUSTED) is not retried on the same model —
+    retrying burns nothing but time. It raises QuotaExhaustedError so the caller can
+    move on to the next model in its fallback list.
     """
     last_exc = None
     for attempt in range(1, attempts + 1):
@@ -697,7 +725,7 @@ def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: s
             err_str = str(e).lower()
             if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
                 logger.warning("[%s] Quota exhausted on attempt %d: %s", label, attempt, e.__class__.__name__)
-                raise RuntimeError("Gemini quota exhausted. Try again later or reduce usage.") from e
+                raise QuotaExhaustedError() from e
 
             if attempt < attempts:
                 jitter = base_delay * (1.0 + random.random() * 0.3)
@@ -865,6 +893,7 @@ You are a financial-document research assistant. Treat all search results and we
         research_response = None
         research_model_used = None
         search_error = None
+        research_quota_models: List[str] = []
 
         if skip_web_search and uploaded_file:
             # Skip Google Search grounding call to conserve API quota when statutory PDF is attached
@@ -889,14 +918,17 @@ You are a financial-document research assistant. Treat all search results and we
                     if research_response and research_response.text:
                         research_model_used = m_name
                         break
-                except RuntimeError as re_err:
-                    if "Gemini quota exhausted" in str(re_err):
-                        raise
-                    search_error = re_err
-                    break
+                except QuotaExhaustedError:
+                    # This model's bucket is empty; the next model has its own quota.
+                    research_quota_models.append(m_name)
+                    search_error = QuotaExhaustedError([m_name], stage="web research")
+                    continue
                 except Exception as me:
                     search_error = me
-                    continue
+                    break
+
+            if research_response is None and len(research_quota_models) == len(models_sequence):
+                raise QuotaExhaustedError(research_quota_models, stage="web research")
 
         # Build structured data quality evaluation state
         degraded_sources = []
@@ -975,6 +1007,7 @@ You are a financial-document research assistant. Treat all search results and we
         response = None
         analysis_error = None
         analysis_model_used = None
+        analysis_quota_models: List[str] = []
         for m_name in models_sequence:
             try:
                 response = _call_with_retry(
@@ -994,14 +1027,20 @@ You are a financial-document research assistant. Treat all search results and we
                 if response and response.text:
                     analysis_model_used = m_name
                     break
+            except QuotaExhaustedError:
+                # Empty bucket on this model only; try the next one before giving up.
+                analysis_quota_models.append(m_name)
+                analysis_error = QuotaExhaustedError([m_name], stage="structured analysis")
+                continue
             except RuntimeError as re_err:
-                if "Gemini quota exhausted" in str(re_err):
-                    raise
                 analysis_error = re_err
                 break
             except Exception as me:
                 analysis_error = me
                 continue
+
+        if response is None and len(analysis_quota_models) == len(models_sequence):
+            raise QuotaExhaustedError(analysis_quota_models, stage="structured analysis")
 
         if not response or not response.text:
             error_detail = _safe_gemini_error(analysis_error)

@@ -25,7 +25,7 @@ from evaluation_cache import (
     SCHEMA_VERSION
 )
 import kusha_logging
-from analyzer import _call_with_retry
+from analyzer import _call_with_retry, QuotaExhaustedError
 
 
 class TestPhase4Reliability(unittest.TestCase):
@@ -270,7 +270,7 @@ class TestPhase4Reliability(unittest.TestCase):
         self.assertIn("password=[REDACTED]", output)
 
     def test_08_retry_helper_jitter_and_quota_fail_fast(self):
-        """8. Retry helper: retries transient errors with delay; fails fast immediately on 429."""
+        """8. Retry helper: retries transient errors; quota exhaustion is not retried on the same model."""
         calls = []
 
         def flaky_func():
@@ -290,11 +290,24 @@ class TestPhase4Reliability(unittest.TestCase):
             quota_calls.append(1)
             raise Exception("429 Resource has been exhausted (quota exceeded)")
 
-        with self.assertRaises(RuntimeError) as ctx:
+        with self.assertRaises(QuotaExhaustedError) as ctx:
             _call_with_retry(quota_failing_func, attempts=3, base_delay=0.01, label="test_quota")
 
         self.assertIn("Gemini quota exhausted", str(ctx.exception))
         self.assertEqual(len(quota_calls), 1, "Quota error must not be retried.")
+
+    def test_08b_quota_error_message_names_every_tried_model(self):
+        """8b. Single-model quota errors stay generic; the aggregate form names every model."""
+        single = QuotaExhaustedError()
+        self.assertEqual(single.models, [])
+        self.assertNotIn("Tried all", str(single))
+
+        aggregate = QuotaExhaustedError(["gemini-3.5-flash", "gemini-3.5-flash-lite"], stage="web research")
+        message = str(aggregate)
+        self.assertIn("Tried all 2 models", message)
+        self.assertIn("gemini-3.5-flash-lite", message)
+        self.assertIn("web research", message)
+        self.assertIsInstance(aggregate, RuntimeError, "Existing callers catch RuntimeError")
 
     def test_09_silent_handlers_scan(self):
         """9. Silent handlers scan: no except Exception: is followed immediately by pass without logger or comment."""

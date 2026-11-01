@@ -186,20 +186,91 @@ class TestPhase3Security(unittest.TestCase):
             self.assertEqual(len(remaining_pdfs), 0, f"Leaked PDF temp files: {remaining_pdfs}")
 
     def test_12_gemini_429_quota_exhaustion_raises(self):
-        """Explicitly detect 429 / resource_exhausted in model retry loop and raise RuntimeError."""
+        """Every model 429s -> QuotaExhaustedError listing all models, not a silent empty result."""
         import analyzer
         mock_client = MagicMock()
         mock_client.models.generate_content.side_effect = Exception("429 Resource has been exhausted (e.g. check quota)")
 
         with patch("google.genai.Client", return_value=mock_client):
-            with self.assertRaises(RuntimeError) as ctx:
+            with self.assertRaises(analyzer.QuotaExhaustedError) as ctx:
                 analyzer.analyze_document_with_gemini(
                     company_name="Test Co",
                     sector="Technology",
                     api_key="mock_key",
                     skip_web_search=False
                 )
-            self.assertIn("Gemini quota exhausted. Try again later or reduce usage.", str(ctx.exception))
+            message = str(ctx.exception)
+            self.assertIn("Gemini quota exhausted. Try again later or reduce usage.", message)
+            self.assertEqual(len(ctx.exception.models), len(analyzer.SUPPORTED_MODELS))
+            for model_id in analyzer.SUPPORTED_MODELS:
+                self.assertIn(model_id, message)
+
+    def test_13_quota_on_one_model_falls_back_to_the_next(self):
+        """A 429 on one model must not abort the run: each model has its own free-tier bucket."""
+        import analyzer
+        attempted = []
+
+        def quota_everywhere(model=None, contents=None, config=None):
+            attempted.append(model)
+            raise Exception("429 Resource has been exhausted")
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = quota_everywhere
+
+        with patch("google.genai.Client", return_value=mock_client):
+            with self.assertRaises(analyzer.QuotaExhaustedError):
+                analyzer.analyze_document_with_gemini(
+                    company_name="Test Co",
+                    sector="Technology",
+                    api_key="mock_key",
+                    skip_web_search=False
+                )
+
+        # Old behaviour stopped at the first model. Every model must be tried once.
+        self.assertEqual(sorted(set(attempted)), sorted(analyzer.SUPPORTED_MODELS),
+                         f"Fallback did not visit every model; attempted={attempted}")
+        self.assertEqual(len(attempted), len(analyzer.SUPPORTED_MODELS),
+                         "Quota errors must not be retried on the same model")
+
+    def test_14_quota_on_requested_model_still_returns_a_result(self):
+        """End-to-end: requested model 429s, the next model answers, and model_used reports the truth."""
+        import json
+        import analyzer
+        from tests.fixtures_golden import CLEAN_LARGECAP
+
+        payload = CLEAN_LARGECAP["raw_analysis"]
+
+        class _Resp:
+            def __init__(self, text):
+                self.text = text
+                self.candidates = []
+
+        seen = []
+
+        def fake_generate(model=None, contents=None, config=None):
+            seen.append(model)
+            if config is not None and getattr(config, "tools", None):
+                return _Resp("Evidence brief for the test company.")
+            if model == "gemini-3.5-flash":
+                raise Exception("429 Resource has been exhausted (check quota)")
+            return _Resp(json.dumps(payload))
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = fake_generate
+
+        with patch("google.genai.Client", return_value=mock_client):
+            result = analyzer.analyze_document_with_gemini(
+                company_name="Test Co",
+                sector="Technology",
+                api_key="mock_key",
+                selected_model="gemini-3.5-flash",
+                skip_web_search=False,
+            )
+
+        self.assertEqual(result.get("model_requested"), "gemini-3.5-flash")
+        self.assertEqual(result.get("model_used"), "gemini-3.5-flash-lite",
+                         "A quota-limited request must be served by the next model, and recorded as such")
+        self.assertIsNotNone(result.get("final_score"), "Fallback must produce a scored result, not an empty one")
 
 
 if __name__ == "__main__":

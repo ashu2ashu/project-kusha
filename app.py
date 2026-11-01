@@ -1341,10 +1341,17 @@ if terminal_mode == "Research":
 
             skip_web_search = False
             if doc_type != "🌐 Web research only":
+                quota_saver_default = bool(st.session_state.get("kusha_quota_hit", False))
                 skip_web_search = st.toggle(
                     "⚡ Skip web search grounding (Conserves API quota)",
-                    value=False,
-                    help="Grounds analysis directly on the official PDF filing and skips Google Search web queries. Saves 1 full API call per audit and avoids 429 search quota exhaustion."
+                    value=quota_saver_default,
+                    help=(
+                        "Grounds the analysis on the attached PDF filing only and skips the Google Search "
+                        "call. Saves one full API call per run (2 calls become 1) and avoids search-quota 429s. "
+                        "Trade-off: with no search call there is no grounding metadata, so the report carries "
+                        "no source citations and records the missing web evidence as an evidence gap. "
+                        "Automatically pre-selected after a quota-exhausted run."
+                    )
                 )
 
             uploaded_file = None
@@ -1738,6 +1745,7 @@ if run_btn:
                     st.session_state["kusha_runs"] = st.session_state.get("kusha_runs", 0) + 1
                     st.session_state["kusha_last_run_time"] = time.time()
                     logger.info("Analysis completed | Model: %s | Elapsed: %.2fs", selected_gemini_model, total_elapsed)
+                    st.session_state["kusha_quota_hit"] = False
                     
                     with timer_placeholder:
                         st.iframe(render_live_analysis_timer_html(
@@ -1771,9 +1779,66 @@ if run_btn:
                         clean_err = clean_err.replace(active_api_key, "AIzaSy***[REDACTED]***")
                     clean_err = re.sub(r'AIza[0-9A-Za-z-_]{35}', 'AIzaSy***[REDACTED]***', clean_err)
                     clean_err = re.sub(r'key=[0-9A-Za-z-_]{20,}', 'key=***[REDACTED]***', clean_err)
-                    st.error(f"Analysis Error: {clean_err}")
-                    with st.expander("Technical Details"):
-                        st.write(f"Diagnostic detail: {clean_err}")
+
+                    quota_hit = "Gemini quota exhausted" in clean_err
+                    rescued = False
+                    if quota_hit:
+                        # Remember the exhaustion so the next run pre-selects quota-saver mode
+                        # (one API call instead of two) instead of burning the next bucket dry.
+                        st.session_state["kusha_quota_hit"] = True
+
+                    # Quota rescue: replay a cached evaluation rather than showing a dead end.
+                    if quota_hit and clean_target_ticker:
+                        try:
+                            quota_replay = load_cached_evaluation(
+                                company_name=clean_target_name,
+                                ticker=clean_target_ticker,
+                                model=selected_gemini_model,
+                                current_pipeline_version=ANALYSIS_PIPELINE_VERSION,
+                                document_hash=document_hash,
+                                sector=target_sector,
+                                skip_web_search=skip_web_search,
+                                analysis_mode=mode_pill,
+                            )
+                        except Exception:
+                            quota_replay = None
+                        if quota_replay is not None:
+                            rescue_result, rescue_time = quota_replay
+                            rescue_result["is_cached_result"] = True
+                            rescue_result["cached_at_time"] = rescue_time
+                            rescue_result["quota_fallback_replay"] = True
+                            rescue_result["execution_time_seconds"] = 0.05
+                            rescue_result["estimated_time_label"] = "Instant (Quota Fallback Replay)"
+                            st.warning(
+                                f"Gemini quota is exhausted, so this run replayed the cached "
+                                f"evaluation saved at {rescue_time}. No API call was made. "
+                                "Scores shown are that earlier run, not a fresh assessment."
+                            )
+                            st.write(f"⏱️ `[{fmt_elapsed(t_start)}]` 💾 Quota fallback: replayed cached evaluation.")
+                            status.update(label="Quota exhausted — showing cached evaluation", state="complete", expanded=False)
+                            st.session_state["idex_result"] = rescue_result
+                            st.session_state["kusha_runs"] = st.session_state.get("kusha_runs", 0) + 1
+                            st.session_state["kusha_last_run_time"] = time.time()
+                            logger.warning("Quota exhausted | Served cached evaluation from %s", rescue_time)
+                            rescued = True
+
+                    if not rescued:
+                        if quota_hit:
+                            st.error(
+                                "Gemini quota exhausted on every available model. "
+                                "Free-tier limits reset daily at midnight Pacific (12:30 IST)."
+                            )
+                            st.info(
+                                "What frees quota now:\n"
+                                "1. **Switch model** in the sidebar — each model has its own daily bucket.\n"
+                                "2. **Use the local replay cache** — repeat analyses cost 0 API calls.\n"
+                                "3. **Enable quota saver** (skip web search) — halves the calls per run.\n"
+                                "4. **Wait for the reset** — nothing else recovers a spent daily bucket."
+                            )
+                        else:
+                            st.error(f"Analysis Error: {clean_err}")
+                        with st.expander("Technical Details"):
+                            st.write(f"Diagnostic detail: {clean_err}")
     finally:
         st.session_state["kusha_running"] = False
 

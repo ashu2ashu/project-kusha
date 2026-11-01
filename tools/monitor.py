@@ -453,7 +453,12 @@ def run_online_probes(repo_root: Path) -> Tuple[int, str, List[str], Dict[str, A
     cache_dir = repo_root / ".cache" / "evaluations"
     stale_cache_count = 0
     now_ts = time.time()
-    max_cache_age_sec = 4 * 24 * 3600  # 4x TTL (96 hours)
+    try:
+        from evaluation_cache import get_max_cache_age_hours
+        cache_ttl_hours = get_max_cache_age_hours()
+    except Exception:
+        cache_ttl_hours = 720
+    max_cache_age_sec = 4 * cache_ttl_hours * 3600  # 4x TTL
     if cache_dir.exists():
         for cfile in cache_dir.glob("*.json"):
             try:
@@ -466,7 +471,7 @@ def run_online_probes(repo_root: Path) -> Tuple[int, str, List[str], Dict[str, A
         "stale_cache_count": stale_cache_count,
     }
     if stale_cache_count > 0:
-        findings.append(f"WARN: {stale_cache_count} evaluation cache files are older than 4x TTL (96h) and not being purged")
+        findings.append(f"WARN: {stale_cache_count} evaluation cache files are older than 4x TTL ({4 * cache_ttl_hours}h) and not being purged")
     else:
         findings.append("OK: Evaluation cache TTL hygiene verified")
 

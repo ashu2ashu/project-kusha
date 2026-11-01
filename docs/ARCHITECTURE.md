@@ -7,7 +7,7 @@
 - `app.py`: Streamlit entrypoint, session state orchestration, user inputs, and top-level analysis execution flow.
 - `cli.py`: Headless command-line execution runner for automated audits (pure).
 - `data_integrity_agent.py`: Pre-flight sanity checks, schema validation, and outlier detection (pure).
-- `evaluation_cache.py`: Content-hashed disk evaluation cache with 24h TTL policy (pure).
+- `evaluation_cache.py`: Content-hashed disk evaluation cache with configurable TTL policy (default 30d/720h) (pure).
 - `financial_trends.py`: Balance sheet metrics, DuPont breakdown, CAGR, and financial ratio math (pure).
 - `forensic_risk_engine.py`: Multi-check forensic accounting engine and fraud risk heuristics (pure).
 - `kusha_logging.py`: Standardized stderr logging with security redaction filters (pure).

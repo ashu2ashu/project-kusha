@@ -33,6 +33,8 @@ class TestPhase4Reliability(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.patcher = patch("evaluation_cache.get_cache_dir", return_value=Path(self.temp_dir))
         self.patcher.start()
+        self.env_patcher = patch.dict(os.environ, {"KUSHA_CACHE_MAX_AGE_HOURS": "24"})
+        self.env_patcher.start()
 
         self.sample_result = {
             "company_name": "Reliance Industries Ltd.",
@@ -47,6 +49,7 @@ class TestPhase4Reliability(unittest.TestCase):
         }
 
     def tearDown(self):
+        self.env_patcher.stop()
         self.patcher.stop()
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)

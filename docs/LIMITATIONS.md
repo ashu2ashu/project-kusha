@@ -24,7 +24,7 @@ The system does not interface with MCA21, CARO audit report databases, related-p
 Annual report PDF discovery relies on BSE public archive endpoints (`bseindia.com`). Ingestion may fail if filing naming conventions change, or may return an earlier filing period if an amended annual report is delayed.
 
 ### 8. Ephemeral Cache Age
-Local evaluation cache entries replay previous analysis runs for up to 24 hours without querying the Gemini API. The UI displays the exact timestamp and age of the cached analysis.
+Local evaluation cache entries replay previous analysis runs for up to 30 days (configurable via KUSHA_CACHE_MAX_AGE_HOURS) without querying the Gemini API. The UI displays the exact timestamp and age of the cached analysis.
 
 ### 9. Synthetic Demonstration Mode
 Demonstration analyses (e.g., Tata Consumer sample) run against pre-computed synthetic fixtures. They do not represent live corporate filings or current fundamental research.

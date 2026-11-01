@@ -19,7 +19,7 @@ All persistent artifacts remain strictly on your local disk:
 - `kusha.log` (optional): Diagnostic logs written only if `KUSHA_LOG_FILE` environment variable is explicitly set.
 
 ## 3. Retention & Data Lifecycles
-- **Local Cache:** Evaluation cache entries expire after 24 hours (TTL). Expired entries older than 4× TTL are automatically deleted from `.cache/evaluations/` during routine maintenance.
+- **Local Cache:** Evaluation cache entries expire after 30 days (720 hours TTL, configurable via KUSHA_CACHE_MAX_AGE_HOURS). Expired entries older than 4× TTL are automatically deleted from `.cache/evaluations/` during routine maintenance.
 - **Feedback & Ledger:** Persisted indefinitely until manually deleted.
 - **Google Data Retention:** Subject to Google Gemini API terms of service. Google's free-tier API terms permit model training on submitted data, which differs from paid tier agreements. Do not submit confidential or non-public filings without reviewing current Google API terms.
 

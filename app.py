@@ -1902,6 +1902,19 @@ if "idex_result" in st.session_state:
             unsafe_allow_html=True
         )
 
+    # Model provenance: a fallback model is a different assessor, so say so plainly.
+    _model_requested = res.get("model_requested")
+    _model_used = res.get("model_used")
+    if _model_used:
+        if _model_requested and _model_used != _model_requested:
+            st.warning(
+                f"Fallback model used: **{_model_used}** answered after **{_model_requested}** "
+                "was quota-limited. Scores are not comparable across model versions — "
+                "re-run with the original model before comparing this result to an earlier one."
+            )
+        else:
+            st.caption(f"Model: {_model_used}")
+
     if res.get("filing_metadata"):
         st.html(build_filing_ingestion_notice_html(res["filing_metadata"]))
 

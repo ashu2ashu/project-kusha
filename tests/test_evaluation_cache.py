@@ -106,5 +106,31 @@ class TestEvaluationCache(unittest.TestCase):
         self.assertEqual(stats_after["count"], 0)
         self.assertEqual(stats_after["total_kb"], 0)
 
+    def test_fallback_model_provenance_survives_cache_roundtrip(self):
+        """A quota-fallback result must not be relabelled as the requested model when replayed."""
+        fallback_result = dict(self.sample_result)
+        fallback_result["model_requested"] = "gemini-3.5-flash"
+        fallback_result["model_used"] = "gemini-3.5-flash-lite"
+
+        save_cached_evaluation(
+            company_name="Fallback Co",
+            ticker="FALLBK",
+            model="gemini-3.5-flash",
+            result=fallback_result,
+            pipeline_version=self.version
+        )
+
+        loaded = load_cached_evaluation(
+            company_name="Fallback Co",
+            ticker="FALLBK",
+            model="gemini-3.5-flash",
+            current_pipeline_version=self.version
+        )
+        self.assertIsNotNone(loaded, "Fallback result should still be replayable")
+        payload, _ = loaded
+        self.assertEqual(payload["model_requested"], "gemini-3.5-flash")
+        self.assertEqual(payload["model_used"], "gemini-3.5-flash-lite",
+                         "Cache replay must preserve the model that actually answered")
+
 if __name__ == "__main__":
     unittest.main()

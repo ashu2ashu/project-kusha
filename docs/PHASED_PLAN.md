@@ -226,12 +226,12 @@ The `google-genai` SDK has no default request timeout. On this key, one overload
 model held the HTTP POST for 208 seconds on one run and 18m31s on another before
 returning 503 — the app looked hung because it was.
 
-- Per-request timeout: 35s (`KUSHA_GEMINI_TIMEOUT_MS`), SDK retries disabled.
+- Per-request timeout: 30s (`KUSHA_GEMINI_TIMEOUT_MS`), SDK retries disabled.
 - A timeout is not retried on the same model.
 - At most 2 models are tried (`MAX_MODEL_ATTEMPTS`), not all 6.
-- Total Gemini budget: 55s (`KUSHA_ANALYSIS_BUDGET_SECONDS`); when spent, the run
-  returns an explicit evidence gap.
-- Measured `python cli.py TCS` after the change: **26.5s** end-to-end, including the
+- Total Gemini budget: 50s (`KUSHA_ANALYSIS_BUDGET_SECONDS`); a new attempt only
+  starts if a full timeout window still fits, so the budget is a real ceiling.
+- Measured `python cli.py TCS` after the change: **24.0s** end-to-end, including the
   Yahoo Finance fetch.
 
 ---

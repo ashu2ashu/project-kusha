@@ -864,13 +864,18 @@ def _is_model_unavailable_error(err: Any) -> bool:
 
 # A hung Gemini request must not stall the UI: the SDK's default timeout is unlimited,
 # and a single overloaded model was measured taking 208 seconds before returning 503.
-# 35s is comfortably above the observed healthy latency (11-30s) and keeps a bad run fast.
-GEMINI_REQUEST_TIMEOUT_MS = int(os.getenv("KUSHA_GEMINI_TIMEOUT_MS", "35000"))
+# Healthy calls measured 11-30s; 30s keeps a bad run short without cutting a valid reply.
+GEMINI_REQUEST_TIMEOUT_MS = int(os.getenv("KUSHA_GEMINI_TIMEOUT_MS", "30000"))
 # Total wall-clock budget for the Gemini part of a run (research + analysis).
-ANALYSIS_TOTAL_BUDGET_SECONDS = float(os.getenv("KUSHA_ANALYSIS_BUDGET_SECONDS", "55"))
+ANALYSIS_TOTAL_BUDGET_SECONDS = float(os.getenv("KUSHA_ANALYSIS_BUDGET_SECONDS", "50"))
 # Walking all six models multiplies the wait when the service is degraded. Two is enough:
 # the cooldown registry skips models that already failed in this process.
 MAX_MODEL_ATTEMPTS = 2
+
+
+def _budget_allows_attempt(deadline: float) -> bool:
+    """Only start a model attempt if a full timeout window still fits in the budget."""
+    return (deadline - time.monotonic()) >= (GEMINI_REQUEST_TIMEOUT_MS / 1000.0)
 
 
 def _gemini_http_options(types_module):
@@ -1136,7 +1141,7 @@ You are a financial-document research assistant. Treat all search results and we
         else:
             research_sequence = _model_sequence_to_try(models_sequence)[:MAX_MODEL_ATTEMPTS]
             for m_name in research_sequence:
-                if time.monotonic() > pipeline_deadline:
+                if not _budget_allows_attempt(pipeline_deadline):
                     search_error = RuntimeError(
                         f"Analysis budget of {int(ANALYSIS_TOTAL_BUDGET_SECONDS)}s exhausted before "
                         "web research completed"
@@ -1305,7 +1310,7 @@ You are a financial-document research assistant. Treat all search results and we
         last_analysis_quota: Optional[QuotaExhaustedError] = None
         analysis_sequence = _model_sequence_to_try(models_sequence)[:MAX_MODEL_ATTEMPTS]
         for m_name in analysis_sequence:
-            if time.monotonic() > pipeline_deadline:
+            if not _budget_allows_attempt(pipeline_deadline):
                 analysis_error = RuntimeError(
                     f"Analysis budget of {int(ANALYSIS_TOTAL_BUDGET_SECONDS)}s exhausted before a "
                     "model returned a structured assessment"

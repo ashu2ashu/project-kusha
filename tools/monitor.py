@@ -425,7 +425,14 @@ def run_online_probes(repo_root: Path) -> Tuple[int, str, List[str], Dict[str, A
         for attempt in range(3):
             try:
                 from google import genai
-                client = genai.Client(api_key=gemini_key)
+                from google.genai import types
+                client = genai.Client(
+                    api_key=gemini_key,
+                    http_options=types.HttpOptions(
+                        timeout=analyzer.GEMINI_REQUEST_TIMEOUT_MS,
+                        retry_options=types.HttpRetryOptions(attempts=1),
+                    ),
+                )
                 listed = [m.name.replace("models/", "") for m in client.models.list()]
                 missing = [m for m in analyzer.SUPPORTED_MODELS if m not in listed]
                 missing_models = missing

@@ -68,6 +68,13 @@ class TestGeminiSearchGrounding(unittest.TestCase):
         type_module.GenerateContentConfig = Config
         type_module.Tool = lambda **kwargs: kwargs
         type_module.GoogleSearch = lambda: "google-search-tool"
+
+        class _Options:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+
+        type_module.HttpOptions = _Options
+        type_module.HttpRetryOptions = _Options
         genai_module = pytypes.ModuleType("google.genai")
         genai_module.Client = MagicMock(return_value=fake_client)
         google_module = pytypes.ModuleType("google")

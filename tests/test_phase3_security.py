@@ -438,6 +438,42 @@ class TestPhase3Security(unittest.TestCase):
                         "A cooling grounding quota must skip the search tool call")
         self.assertEqual(result.get("analysis_status"), "completed_with_evidence_gaps")
 
+    def test_19_timeout_is_not_retried_on_the_same_model(self):
+        """A hung request must fail fast to the next model, not double the wait."""
+        import analyzer
+
+        calls = []
+
+        def slow():
+            calls.append(1)
+            raise TimeoutError("ReadTimeout: request timed out")
+
+        with self.assertRaises(analyzer.ModelUnavailableError) as ctx:
+            analyzer._call_with_retry(slow, attempts=2, base_delay=0.01, label="test_timeout")
+
+        self.assertEqual(len(calls), 1, "A timeout must not be retried on the same model")
+        self.assertEqual(ctx.exception.reason, "timeout")
+
+    def test_20_total_budget_returns_a_gap_instead_of_hanging(self):
+        """When the wall-clock budget is spent, return an explicit gap — never hang."""
+        import analyzer
+
+        with patch.object(analyzer, "ANALYSIS_TOTAL_BUDGET_SECONDS", 0):
+            with patch("google.genai.Client", return_value=MagicMock()):
+                result = analyzer.analyze_document_with_gemini(
+                    company_name="Test Co",
+                    sector="Technology",
+                    api_key="mock_key",
+                    live_data={"current_price": 100.0, "pe_ratio": 20.0},
+                    skip_web_search=True,
+                )
+
+        self.assertEqual(result.get("analysis_status"), "insufficient_evidence")
+        self.assertTrue(
+            any("budget" in gap.lower() for gap in result.get("evidence_gaps", [])),
+            f"Expected a budget gap, got {result.get('evidence_gaps')}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

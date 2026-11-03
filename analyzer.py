@@ -112,7 +112,7 @@ def verify_gemini_api_key(api_key: str, model_name: Optional[str] = None) -> tup
 
     try:
         from google import genai
-        client = genai.Client(api_key=key)
+        client = _new_gemini_client(key)
 
         last_error = None
         for m in models_to_test:
@@ -730,9 +730,12 @@ class ModelUnavailableError(RuntimeError):
     remember the model is unhealthy for a short while.
     """
 
-    def __init__(self, label: str = "", provider_detail: Optional[str] = None):
+    def __init__(self, label: str = "", provider_detail: Optional[str] = None, reason: str = "unavailable"):
         self.label = label
         self.provider_detail = (provider_detail or "").strip() or None
+        # "unavailable" (503) or "timeout": the caller treats a timeout more harshly,
+        # because a second hung model would double the wait for no benefit.
+        self.reason = reason
         message = f"Model unavailable ({label})." if label else "Model unavailable."
         if self.provider_detail:
             message += f" {self.provider_detail}"
@@ -859,6 +862,39 @@ def _is_model_unavailable_error(err: Any) -> bool:
     return "'code': 503" in text or '"code": 503' in text
 
 
+# A hung Gemini request must not stall the UI: the SDK's default timeout is unlimited,
+# and a single overloaded model was measured taking 208 seconds before returning 503.
+GEMINI_REQUEST_TIMEOUT_MS = int(os.getenv("KUSHA_GEMINI_TIMEOUT_MS", "90000"))
+# Total wall-clock budget for the structured-analysis model walk.
+ANALYSIS_TOTAL_BUDGET_SECONDS = float(os.getenv("KUSHA_ANALYSIS_BUDGET_SECONDS", "300"))
+
+
+def _gemini_http_options(types_module):
+    """Bound every request: no infinite waits, and our own fallback owns the retries."""
+    return types_module.HttpOptions(
+        timeout=GEMINI_REQUEST_TIMEOUT_MS,
+        retry_options=types_module.HttpRetryOptions(attempts=1),
+    )
+
+
+def _new_gemini_client(api_key: str):
+    """Create a client with a bounded request timeout (used everywhere, including tools)."""
+    from google import genai
+    from google.genai import types
+    return genai.Client(api_key=api_key, http_options=_gemini_http_options(types))
+
+
+def _is_timeout_error(err: Any) -> bool:
+    """A timed-out model is effectively unavailable right now; retrying it just burns time."""
+    if "timeout" in type(err).__name__.lower():
+        return True
+    text = str(err).lower()
+    return any(
+        marker in text
+        for marker in ("timed out", "timeout", "deadline exceeded", "readtimeout", "connecttimeout")
+    )
+
+
 def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: str = "gemini"):
     """
     Executes a callable with retries and exponential/jittered backoff.
@@ -903,6 +939,16 @@ def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: s
                     provider_detail=_redact_provider_detail(str(e)),
                 ) from e
 
+            # A request that exceeded our timeout is not going to get faster on retry;
+            # move to the next model instead of doubling the wait.
+            if _is_timeout_error(e):
+                logger.warning("[%s] Request timed out on attempt %d: %s", label, attempt, e.__class__.__name__)
+                raise ModelUnavailableError(
+                    label=label,
+                    provider_detail=_redact_provider_detail(str(e)),
+                    reason="timeout",
+                ) from e
+
             if attempt < attempts:
                 jitter = base_delay * (1.0 + random.random() * 0.3)
                 logger.warning(
@@ -943,7 +989,7 @@ def analyze_document_with_gemini(
     except ImportError:
         raise ImportError("google-genai package is not installed.")
 
-    client = genai.Client(api_key=clean_key)
+    client = _new_gemini_client(clean_key)
 
     model_to_use = selected_model if selected_model and selected_model in SUPPORTED_MODELS else DEFAULT_MODEL
     models_sequence = [model_to_use] + [m for m in SUPPORTED_MODELS if m != model_to_use]
@@ -1071,6 +1117,8 @@ You are a financial-document research assistant. Treat all search results and we
         search_error = None
         research_quota_models: List[str] = []
         last_research_quota: Optional[QuotaExhaustedError] = None
+        research_timeouts = 0
+        pipeline_deadline = time.monotonic() + ANALYSIS_TOTAL_BUDGET_SECONDS
 
         if skip_web_search:
             # Skip Google Search grounding call to conserve API quota
@@ -1084,6 +1132,12 @@ You are a financial-document research assistant. Treat all search results and we
         else:
             research_sequence = _model_sequence_to_try(models_sequence)
             for m_name in research_sequence:
+                if time.monotonic() > pipeline_deadline:
+                    search_error = RuntimeError(
+                        f"Analysis budget of {int(ANALYSIS_TOTAL_BUDGET_SECONDS)}s exhausted before "
+                        "web research completed"
+                    )
+                    break
                 try:
                     research_response = _call_with_retry(
                         lambda m=m_name: client.models.generate_content(
@@ -1117,6 +1171,16 @@ You are a financial-document research assistant. Treat all search results and we
                 except ModelUnavailableError as ue:
                     _mark_model_unavailable(m_name)
                     search_error = ue
+                    if ue.reason == "timeout":
+                        # Two hung models in a row means the network or the service is
+                        # unhealthy; walking the rest would just multiply the wait.
+                        research_timeouts += 1
+                        if research_timeouts >= 2:
+                            logger.warning(
+                                "Two consecutive Gemini timeouts during research; continuing "
+                                "without web evidence."
+                            )
+                            break
                     continue
                 except Exception as me:
                     search_error = me
@@ -1237,6 +1301,12 @@ You are a financial-document research assistant. Treat all search results and we
         last_analysis_quota: Optional[QuotaExhaustedError] = None
         analysis_sequence = _model_sequence_to_try(models_sequence)
         for m_name in analysis_sequence:
+            if time.monotonic() > pipeline_deadline:
+                analysis_error = RuntimeError(
+                    f"Analysis budget of {int(ANALYSIS_TOTAL_BUDGET_SECONDS)}s exhausted before a "
+                    "model returned a structured assessment"
+                )
+                break
             try:
                 response = _call_with_retry(
                     lambda m=m_name: client.models.generate_content(
@@ -1284,7 +1354,12 @@ You are a financial-document research assistant. Treat all search results and we
 
         if not response or not response.text:
             error_detail = _safe_gemini_error(analysis_error)
-            gap_result = _research_gap_result(company_name, sector, f"Grounded research was retrieved, but Gemini could not complete structured analysis: {error_detail}.")
+            stage_note = (
+                "Grounded research was retrieved, but Gemini could not complete structured analysis"
+                if research_response and research_response.text
+                else "Gemini could not complete structured analysis on the available data"
+            )
+            gap_result = _research_gap_result(company_name, sector, f"{stage_note}: {error_detail}.")
             gap_result["model_requested"] = model_to_use
             gap_result["model_used"] = None
             gap_result["research_model_used"] = research_model_used

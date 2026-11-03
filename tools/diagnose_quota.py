@@ -85,14 +85,13 @@ def main() -> int:
         return 1
 
     try:
-        from analyzer import SUPPORTED_MODELS
-        from google import genai
+        from analyzer import SUPPORTED_MODELS, _new_gemini_client
         from google.genai import types
     except ImportError as exc:
         print(f"Missing dependency: {exc}")
         return 1
 
-    client = genai.Client(api_key=key)
+    client = _new_gemini_client(key)
     working, failures = [], []
 
     for model in SUPPORTED_MODELS:

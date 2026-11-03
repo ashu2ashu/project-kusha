@@ -694,9 +694,20 @@ class QuotaExhaustedError(RuntimeError):
 
     BASE_MESSAGE = "Gemini quota exhausted. Try again later or reduce usage."
 
-    def __init__(self, models: Optional[List[str]] = None, stage: str = ""):
+    def __init__(
+        self,
+        models: Optional[List[str]] = None,
+        stage: str = "",
+        provider_detail: Optional[str] = None,
+        retry_after_seconds: Optional[float] = None,
+    ):
         self.models = list(models or [])
         self.stage = stage
+        # Keep the provider's own wording: it distinguishes a per-minute throttle from a
+        # spent daily bucket, and our generic sentence cannot.
+        self.provider_detail = (provider_detail or "").strip() or None
+        self.retry_after_seconds = retry_after_seconds
+
         message = self.BASE_MESSAGE
         if self.models:
             suffix = f" during {stage}" if stage else ""
@@ -705,16 +716,47 @@ class QuotaExhaustedError(RuntimeError):
                 f"({', '.join(self.models)}); each model has its own free-tier bucket. "
                 "Daily limits reset at midnight Pacific."
             )
+        if self.provider_detail:
+            message += f" Provider detail: {self.provider_detail}"
         super().__init__(message)
+
+
+_RETRY_DELAY_PATTERNS = (
+    re.compile(r"retrydelay['\"]?\s*[:=]\s*['\"]?(\d+(?:\.\d+)?)\s*s", re.IGNORECASE),
+    re.compile(r"retry\s+(?:in|after)\s+(\d+(?:\.\d+)?)\s*s", re.IGNORECASE),
+    re.compile(r"['\"](\d+(?:\.\d+)?)s['\"]", re.IGNORECASE),
+)
+
+# A 429 that tells us to wait under a minute is a rate throttle, not a spent daily bucket.
+MAX_HONORED_RETRY_DELAY_SECONDS = 65.0
+
+
+def _parse_retry_delay(err_str: str) -> Optional[float]:
+    """Extract the provider's suggested retry delay, if the error carries one."""
+    for pattern in _RETRY_DELAY_PATTERNS:
+        match = pattern.search(err_str or "")
+        if match:
+            try:
+                return float(match.group(1))
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def _redact_provider_detail(err_str: str) -> str:
+    """Keep the provider message but strip anything key-shaped before it reaches the UI."""
+    cleaned = re.sub(r"AIza[0-9A-Za-z_-]{20,}", "[REDACTED_API_KEY]", str(err_str or ""))
+    cleaned = re.sub(r"key=[0-9A-Za-z_-]{16,}", "key=[REDACTED]", cleaned)
+    return cleaned.strip()[:600]
 
 
 def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: str = "gemini"):
     """
     Executes a callable with retries and exponential/jittered backoff.
 
-    Quota exhaustion (429 / RESOURCE_EXHAUSTED) is not retried on the same model —
-    retrying burns nothing but time. It raises QuotaExhaustedError so the caller can
-    move on to the next model in its fallback list.
+    A 429 is normally not retried on the same model — but if the provider tells us to
+    wait a short, explicit interval (per-minute throttle), we honour it once. Treating
+    every 429 as a spent daily bucket made a 30-second throttle look like a dead key.
     """
     last_exc = None
     for attempt in range(1, attempts + 1):
@@ -724,8 +766,24 @@ def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: s
             last_exc = e
             err_str = str(e).lower()
             if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
-                logger.warning("[%s] Quota exhausted on attempt %d: %s", label, attempt, e.__class__.__name__)
-                raise QuotaExhaustedError() from e
+                retry_delay = _parse_retry_delay(str(e))
+                honor_delay = (
+                    retry_delay is not None
+                    and 0 < retry_delay <= MAX_HONORED_RETRY_DELAY_SECONDS
+                    and attempt < attempts
+                )
+                logger.warning(
+                    "[%s] Quota/rate limit on attempt %d: %s (suggested wait: %s)%s",
+                    label, attempt, e.__class__.__name__, retry_delay,
+                    "; honouring it" if honor_delay else "",
+                )
+                if honor_delay:
+                    time.sleep(retry_delay + random.random() * 0.5)
+                    continue
+                raise QuotaExhaustedError(
+                    provider_detail=_redact_provider_detail(str(e)),
+                    retry_after_seconds=retry_delay,
+                ) from e
 
             if attempt < attempts:
                 jitter = base_delay * (1.0 + random.random() * 0.3)
@@ -894,6 +952,7 @@ You are a financial-document research assistant. Treat all search results and we
         research_model_used = None
         search_error = None
         research_quota_models: List[str] = []
+        last_research_quota: Optional[QuotaExhaustedError] = None
 
         if skip_web_search and uploaded_file:
             # Skip Google Search grounding call to conserve API quota when statutory PDF is attached
@@ -918,17 +977,23 @@ You are a financial-document research assistant. Treat all search results and we
                     if research_response and research_response.text:
                         research_model_used = m_name
                         break
-                except QuotaExhaustedError:
+                except QuotaExhaustedError as qe:
                     # This model's bucket is empty; the next model has its own quota.
                     research_quota_models.append(m_name)
-                    search_error = QuotaExhaustedError([m_name], stage="web research")
+                    last_research_quota = qe
+                    search_error = qe
                     continue
                 except Exception as me:
                     search_error = me
                     break
 
             if research_response is None and len(research_quota_models) == len(models_sequence):
-                raise QuotaExhaustedError(research_quota_models, stage="web research")
+                raise QuotaExhaustedError(
+                    research_quota_models,
+                    stage="web research",
+                    provider_detail=getattr(last_research_quota, "provider_detail", None),
+                    retry_after_seconds=getattr(last_research_quota, "retry_after_seconds", None),
+                )
 
         # Build structured data quality evaluation state
         degraded_sources = []
@@ -1008,6 +1073,7 @@ You are a financial-document research assistant. Treat all search results and we
         analysis_error = None
         analysis_model_used = None
         analysis_quota_models: List[str] = []
+        last_analysis_quota: Optional[QuotaExhaustedError] = None
         for m_name in models_sequence:
             try:
                 response = _call_with_retry(
@@ -1027,10 +1093,11 @@ You are a financial-document research assistant. Treat all search results and we
                 if response and response.text:
                     analysis_model_used = m_name
                     break
-            except QuotaExhaustedError:
+            except QuotaExhaustedError as qe:
                 # Empty bucket on this model only; try the next one before giving up.
                 analysis_quota_models.append(m_name)
-                analysis_error = QuotaExhaustedError([m_name], stage="structured analysis")
+                last_analysis_quota = qe
+                analysis_error = qe
                 continue
             except RuntimeError as re_err:
                 analysis_error = re_err
@@ -1040,7 +1107,12 @@ You are a financial-document research assistant. Treat all search results and we
                 continue
 
         if response is None and len(analysis_quota_models) == len(models_sequence):
-            raise QuotaExhaustedError(analysis_quota_models, stage="structured analysis")
+            raise QuotaExhaustedError(
+                analysis_quota_models,
+                stage="structured analysis",
+                provider_detail=getattr(last_analysis_quota, "provider_detail", None),
+                retry_after_seconds=getattr(last_analysis_quota, "retry_after_seconds", None),
+            )
 
         if not response or not response.text:
             error_detail = _safe_gemini_error(analysis_error)

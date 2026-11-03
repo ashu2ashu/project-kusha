@@ -1825,15 +1825,25 @@ if run_btn:
                     if not rescued:
                         if quota_hit:
                             st.error(
-                                "Gemini quota exhausted on every available model. "
-                                "Free-tier limits reset daily at midnight Pacific (12:30 IST)."
+                                "Gemini quota exhausted on every available model."
                             )
                             st.info(
-                                "What frees quota now:\n"
-                                "1. **Switch model** in the sidebar — each model has its own daily bucket.\n"
-                                "2. **Use the local replay cache** — repeat analyses cost 0 API calls.\n"
-                                "3. **Enable quota saver** (skip web search) — halves the calls per run.\n"
-                                "4. **Wait for the reset** — nothing else recovers a spent daily bucket."
+                                "**First check which limit this is.** A daily bucket cannot be spent "
+                                "on your first run of the day — if this is the first run, it is a "
+                                "per-minute throttle, and waiting 60 seconds fixes it.\n\n"
+                                "1. **Wait 60 seconds and retry** — the per-minute window clears.\n"
+                                "2. **Switch model** in the sidebar — each model has its own daily bucket.\n"
+                                "3. **Use the local replay cache** — repeat analyses cost 0 API calls.\n"
+                                "4. **Enable quota saver** (skip web search) — halves the calls per run.\n"
+                                "5. **If it still fails after a minute**, run `python tools/diagnose_quota.py` "
+                                "— it prints Google's own error text, which names the exhausted metric "
+                                "and distinguishes a throttle from a spent day.\n\n"
+                                "Free-tier daily limits reset at midnight Pacific (12:30 IST)."
+                            )
+                            st.caption(
+                                "Google's raw error is preserved under Technical Details below — it names "
+                                "the exact quota metric, which is the only reliable way to tell a "
+                                "rate limit from a daily cap."
                             )
                         else:
                             st.error(f"Analysis Error: {clean_err}")

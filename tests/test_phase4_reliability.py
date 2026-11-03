@@ -299,6 +299,48 @@ class TestPhase4Reliability(unittest.TestCase):
         self.assertIn("Gemini quota exhausted", str(ctx.exception))
         self.assertEqual(len(quota_calls), 1, "Quota error must not be retried.")
 
+    def test_08c_short_retry_delay_is_honoured_as_a_throttle(self):
+        """A 429 that says 'retry in 0.01s' is a rate throttle: wait it out, do not declare exhaustion."""
+        attempts = []
+
+        def throttled_then_ok():
+            attempts.append(len(attempts) + 1)
+            if len(attempts) == 1:
+                raise Exception("429 RESOURCE_EXHAUSTED ... retryDelay: '0.01s'")
+            return "SUCCESS"
+
+        result = _call_with_retry(throttled_then_ok, attempts=2, base_delay=0.01, label="test_throttle")
+        self.assertEqual(result, "SUCCESS")
+        self.assertEqual(len(attempts), 2, "Short retryDelay must be honoured with a real retry")
+
+    def test_08d_long_retry_delay_is_not_waited_out(self):
+        """A 429 suggesting a multi-minute wait is a spent bucket: fail fast to the next model."""
+        attempts = []
+
+        def long_throttle():
+            attempts.append(1)
+            raise Exception("429 RESOURCE_EXHAUSTED retryDelay: '180s'")
+
+        with self.assertRaises(QuotaExhaustedError):
+            _call_with_retry(long_throttle, attempts=2, base_delay=0.01, label="test_long")
+        self.assertEqual(len(attempts), 1, "A 3-minute wait must not be honoured inline")
+
+    def test_08e_provider_detail_is_preserved_and_redacted(self):
+        """The provider's own wording must survive, or the user cannot tell RPM from RPD."""
+        raw = "429 RESOURCE_EXHAUSTED quota exceeded for metric: generate_content_free_tier_requests, limit: 5, model: gemini-3.5-flash AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+        def always_quota():
+            raise Exception(raw)
+
+        with self.assertRaises(QuotaExhaustedError) as ctx:
+            _call_with_retry(always_quota, attempts=1, base_delay=0.01, label="test_detail")
+
+        detail = ctx.exception.provider_detail or ""
+        self.assertIn("generate_content_free_tier_requests", detail)
+        self.assertIn("limit: 5", detail)
+        self.assertNotIn("AIzaSy", detail, "Provider detail must not leak a key")
+        self.assertIn("Provider detail:", str(ctx.exception))
+
     def test_08b_quota_error_message_names_every_tried_model(self):
         """8b. Single-model quota errors stay generic; the aggregate form names every model."""
         single = QuotaExhaustedError()

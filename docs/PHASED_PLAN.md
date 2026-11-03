@@ -220,6 +220,20 @@ evidence. The justification: a score built from attributed Yahoo Finance data an
 multi-year statements is useful when it is explicitly provisional; presenting demo
 numbers as if they described the company was not.
 
+### Time bounds (measured)
+
+The `google-genai` SDK has no default request timeout. On this key, one overloaded
+model held the HTTP POST for 208 seconds on one run and 18m31s on another before
+returning 503 — the app looked hung because it was.
+
+- Per-request timeout: 35s (`KUSHA_GEMINI_TIMEOUT_MS`), SDK retries disabled.
+- A timeout is not retried on the same model.
+- At most 2 models are tried (`MAX_MODEL_ATTEMPTS`), not all 6.
+- Total Gemini budget: 55s (`KUSHA_ANALYSIS_BUDGET_SECONDS`); when spent, the run
+  returns an explicit evidence gap.
+- Measured `python cli.py TCS` after the change: **26.5s** end-to-end, including the
+  Yahoo Finance fetch.
+
 ---
 
 ## Decisions needed from the owner (not code)

@@ -864,9 +864,13 @@ def _is_model_unavailable_error(err: Any) -> bool:
 
 # A hung Gemini request must not stall the UI: the SDK's default timeout is unlimited,
 # and a single overloaded model was measured taking 208 seconds before returning 503.
-GEMINI_REQUEST_TIMEOUT_MS = int(os.getenv("KUSHA_GEMINI_TIMEOUT_MS", "90000"))
-# Total wall-clock budget for the structured-analysis model walk.
-ANALYSIS_TOTAL_BUDGET_SECONDS = float(os.getenv("KUSHA_ANALYSIS_BUDGET_SECONDS", "300"))
+# 35s is comfortably above the observed healthy latency (11-30s) and keeps a bad run fast.
+GEMINI_REQUEST_TIMEOUT_MS = int(os.getenv("KUSHA_GEMINI_TIMEOUT_MS", "35000"))
+# Total wall-clock budget for the Gemini part of a run (research + analysis).
+ANALYSIS_TOTAL_BUDGET_SECONDS = float(os.getenv("KUSHA_ANALYSIS_BUDGET_SECONDS", "55"))
+# Walking all six models multiplies the wait when the service is degraded. Two is enough:
+# the cooldown registry skips models that already failed in this process.
+MAX_MODEL_ATTEMPTS = 2
 
 
 def _gemini_http_options(types_module):
@@ -1130,7 +1134,7 @@ You are a financial-document research assistant. Treat all search results and we
                 f"the search tool within the last {int(GROUNDING_UNAVAILABLE_SECONDS // 60)} minutes"
             )
         else:
-            research_sequence = _model_sequence_to_try(models_sequence)
+            research_sequence = _model_sequence_to_try(models_sequence)[:MAX_MODEL_ATTEMPTS]
             for m_name in research_sequence:
                 if time.monotonic() > pipeline_deadline:
                     search_error = RuntimeError(
@@ -1149,7 +1153,7 @@ You are a financial-document research assistant. Treat all search results and we
                                 tools=[types.Tool(google_search=types.GoogleSearch())],
                             )
                         ),
-                        attempts=2,
+                        attempts=1,
                         base_delay=1.5,
                         label=f"gemini_research_{m_name}"
                     )
@@ -1299,7 +1303,7 @@ You are a financial-document research assistant. Treat all search results and we
         analysis_model_used = None
         analysis_quota_models: List[str] = []
         last_analysis_quota: Optional[QuotaExhaustedError] = None
-        analysis_sequence = _model_sequence_to_try(models_sequence)
+        analysis_sequence = _model_sequence_to_try(models_sequence)[:MAX_MODEL_ATTEMPTS]
         for m_name in analysis_sequence:
             if time.monotonic() > pipeline_deadline:
                 analysis_error = RuntimeError(
@@ -1318,7 +1322,7 @@ You are a financial-document research assistant. Treat all search results and we
                             temperature=0.10,
                         )
                     ),
-                    attempts=2,
+                    attempts=1,
                     base_delay=1.5,
                     label=f"gemini_analysis_{m_name}"
                 )

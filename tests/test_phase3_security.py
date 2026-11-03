@@ -210,8 +210,8 @@ class TestPhase3Security(unittest.TestCase):
                 )
             message = str(ctx.exception)
             self.assertIn("Gemini quota exhausted. Try again later or reduce usage.", message)
-            self.assertEqual(len(ctx.exception.models), len(analyzer.SUPPORTED_MODELS))
-            for model_id in analyzer.SUPPORTED_MODELS:
+            self.assertEqual(len(ctx.exception.models), analyzer.MAX_MODEL_ATTEMPTS)
+            for model_id in ctx.exception.models:
                 self.assertIn(model_id, message)
 
     def test_13_quota_on_one_model_falls_back_to_the_next(self):
@@ -236,11 +236,10 @@ class TestPhase3Security(unittest.TestCase):
                     skip_web_search=True
                 )
 
-        # Old behaviour stopped at the first model. Every model must be tried once.
-        self.assertEqual(sorted(set(attempted)), sorted(analyzer.SUPPORTED_MODELS),
-                         f"Fallback did not visit every model; attempted={attempted}")
-        self.assertEqual(len(attempted), len(analyzer.SUPPORTED_MODELS),
-                         "Quota errors must not be retried on the same model")
+        # Old behaviour stopped at the first model. The walk is now capped at
+        # MAX_MODEL_ATTEMPTS so a degraded service cannot stall the run.
+        self.assertEqual(len(attempted), analyzer.MAX_MODEL_ATTEMPTS,
+                         f"Fallback must be capped at {analyzer.MAX_MODEL_ATTEMPTS} models; attempted={attempted}")
 
     def test_14_quota_on_requested_model_still_returns_a_result(self):
         """End-to-end: requested model 429s, the next model answers, and model_used reports the truth."""

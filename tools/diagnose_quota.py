@@ -65,7 +65,9 @@ def classify(detail: str) -> str:
         return "PER-MINUTE THROTTLE — wait ~60s and the same model will work."
     if "per 1m tokens" in lowered or "tokens per minute" in lowered or "tpm" in lowered:
         return "TOKEN-PER-MINUTE THROTTLE — the prompt is too large for this tier right now."
-    if "billing" in lowered or "free tier" in lowered and "not available" in lowered:
+    if "billing" in lowered and any(
+        token in lowered for token in ("not available", "enable", "disabled", "suspended")
+    ):
         return "PROJECT/Billing — this project may not have free-tier access to this model."
     if "suspended" in lowered or "disabled" in lowered:
         return "PROJECT SUSPENDED or API disabled."
@@ -118,6 +120,28 @@ def main() -> int:
 
     print(f"{len(working)}/{len(SUPPORTED_MODELS)} models answered: {', '.join(working)}")
     print("The app's fallback will pick one of these on the next run.")
+
+    # Google Search grounding is a separate, per-project tool quota. Generation can be
+    # perfectly healthy while every grounded call returns 429 — probe it explicitly.
+    print(f"\nGoogle Search grounding probe: one grounded call to {working[0]} ...")
+    try:
+        client.models.generate_content(
+            model=working[0],
+            contents="What is the latest public filing for Reliance Industries? One sentence.",
+            config=types.GenerateContentConfig(
+                temperature=0,
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+            ),
+        )
+        print("  grounding: OK")
+    except Exception as exc:
+        detail = redact(str(exc))
+        print(f"  grounding: {detail}")
+        print(
+            "  -> This is a Google Search grounding error (per-project tool quota), "
+            "not a text-generation limit."
+        )
+        print("     The app now runs a PROVISIONAL analysis without web evidence instead of failing.")
 
     # Two immediate calls on the same model: a daily bucket survives this, an RPM cap does not.
     print(f"\nRate-limit probe: two back-to-back calls to {working[0]} ...")

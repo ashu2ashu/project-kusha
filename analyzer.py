@@ -721,6 +721,81 @@ class QuotaExhaustedError(RuntimeError):
         super().__init__(message)
 
 
+class ModelUnavailableError(RuntimeError):
+    """
+    Raised when a model answers 503 UNAVAILABLE / overloaded.
+
+    Measured on a live free-tier key, some models return 503 while others answer normally.
+    Retrying the same overloaded model wastes seconds; the caller should move on and
+    remember the model is unhealthy for a short while.
+    """
+
+    def __init__(self, label: str = "", provider_detail: Optional[str] = None):
+        self.label = label
+        self.provider_detail = (provider_detail or "").strip() or None
+        message = f"Model unavailable ({label})." if label else "Model unavailable."
+        if self.provider_detail:
+            message += f" {self.provider_detail}"
+        super().__init__(message)
+
+
+# Models that returned 503 are deprioritised for this long, so a single bad run does not
+# make every later run pay the same failed round trip. In-process only; no persistence.
+MODEL_UNAVAILABLE_COOLDOWN_SECONDS = 600.0
+_MODEL_COOLDOWN_UNTIL: Dict[str, float] = {}
+
+
+def _mark_model_unavailable(model: str, seconds: float = MODEL_UNAVAILABLE_COOLDOWN_SECONDS) -> None:
+    _MODEL_COOLDOWN_UNTIL[model] = time.monotonic() + seconds
+
+
+def _is_model_cooling(model: str) -> bool:
+    until = _MODEL_COOLDOWN_UNTIL.get(model)
+    if until is None:
+        return False
+    if time.monotonic() >= until:
+        _MODEL_COOLDOWN_UNTIL.pop(model, None)
+        return False
+    return True
+
+
+def reset_model_cooldowns() -> None:
+    """Clear the in-process unavailable registry (used by tests and by 'Test Key')."""
+    _MODEL_COOLDOWN_UNTIL.clear()
+
+
+# Google Search grounding is billed and limited per API project, not per model. Measured on a
+# live free-tier key: plain generation answered on 4/6 models while a grounded call returned
+# 429 on every model. Walking the whole model list therefore buys nothing — it just delays the
+# run and spends the request budget. Remember the failure for a while instead.
+GROUNDING_UNAVAILABLE_SECONDS = 1800.0
+_GROUNDING_UNAVAILABLE_UNTIL = 0.0
+
+
+def _mark_grounding_unavailable(seconds: float = GROUNDING_UNAVAILABLE_SECONDS) -> None:
+    global _GROUNDING_UNAVAILABLE_UNTIL
+    _GROUNDING_UNAVAILABLE_UNTIL = time.monotonic() + seconds
+
+
+def _grounding_is_cooling() -> bool:
+    global _GROUNDING_UNAVAILABLE_UNTIL
+    if _GROUNDING_UNAVAILABLE_UNTIL and time.monotonic() >= _GROUNDING_UNAVAILABLE_UNTIL:
+        _GROUNDING_UNAVAILABLE_UNTIL = 0.0
+    return bool(_GROUNDING_UNAVAILABLE_UNTIL)
+
+
+def reset_grounding_state() -> None:
+    """Forget a remembered grounding failure (used by tests and by 'Test Key')."""
+    global _GROUNDING_UNAVAILABLE_UNTIL
+    _GROUNDING_UNAVAILABLE_UNTIL = 0.0
+
+
+def _model_sequence_to_try(models_sequence: List[str]) -> List[str]:
+    """Skip cooling models, but never return an empty list — if all are cooling, try all."""
+    usable = [m for m in models_sequence if not _is_model_cooling(m)]
+    return usable or list(models_sequence)
+
+
 _RETRY_DELAY_PATTERNS = (
     re.compile(r"retrydelay['\"]?\s*[:=]\s*['\"]?(\d+(?:\.\d+)?)\s*s", re.IGNORECASE),
     re.compile(r"retry\s+(?:in|after)\s+(\d+(?:\.\d+)?)\s*s", re.IGNORECASE),
@@ -752,25 +827,36 @@ def _redact_provider_detail(err_str: str) -> str:
 
 def _is_non_retryable_model_error(err: Any) -> bool:
     """
-    True when retrying the same request on another model cannot help.
-
-    A 503 UNAVAILABLE on one model says nothing about the others — measured on this key,
-    gemini-3.8-flash and gemini-flash-latest returned 503 while four other models answered.
-    A 400/403/404 is a bad request, bad key, or missing model: stop the chain.
+    True when retrying the same request on another model cannot help (e.g. invalid API key
+    or project permission denied). Model-specific errors like 404 Not Found, 400 parameter
+    mismatch, or 503 Unavailable should NOT stop the fallback chain across other models.
     """
     text = str(err).lower()
     return any(
         token in text
         for token in (
-            "invalid_argument",
             "api_key_invalid",
+            "api key not valid",
             "permission_denied",
-            "not_found",
-            "400",
-            "403",
-            "404",
         )
     )
+
+
+def _is_model_unavailable_error(err: Any) -> bool:
+    """
+    True only for a real 503 from the provider — not for prose that happens to mention 503.
+
+    Matches the structured code when the client exposes it, or Google's literal
+    "503 UNAVAILABLE. {...}" prefix. A generic exception carrying the text
+    "temporary glitch (503 ...)" is a transient error and must stay retryable.
+    """
+    for attribute in ("code", "status_code"):
+        if getattr(err, attribute, None) == 503:
+            return True
+    text = str(err)
+    if re.match(r"^\s*503\b", text):
+        return True
+    return "'code': 503" in text or '"code": 503' in text
 
 
 def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: str = "gemini"):
@@ -806,6 +892,15 @@ def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: s
                 raise QuotaExhaustedError(
                     provider_detail=_redact_provider_detail(str(e)),
                     retry_after_seconds=retry_delay,
+                ) from e
+
+            # 503 UNAVAILABLE / overloaded is per-model and usually clears by using another
+            # model. Retrying the same overloaded model just adds seconds to the run.
+            if _is_model_unavailable_error(e):
+                logger.warning("[%s] Model unavailable on attempt %d: %s", label, attempt, e.__class__.__name__)
+                raise ModelUnavailableError(
+                    label=label,
+                    provider_detail=_redact_provider_detail(str(e)),
                 ) from e
 
             if attempt < attempts:
@@ -977,11 +1072,12 @@ You are a financial-document research assistant. Treat all search results and we
         research_quota_models: List[str] = []
         last_research_quota: Optional[QuotaExhaustedError] = None
 
-        if skip_web_search and uploaded_file:
-            # Skip Google Search grounding call to conserve API quota when statutory PDF is attached
+        if skip_web_search:
+            # Skip Google Search grounding call to conserve API quota
             search_error = RuntimeError("Google Search grounding skipped (Quota Saver mode active)")
         else:
-            for m_name in models_sequence:
+            research_sequence = _model_sequence_to_try(models_sequence)
+            for m_name in research_sequence:
                 try:
                     research_response = _call_with_retry(
                         lambda m=m_name: client.models.generate_content(
@@ -1006,6 +1102,10 @@ You are a financial-document research assistant. Treat all search results and we
                     last_research_quota = qe
                     search_error = qe
                     continue
+                except ModelUnavailableError as ue:
+                    _mark_model_unavailable(m_name)
+                    search_error = ue
+                    continue
                 except Exception as me:
                     search_error = me
                     # A 503/timeout on this model does not condemn the others; a bad
@@ -1014,13 +1114,20 @@ You are a financial-document research assistant. Treat all search results and we
                         break
                     continue
 
-            if research_response is None and len(research_quota_models) == len(models_sequence):
-                raise QuotaExhaustedError(
-                    research_quota_models,
-                    stage="web research",
-                    provider_detail=getattr(last_research_quota, "provider_detail", None),
-                    retry_after_seconds=getattr(last_research_quota, "retry_after_seconds", None),
-                )
+            if research_response is None and len(research_quota_models) == len(research_sequence):
+                if not uploaded_file:
+                    raise QuotaExhaustedError(
+                        research_quota_models,
+                        stage="web research",
+                        provider_detail=getattr(last_research_quota, "provider_detail", None),
+                        retry_after_seconds=getattr(last_research_quota, "retry_after_seconds", None),
+                    )
+                else:
+                    logger.warning(
+                        "Google Search grounding quota exhausted across all models (%s). "
+                        "Continuing evaluation grounded directly on the attached statutory PDF.",
+                        ", ".join(research_quota_models)
+                    )
 
         # Build structured data quality evaluation state
         degraded_sources = []
@@ -1101,7 +1208,8 @@ You are a financial-document research assistant. Treat all search results and we
         analysis_model_used = None
         analysis_quota_models: List[str] = []
         last_analysis_quota: Optional[QuotaExhaustedError] = None
-        for m_name in models_sequence:
+        analysis_sequence = _model_sequence_to_try(models_sequence)
+        for m_name in analysis_sequence:
             try:
                 response = _call_with_retry(
                     lambda m=m_name: client.models.generate_content(
@@ -1126,6 +1234,10 @@ You are a financial-document research assistant. Treat all search results and we
                 last_analysis_quota = qe
                 analysis_error = qe
                 continue
+            except ModelUnavailableError as ue:
+                _mark_model_unavailable(m_name)
+                analysis_error = ue
+                continue
             except RuntimeError as re_err:
                 analysis_error = re_err
                 if _is_non_retryable_model_error(re_err):
@@ -1135,7 +1247,7 @@ You are a financial-document research assistant. Treat all search results and we
                 analysis_error = me
                 continue
 
-        if response is None and len(analysis_quota_models) == len(models_sequence):
+        if response is None and len(analysis_quota_models) == len(analysis_sequence):
             raise QuotaExhaustedError(
                 analysis_quota_models,
                 stage="structured analysis",

@@ -29,10 +29,16 @@ class TestPhase3Security(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.orig_cache_dir_fn = evaluation_cache.get_cache_dir
         evaluation_cache.get_cache_dir = lambda: Path(self.temp_dir)
+        # The 503 cooldown registry is process-wide; a test that trips it must not
+        # silently change the model sequence used by later tests.
+        import analyzer
+        analyzer.reset_model_cooldowns()
 
     def tearDown(self):
         evaluation_cache.get_cache_dir = self.orig_cache_dir_fn
         shutil.rmtree(self.temp_dir, ignore_errors=True)
+        import analyzer
+        analyzer.reset_model_cooldowns()
 
     def test_01_esc_helper_behaviour(self):
         """1. esc() escapes <script>, quotes, and returns '' for None."""
@@ -312,6 +318,35 @@ class TestPhase3Security(unittest.TestCase):
         self.assertEqual(result.get("model_used"), "gemini-3.5-flash-lite")
         self.assertIsNotNone(result.get("final_score"))
 
+    def test_16_503_is_not_retried_and_enters_cooldown(self):
+        """An overloaded model costs one round trip, not two, and is skipped next run."""
+        import analyzer
+
+        calls = []
+
+        def fake_generate(model=None, contents=None, config=None):
+            calls.append(model)
+            if model == "gemini-3.5-flash":
+                raise Exception("503 UNAVAILABLE. This model is currently experiencing high demand.")
+            return MagicMock(text="")
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = fake_generate
+
+        with patch("google.genai.Client", return_value=mock_client):
+            analyzer.analyze_document_with_gemini(
+                company_name="Test Co",
+                sector="Technology",
+                api_key="mock_key",
+                selected_model="gemini-3.5-flash",
+                skip_web_search=False,
+            )
+
+        flash_attempts = [c for c in calls if c == "gemini-3.5-flash"]
+        self.assertEqual(len(flash_attempts), 1,
+                         f"A 503 must not be retried on the same model; calls={calls}")
+        self.assertTrue(analyzer._is_model_cooling("gemini-3.5-flash"),
+                        "An overloaded model must enter the cooldown registry")
 
 if __name__ == "__main__":
     unittest.main()

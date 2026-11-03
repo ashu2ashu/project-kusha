@@ -387,6 +387,68 @@ class TestPhase4Reliability(unittest.TestCase):
                             f"File {fn}:{idx+1} has except Exception: followed by pass without logger or explanatory comment"
                         )
 
+    def test_10_pdf_attached_continues_when_google_search_quota_exhausted(self):
+        """When an uploaded PDF is attached, 429 on Google Search tool must NOT abort the run with QuotaExhaustedError."""
+        import analyzer
+        import types as pytypes
+
+        mock_client = MagicMock()
+        mock_client.files.upload.return_value = pytypes.SimpleNamespace(name="files/mock-pdf")
+
+        # Google Search grounding call fails with 429 quota exhaustion, but structured analysis succeeds
+        valid_response_json = json.dumps({
+            "company_name": "Test Co",
+            "sector": "Industrials",
+            "pillars": [{"id": p["id"], "name": p["name"], "score": 5, "justification": f"Evidence for pillar {p['id']}"} for p in analyzer.CANONICAL_PILLARS],
+            "final_call": "Valid assessment grounded on BSE annual report PDF.",
+            "evidence_gaps": [],
+        })
+        success_response = pytypes.SimpleNamespace(
+            text=valid_response_json,
+            candidates=[pytypes.SimpleNamespace(grounding_metadata=None)],
+        )
+
+        def mock_generate_content(model=None, contents=None, config=None):
+            tools = getattr(config, "tools", None)
+            if tools:
+                raise Exception("429 Resource has been exhausted on Google Search Grounding")
+            return success_response
+
+        mock_client.models.generate_content.side_effect = mock_generate_content
+
+        with patch("google.genai.Client", return_value=mock_client):
+            result = analyzer.analyze_document_with_gemini(
+                company_name="Test Co",
+                sector="Industrials",
+                api_key="mock_key",
+                pdf_bytes=b"%PDF-1.4 mock statutory annual report content",
+                filing_metadata={"source": "BSE-hosted PDF", "url": "https://bseindia.com/test.pdf"},
+                skip_web_search=False
+            )
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result.get("company_name"), "Test Co")
+        self.assertFalse(result.get("web_research", {}).get("search_performed", True))
+        self.assertTrue(any("Google Search grounding unavailable" in gap for gap in result.get("evidence_gaps", [])))
+
+    def test_11_skip_web_search_honoured_without_uploaded_pdf(self):
+        """skip_web_search=True skips the search tool call even when no PDF is attached."""
+        import analyzer
+
+        mock_client = MagicMock()
+
+        with patch("google.genai.Client", return_value=mock_client):
+            result = analyzer.analyze_document_with_gemini(
+                company_name="Test Co",
+                sector="Industrials",
+                api_key="mock_key",
+                pdf_bytes=None,
+                skip_web_search=True
+            )
+
+        self.assertEqual(result.get("analysis_status"), "insufficient_evidence")
+        self.assertEqual(mock_client.models.generate_content.call_count, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

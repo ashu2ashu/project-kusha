@@ -33,12 +33,14 @@ class TestPhase3Security(unittest.TestCase):
         # silently change the model sequence used by later tests.
         import analyzer
         analyzer.reset_model_cooldowns()
+        analyzer.reset_grounding_state()
 
     def tearDown(self):
         evaluation_cache.get_cache_dir = self.orig_cache_dir_fn
         shutil.rmtree(self.temp_dir, ignore_errors=True)
         import analyzer
         analyzer.reset_model_cooldowns()
+        analyzer.reset_grounding_state()
 
     def test_01_esc_helper_behaviour(self):
         """1. esc() escapes <script>, quotes, and returns '' for None."""
@@ -203,7 +205,8 @@ class TestPhase3Security(unittest.TestCase):
                     company_name="Test Co",
                     sector="Technology",
                     api_key="mock_key",
-                    skip_web_search=False
+                    live_data={"current_price": 100.0, "pe_ratio": 20.0},
+                    skip_web_search=True
                 )
             message = str(ctx.exception)
             self.assertIn("Gemini quota exhausted. Try again later or reduce usage.", message)
@@ -229,7 +232,8 @@ class TestPhase3Security(unittest.TestCase):
                     company_name="Test Co",
                     sector="Technology",
                     api_key="mock_key",
-                    skip_web_search=False
+                    live_data={"current_price": 100.0, "pe_ratio": 20.0},
+                    skip_web_search=True
                 )
 
         # Old behaviour stopped at the first model. Every model must be tried once.
@@ -347,6 +351,93 @@ class TestPhase3Security(unittest.TestCase):
                          f"A 503 must not be retried on the same model; calls={calls}")
         self.assertTrue(analyzer._is_model_cooling("gemini-3.5-flash"),
                         "An overloaded model must enter the cooldown registry")
+
+    def test_17_grounding_quota_degrades_to_provisional_score(self):
+        """A project-level grounding 429 must not abort an analysis that has market data."""
+        import json
+        import analyzer
+        from tests.fixtures_golden import CLEAN_LARGECAP
+
+        payload = CLEAN_LARGECAP["raw_analysis"]
+
+        class _Resp:
+            def __init__(self, text):
+                self.text = text
+                self.candidates = []
+
+        grounded_calls = []
+
+        def fake_generate(model=None, contents=None, config=None):
+            if config is not None and getattr(config, "tools", None):
+                grounded_calls.append(model)
+                raise Exception(
+                    "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': "
+                    "'You exceeded your current quota, please check your plan and billing details.'}}"
+                )
+            return _Resp(json.dumps(payload))
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = fake_generate
+
+        with patch("google.genai.Client", return_value=mock_client):
+            result = analyzer.analyze_document_with_gemini(
+                company_name="Test Co",
+                sector="Technology",
+                api_key="mock_key",
+                live_data={"current_price": 100.0, "pe_ratio": 20.0},
+                selected_model="gemini-3.5-flash",
+                skip_web_search=False,
+            )
+
+        self.assertEqual(
+            len(grounded_calls), 1,
+            "Grounding is one project-level quota: a 429 must not be retried across six models",
+        )
+        self.assertEqual(result.get("analysis_status"), "completed_with_evidence_gaps")
+        self.assertIsNotNone(result.get("final_score"), "A provisional score must still be produced")
+        self.assertTrue(result.get("final_call", "").startswith("PROVISIONAL"))
+        self.assertTrue(
+            any("Google Search grounding unavailable" in gap for gap in result.get("evidence_gaps", []))
+        )
+        self.assertTrue(analyzer._grounding_is_cooling())
+
+    def test_18_grounding_cooldown_skips_the_search_call_entirely(self):
+        """After a grounding 429 the next run must not spend another grounded request."""
+        import json
+        import analyzer
+        from tests.fixtures_golden import CLEAN_LARGECAP
+
+        payload = CLEAN_LARGECAP["raw_analysis"]
+        calls = []
+
+        class _Resp:
+            def __init__(self, text):
+                self.text = text
+                self.candidates = []
+
+        def fake_generate(model=None, contents=None, config=None):
+            calls.append(getattr(config, "tools", None))
+            return _Resp(json.dumps(payload))
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = fake_generate
+
+        analyzer._mark_grounding_unavailable()
+        with patch("google.genai.Client", return_value=mock_client):
+            result = analyzer.analyze_document_with_gemini(
+                company_name="Test Co",
+                sector="Technology",
+                api_key="mock_key",
+                live_data={"current_price": 100.0, "pe_ratio": 20.0},
+                selected_model="gemini-3.5-flash",
+                skip_web_search=False,
+            )
+
+        self.assertTrue(calls, "The structured analysis must still run")
+        self.assertTrue(all(tools is None for tools in calls),
+                        "A cooling grounding quota must skip the search tool call")
+        self.assertEqual(result.get("analysis_status"), "completed_with_evidence_gaps")
+
 
 if __name__ == "__main__":
     unittest.main()

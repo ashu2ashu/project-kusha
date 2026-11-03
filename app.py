@@ -1987,6 +1987,13 @@ if "idex_result" in st.session_state:
     if res.get("analysis_status") == "insufficient_evidence":
         st.error("Insufficient evidence: " + "; ".join(res.get("evidence_gaps", [])))
 
+    if res.get("analysis_status") == "completed_with_evidence_gaps":
+        st.warning(
+            "⚠️ **Provisional assessment** — Google Search grounding was unavailable, so this score "
+            "was computed from third-party market data and statements only. Current filings, auditor "
+            "disclosures, pledge data and news were **not** verified. Treat the call as provisional."
+        )
+
     if not is_demo and res.get("analysis_status") == "insufficient_evidence" and res.get("filing_metadata", {}).get("ingestion_status") != "analyzed":
         st.error("Score, allocation, and investment call are withheld because the evidence checks are incomplete. Resolve the listed gaps and run the analysis again.")
         st.stop()

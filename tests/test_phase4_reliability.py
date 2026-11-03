@@ -35,6 +35,9 @@ class TestPhase4Reliability(unittest.TestCase):
         self.patcher.start()
         self.env_patcher = patch.dict(os.environ, {"KUSHA_CACHE_MAX_AGE_HOURS": "24"})
         self.env_patcher.start()
+        import analyzer
+        analyzer.reset_model_cooldowns()
+        analyzer.reset_grounding_state()
 
         self.sample_result = {
             "company_name": "Reliance Industries Ltd.",
@@ -53,6 +56,9 @@ class TestPhase4Reliability(unittest.TestCase):
         self.patcher.stop()
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
+        import analyzer
+        analyzer.reset_model_cooldowns()
+        analyzer.reset_grounding_state()
 
     def test_01_cache_key_isolation(self):
         """1. Cache key isolation: different document_hash or skip_web_search yields different keys."""

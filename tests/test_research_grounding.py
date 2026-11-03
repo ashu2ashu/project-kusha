@@ -22,6 +22,16 @@ def _analysis_json():
 
 
 class TestGeminiSearchGrounding(unittest.TestCase):
+    def setUp(self):
+        # The grounding circuit breaker is process-wide; a quota test must not leak into
+        # the next test's expectation that the search tool is called.
+        import analyzer
+        analyzer.reset_grounding_state()
+
+    def tearDown(self):
+        import analyzer
+        analyzer.reset_grounding_state()
+
     def _run_with_mock_client(self, pdf_bytes=None, failure=False, no_sources=False, upload_failure=False, filing_metadata=None):
         source = pytypes.SimpleNamespace(title="Example Annual Report", uri="https://example.com/report.pdf")
         metadata = pytypes.SimpleNamespace(

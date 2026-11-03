@@ -140,14 +140,26 @@ def run_cli_analysis(ticker: str, is_demo: bool = False, model: str = "gemini-3.
                 forensic_report=forensic_rep
             )
         except Exception as e:
-            print(f"{YELLOW}⚠ Gemini API live query error: {e}. Falling back to deterministic demo scorecard.{RESET}")
-            idex_res = analyzer.get_demo_analysis(
-                company_name=company_name,
-                sector=sector,
-                live_data=live_data,
-                sentinel_report=sentinel_rep,
-                forensic_report=forensic_rep
-            )
+            print(f"{YELLOW}⚠ Gemini API error: {e}{RESET}")
+            print(f"{YELLOW}▶ Retrying without Google Search grounding (degraded, clearly labelled)...{RESET}")
+            try:
+                idex_res = analyzer.analyze_document_with_gemini(
+                    company_name=company_name,
+                    sector=sector,
+                    api_key=api_key,
+                    live_data=live_data,
+                    selected_model=model,
+                    sentinel_report=sentinel_rep,
+                    forensic_report=forensic_rep,
+                    skip_web_search=True,
+                )
+            except Exception as retry_err:
+                print(f"{RED}✖ Analysis could not complete: {retry_err}{RESET}")
+                print(
+                    f"{YELLOW}No assessment was produced. Demo numbers are not shown here because "
+                    f"they would not describe {company_name}.{RESET}"
+                )
+                return
 
     # Display 8 Canonical Pillars
     print(f"\n{BOLD}┌─ 8 CANONICAL PILLARS SCORECARD (IDEX-7.5SC) ──────────────────────────────────┐{RESET}")
@@ -184,6 +196,16 @@ def run_cli_analysis(ticker: str, is_demo: bool = False, model: str = "gemini-3.
     print(f"│ Verdict Band     : {BOLD}{verdict[:58]:<58}{RESET} │")
     print(f"│ Risk Tier        : {BOLD}{risk_tier:<58}{RESET} │")
     print(f"{BOLD}└────────────────────────────────────────────────────────────────────────────────┘{RESET}")
+
+    if idex_res.get("analysis_status") == "completed_with_evidence_gaps":
+        print(
+            f"\n{YELLOW}⚠ PROVISIONAL — web evidence was unavailable. This score was computed from "
+            f"third-party market data and statements only; current filings, auditor disclosures, "
+            f"pledge data and news were not verified.{RESET}"
+        )
+        for gap in idex_res.get("evidence_gaps", [])[:4]:
+            print(f"{DIM}  • {gap}{RESET}")
+
     print(f"\n{DIM}Run complete. For the interactive visual dashboard, run: streamlit run app.py{RESET}\n")
 
 

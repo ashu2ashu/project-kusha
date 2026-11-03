@@ -193,6 +193,35 @@ as a warning by the monitor.
 
 ---
 
+## Quota degradation behaviour (2026-11-03)
+
+Measured on the live free-tier key: plain generation answered on 4 of 6 models
+(`gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3-flash-preview`,
+`gemini-flash-lite-latest`), while a Google Search grounded call returned `429
+RESOURCE_EXHAUSTED` on every model. Grounding is a per-project tool quota, not a
+per-model generation bucket.
+
+- A grounding `429` now stops the model walk immediately and remembers the failure for
+  30 minutes in-process (`_mark_grounding_unavailable`). Trying the other five models
+  only delayed the run.
+- When grounding is unavailable but market data or a PDF exists, the analysis still
+  runs. The result is labelled `analysis_status = "completed_with_evidence_gaps"`, its
+  `final_call` is prefixed `PROVISIONAL —`, every pillar keeps
+  `evidence_status = "insufficient_evidence"`, and the evidence gap names exactly what
+  was not verified.
+- A score is withheld (`insufficient_evidence`) only when there is no document, no
+  market data, and no web evidence — or when search ran but returned no usable sources.
+- `cli.py` no longer prints a demo scorecard on an API error. It retries once without
+  grounding, then prints the provisional result with its gaps; if that also fails it
+  prints no assessment rather than synthetic numbers.
+
+This changes an earlier Phase 1–3 policy that withheld every score without web
+evidence. The justification: a score built from attributed Yahoo Finance data and
+multi-year statements is useful when it is explicitly provisional; presenting demo
+numbers as if they described the company was not.
+
+---
+
 ## Decisions needed from the owner (not code)
 
 1. **SEBI posture** — keep scores + position sizing (registration risk) or strip them.

@@ -272,6 +272,46 @@ class TestPhase3Security(unittest.TestCase):
                          "A quota-limited request must be served by the next model, and recorded as such")
         self.assertIsNotNone(result.get("final_score"), "Fallback must produce a scored result, not an empty one")
 
+    def test_15_503_on_first_model_does_not_abort_the_chain(self):
+        """A 503 UNAVAILABLE on one model must fall through to the next, for research and analysis."""
+        import json
+        import analyzer
+        from tests.fixtures_golden import CLEAN_LARGECAP
+
+        payload = CLEAN_LARGECAP["raw_analysis"]
+
+        class _Resp:
+            def __init__(self, text):
+                self.text = text
+                self.candidates = []
+
+        def fake_generate(model=None, contents=None, config=None):
+            if model == "gemini-3.5-flash":
+                raise Exception(
+                    "503 UNAVAILABLE. {'error': {'code': 503, 'message': "
+                    "'This model is currently experiencing high demand.'}}"
+                )
+            if config is not None and getattr(config, "tools", None):
+                return _Resp("Evidence brief for the test company.")
+            return _Resp(json.dumps(payload))
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = fake_generate
+
+        with patch("google.genai.Client", return_value=mock_client):
+            result = analyzer.analyze_document_with_gemini(
+                company_name="Test Co",
+                sector="Technology",
+                api_key="mock_key",
+                selected_model="gemini-3.5-flash",
+                skip_web_search=False,
+            )
+
+        self.assertEqual(result.get("research_model_used"), "gemini-3.5-flash-lite",
+                         "Research must fall through a 503 to a healthy model")
+        self.assertEqual(result.get("model_used"), "gemini-3.5-flash-lite")
+        self.assertIsNotNone(result.get("final_score"))
+
 
 if __name__ == "__main__":
     unittest.main()

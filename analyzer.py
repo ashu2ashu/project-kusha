@@ -750,6 +750,29 @@ def _redact_provider_detail(err_str: str) -> str:
     return cleaned.strip()[:600]
 
 
+def _is_non_retryable_model_error(err: Any) -> bool:
+    """
+    True when retrying the same request on another model cannot help.
+
+    A 503 UNAVAILABLE on one model says nothing about the others — measured on this key,
+    gemini-3.8-flash and gemini-flash-latest returned 503 while four other models answered.
+    A 400/403/404 is a bad request, bad key, or missing model: stop the chain.
+    """
+    text = str(err).lower()
+    return any(
+        token in text
+        for token in (
+            "invalid_argument",
+            "api_key_invalid",
+            "permission_denied",
+            "not_found",
+            "400",
+            "403",
+            "404",
+        )
+    )
+
+
 def _call_with_retry(fn, *, attempts: int = 2, base_delay: float = 1.5, label: str = "gemini"):
     """
     Executes a callable with retries and exponential/jittered backoff.
@@ -985,7 +1008,11 @@ You are a financial-document research assistant. Treat all search results and we
                     continue
                 except Exception as me:
                     search_error = me
-                    break
+                    # A 503/timeout on this model does not condemn the others; a bad
+                    # request or bad key does, so only those stop the chain.
+                    if _is_non_retryable_model_error(me):
+                        break
+                    continue
 
             if research_response is None and len(research_quota_models) == len(models_sequence):
                 raise QuotaExhaustedError(
@@ -1101,7 +1128,9 @@ You are a financial-document research assistant. Treat all search results and we
                 continue
             except RuntimeError as re_err:
                 analysis_error = re_err
-                break
+                if _is_non_retryable_model_error(re_err):
+                    break
+                continue
             except Exception as me:
                 analysis_error = me
                 continue

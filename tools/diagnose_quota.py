@@ -24,8 +24,12 @@ import getpass
 import os
 import re
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
+
+# Allow `python tools/diagnose_quota.py` from the repo root to import analyzer.py.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 load_dotenv()
 
